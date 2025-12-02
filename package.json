@@ -1,0 +1,16 @@
+{
+    "name": "your-chaos-my-mission",
+    "version": "0.1.0",
+    "packageManager": "pnpm@9.14.4",
+    "private": true,
+    "scripts": {
+        "build": "turbo build",
+        "dev": "turbo dev",
+        "lint": "turbo lint",
+        "clean": "turbo clean && rm -rf node_modules"
+    },
+    "devDependencies": {
+        "turbo": "^2.3.3",
+        "tsx": "^4.19.2"
+    }
+}

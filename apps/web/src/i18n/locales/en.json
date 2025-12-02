@@ -1,0 +1,113 @@
+{
+    "common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "save": "Save",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "edit": "Edit",
+        "create": "Create",
+        "back": "Back",
+        "next": "Next",
+        "submit": "Submit",
+        "search": "Search",
+        "close": "Close",
+        "yes": "Yes",
+        "no": "No",
+        "or": "or"
+    },
+    "auth": {
+        "login": "Login",
+        "register": "Register",
+        "logout": "Logout",
+        "email": "Email",
+        "password": "Password",
+        "confirmPassword": "Confirm password",
+        "name": "Name",
+        "forgotPassword": "Forgot password?",
+        "resetPassword": "Reset password",
+        "newPassword": "New password",
+        "welcomeBack": "Welcome back",
+        "createAccount": "Create account",
+        "loginPrompt": "Sign in to continue",
+        "registerPrompt": "Create an account to get started",
+        "noAccount": "Don't have an account?",
+        "hasAccount": "Already registered?",
+        "tryDemo": "Try demo",
+        "demoInfo": "Try all features without creating an account.",
+        "sessionExpired": "Session expired",
+        "sessionExpiredMessage": "You have been logged out. Please sign in again.",
+        "invalidCredentials": "Invalid credentials",
+        "emailExists": "Email already registered",
+        "passwordMinLength": "Password must be at least {{count}} characters",
+        "passwordsNoMatch": "Passwords do not match",
+        "forgotPasswordTitle": "Forgot password?",
+        "forgotPasswordDescription": "Enter your email address and we'll send you a reset link.",
+        "sendLink": "Send link",
+        "backToLogin": "Back to login",
+        "emailSent": "Email sent",
+        "emailSentMessage": "If an account with this email exists, a password reset link has been sent. Please check your inbox.",
+        "linkValid": "The link is valid for 1 hour.",
+        "setNewPassword": "Set new password",
+        "forEmail": "For: {{email}}",
+        "changePassword": "Change password",
+        "invalidLink": "Invalid link",
+        "invalidLinkMessage": "This link is invalid or expired. Please request a new password reset link.",
+        "requestNewLink": "Request new link",
+        "verifyingLink": "Verifying link...",
+        "passwordReset": "Password reset",
+        "passwordResetSuccess": "You can now sign in with your new password."
+    },
+    "landing": {
+        "title": "Your Chaos",
+        "subtitle": "My Mission",
+        "tagline": "Organize your life with one app.",
+        "description": "Applications, habits, expenses and more - all in one place.",
+        "getStarted": "Get started",
+        "tryDemo": "Try demo",
+        "features": {
+            "applications": "Track applications",
+            "habits": "Build habits",
+            "expenses": "Monitor expenses",
+            "xp": "Earn XP & level up"
+        }
+    },
+    "nav": {
+        "home": "Home",
+        "dashboard": "Dashboard",
+        "applications": "Applications",
+        "habits": "Habits",
+        "expenses": "Expenses",
+        "media": "Media",
+        "notes": "Notes",
+        "settings": "Settings",
+        "changelog": "Changelog"
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "welcome": "Welcome back, {{name}}!",
+        "level": "Level {{level}}",
+        "xpProgress": "{{current}} / {{next}} XP"
+    },
+    "settings": {
+        "title": "Settings",
+        "language": "Language",
+        "theme": "Theme",
+        "notifications": "Notifications",
+        "account": "Account",
+        "profile": "Profile",
+        "security": "Security"
+    },
+    "notifications": {
+        "success": "Success",
+        "error": "Error",
+        "info": "Info",
+        "warning": "Warning"
+    },
+    "errors": {
+        "generic": "An error occurred",
+        "network": "Network error - please try again",
+        "unauthorized": "Unauthorized",
+        "notFound": "Not found"
+    }
+}

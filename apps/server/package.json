@@ -1,0 +1,46 @@
+{
+    "name": "@ycmm/server",
+    "version": "0.1.0",
+    "private": true,
+    "type": "commonjs",
+    "scripts": {
+        "predev": "lsof -ti:8080 | xargs kill -9 2>/dev/null || true",
+        "dev": "ts-node src/app.ts",
+        "build": "tsc",
+        "start": "node dist/app.js",
+        "migration:create": "deepkit-orm migration:create",
+        "migration:up": "deepkit-orm migration:up",
+        "migration:down": "deepkit-orm migration:down"
+    },
+    "dependencies": {
+        "@deepkit/app": "^1.0.19",
+        "@deepkit/broker": "^1.0.19",
+        "@deepkit/core": "^1.0.19",
+        "@deepkit/event": "^1.0.19",
+        "@deepkit/filesystem": "^1.0.19",
+        "@deepkit/framework": "^1.0.19",
+        "@deepkit/http": "^1.0.19",
+        "@deepkit/injector": "^1.0.19",
+        "@deepkit/logger": "^1.0.19",
+        "@deepkit/orm": "^1.0.19",
+        "@deepkit/sql": "^1.0.19",
+        "@deepkit/sqlite": "^1.0.19",
+        "@deepkit/type": "^1.0.19",
+        "@ycmm/core": "workspace:*",
+        "bcrypt": "^5.1.1",
+        "dotenv": "^16.4.5",
+        "jsonwebtoken": "^9.0.2",
+        "uuid": "^11.0.3"
+    },
+    "devDependencies": {
+        "@deepkit/type-compiler": "^1.0.19",
+        "@types/bcrypt": "^5.0.2",
+        "@types/jsonwebtoken": "^9.0.7",
+        "@types/node": "^22.10.1",
+        "@types/uuid": "^10.0.0",
+        "ts-node": "^10.9.2",
+        "ts-node-dev": "^2.0.0",
+        "tsx": "^4.19.2",
+        "typescript": "^5.7.2"
+    }
+}

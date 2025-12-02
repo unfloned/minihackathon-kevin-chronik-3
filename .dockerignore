@@ -1,0 +1,54 @@
+# Dependencies (will be installed fresh in container)
+node_modules
+**/node_modules
+
+# Build outputs (will be built in container)
+**/dist
+**/build
+**/.angular
+**/.turbo
+**/.nx
+
+# Development files
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test files
+**/*.spec.ts
+**/*.test.ts
+**/test
+**/tests
+**/__tests__
+coverage
+
+# Documentation
+*.md
+!README.md
+docs
+
+# Local data
+apps/server/data
+apps/server/var
+
+# Misc
+.claude
+PLAN.md
+PHASEN.md

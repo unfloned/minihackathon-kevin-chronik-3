@@ -1,0 +1,211 @@
+/* Theme transition - smooth color scheme changes */
+:root {
+    --theme-transition-duration: 0.3s;
+    --theme-transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Custom theme colors for consistency */
+:root,
+[data-mantine-color-scheme="light"] {
+    /* Stats card background - slightly darker than white */
+    --stats-card-bg: rgba(0, 0, 0, 0.02);
+    /* Highlighted section background (e.g. "Diese Woche fällig") */
+    --highlight-section-bg: rgba(34, 139, 230, 0.08);
+    /* App main content background */
+    --app-main-bg: rgba(0, 0, 0, 0.015);
+    /* Empty state background */
+    --empty-state-bg: transparent;
+}
+
+[data-mantine-color-scheme="dark"] {
+    /* Stats card background - slightly lighter than dark */
+    --stats-card-bg: rgba(255, 255, 255, 0.03);
+    /* Highlighted section background */
+    --highlight-section-bg: rgba(34, 139, 230, 0.15);
+    /* App main content background */
+    --app-main-bg: transparent;
+    /* Empty state background */
+    --empty-state-bg: transparent;
+}
+
+/* Apply app main background */
+.mantine-AppShell-main {
+    background-color: var(--app-main-bg);
+}
+
+/* Stats cards get the subtle background */
+.stats-card {
+    background-color: var(--stats-card-bg) !important;
+}
+
+/* Highlighted sections */
+.highlight-section {
+    background-color: var(--highlight-section-bg) !important;
+}
+
+/* Apply transitions to color-related properties for smooth theme changes */
+*,
+*::before,
+*::after {
+    transition:
+        background-color var(--theme-transition-duration) var(--theme-transition-timing),
+        border-color var(--theme-transition-duration) var(--theme-transition-timing),
+        color var(--theme-transition-duration) var(--theme-transition-timing),
+        box-shadow var(--theme-transition-duration) var(--theme-transition-timing),
+        fill var(--theme-transition-duration) var(--theme-transition-timing),
+        stroke var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Exclude certain elements from transitions to avoid performance issues */
+input,
+textarea,
+select,
+canvas,
+video,
+img,
+svg path,
+svg rect,
+svg circle {
+    transition: none !important;
+}
+
+/* Smooth scrollbar color transitions */
+::-webkit-scrollbar-track {
+    transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+::-webkit-scrollbar-thumb {
+    transition: background-color var(--theme-transition-duration) var(--theme-transition-timing);
+}
+
+/* Cards and interactive elements get a subtle hover lift */
+.mantine-Card-root,
+.mantine-Paper-root {
+    transition:
+        background-color var(--theme-transition-duration) var(--theme-transition-timing),
+        border-color var(--theme-transition-duration) var(--theme-transition-timing),
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.mantine-Card-root:hover,
+.mantine-Paper-root[data-with-border]:hover {
+    transform: translateY(-1px);
+}
+
+/* Button hover effects */
+.mantine-Button-root {
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        transform 0.1s ease,
+        box-shadow 0.15s ease;
+}
+
+.mantine-Button-root:active {
+    transform: scale(0.98);
+}
+
+/* NavLink smooth highlighting */
+.mantine-NavLink-root {
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+/* Modal and overlay animations */
+.mantine-Modal-overlay {
+    transition: opacity 0.2s ease;
+}
+
+.mantine-Modal-content {
+    transition:
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.2s ease;
+}
+
+/* Badge pulse animation for attention */
+@keyframes badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.badge-pulse {
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* Streak flame animation */
+@keyframes flame-flicker {
+    0%, 100% {
+        transform: scaleY(1) translateY(0);
+        opacity: 1;
+    }
+    25% {
+        transform: scaleY(1.1) translateY(-2px);
+        opacity: 0.9;
+    }
+    50% {
+        transform: scaleY(0.95) translateY(0);
+        opacity: 1;
+    }
+    75% {
+        transform: scaleY(1.05) translateY(-1px);
+        opacity: 0.95;
+    }
+}
+
+.flame-animate {
+    animation: flame-flicker 1.5s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+/* XP bar fill animation */
+@keyframes xp-fill {
+    from {
+        width: 0%;
+    }
+}
+
+.xp-bar-animate {
+    animation: xp-fill 1s ease-out forwards;
+}
+
+/* Achievement unlock glow */
+@keyframes achievement-glow {
+    0%, 100% {
+        box-shadow: 0 0 5px rgba(34, 139, 230, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(34, 139, 230, 0.6), 0 0 40px rgba(34, 139, 230, 0.3);
+    }
+}
+
+.achievement-glow {
+    animation: achievement-glow 2s ease-in-out infinite;
+}
+
+/* Skeleton loading animation override for smoother feel */
+.mantine-Skeleton-root {
+    --_skeleton-opacity: 0.1;
+}
+
+/* Focus ring transitions */
+*:focus-visible {
+    transition:
+        outline-offset 0.1s ease,
+        outline 0.1s ease;
+}
+
+/* Progress bar smooth transitions */
+.mantine-Progress-section {
+    transition: width 0.5s ease-out;
+}
+
+/* Ring progress animation */
+.mantine-RingProgress-curve {
+    transition: stroke-dashoffset 0.8s ease-out;
+}

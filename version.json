@@ -1,0 +1,18 @@
+{
+    "version": "0.1.0",
+    "name": "Your Chaos, My Mission",
+    "description": "Dein Chaos, meine Mission - Eine persönliche Verwaltungs-Web-App",
+    "released": "2024-12-02",
+    "changelog": [
+        {
+            "version": "0.1.0",
+            "date": "2024-12-02",
+            "changes": [
+                "Initial Release",
+                "Projekt Setup mit Turbo Monorepo",
+                "React + Vite Frontend",
+                "Deepkit Backend"
+            ]
+        }
+    ]
+}
