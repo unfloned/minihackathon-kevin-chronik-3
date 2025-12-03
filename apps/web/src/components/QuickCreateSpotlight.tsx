@@ -20,7 +20,7 @@ import {
     IconSearch,
 } from '@tabler/icons-react';
 import { useQuickCreate, QuickCreateType } from '../contexts/QuickCreateContext';
-import { createModalTitles } from './CreateModals';
+import { createModalTitles } from './modalConfig';
 
 interface CreateOption {
     type: QuickCreateType;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Container,
@@ -52,14 +52,6 @@ export default function NotesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
     const [view, setView] = useState<'active' | 'archived'>('active');
-
-    // Handle quick create from CMD+N
-    useEffect(() => {
-        if (pendingCreate === 'note') {
-            consumeCreate();
-            navigate('/app/notes/new');
-        }
-    }, [pendingCreate, consumeCreate, navigate]);
 
     const { data: notes, isLoading, refetch } = useRequest<Note[]>('/notes');
     const { data: archivedNotes, refetch: refetchArchived } = useRequest<Note[]>('/notes/archived');

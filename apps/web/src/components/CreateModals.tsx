@@ -866,17 +866,5 @@ export const createModals = {
     wishlistCreate: WishlistCreateModal,
 };
 
-// Modal titles for ModalsProvider
-export const createModalTitles: Record<keyof typeof createModals, string> = {
-    habitCreate: 'Neues Habit',
-    expenseCreate: 'Neue Ausgabe',
-    deadlineCreate: 'Neue Frist',
-    subscriptionCreate: 'Neues Abo',
-    listCreate: 'Neue Liste',
-    projectCreate: 'Neues Projekt',
-    mediaCreate: 'Neues Medium',
-    mealCreate: 'Neues Rezept',
-    inventoryCreate: 'Neuer Gegenstand',
-    applicationCreate: 'Neue Bewerbung',
-    wishlistCreate: 'Neuer Wunsch',
-};
+// Re-export titles from modalConfig
+export { createModalTitles } from './modalConfig';
