@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Container,
-    Title,
     Text,
     SimpleGrid,
     Card,
@@ -33,6 +32,7 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useRequest, useMutation } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
 import type { NoteSimple } from '@ycmm/core';
 
 // Alias for component usage
@@ -254,12 +254,7 @@ export default function NotesPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <div>
-                        <Title order={2}>Notizen</Title>
-                        <Text c="dimmed">
-                            Deine persönlichen Notizen und Ideen
-                        </Text>
-                    </div>
+                    <PageTitle title="Notizen" subtitle="Deine persönlichen Notizen und Ideen" />
                     <Button leftSection={<IconPlus size={18} />} onClick={handleOpenCreate}>
                         Neue Notiz
                     </Button>

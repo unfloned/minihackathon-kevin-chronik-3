@@ -1,6 +1,5 @@
 import {
     Container,
-    Title,
     Text,
     SimpleGrid,
     Card,
@@ -8,12 +7,9 @@ import {
     Stack,
     Badge,
     ThemeIcon,
-    Progress,
     Paper,
     SegmentedControl,
     Skeleton,
-    Tooltip,
-    RingProgress,
 } from '@mantine/core';
 import {
     IconTrophy,
@@ -101,6 +97,8 @@ import {
 import { useState, useEffect } from 'react';
 import { useRequest, useConfetti } from '../../../hooks';
 import type { AchievementPublic, GamificationStats } from '@ycmm/core';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 
 // Achievement interface extends AchievementPublic with additional fields for display
 interface Achievement extends AchievementPublic {
@@ -307,96 +305,43 @@ export default function AchievementsPage() {
         <Container size="xl" py="xl">
             <Stack gap="xl">
                 {/* Header */}
-                <div>
-                    <Title order={2}>Achievements</Title>
-                    <Text c="dimmed">
-                        Schalte Achievements frei und sammle XP!
-                    </Text>
-                </div>
+                <PageTitle title="Achievements" subtitle="Schalte Achievements frei und sammle XP!" />
 
                 {/* Stats Overview */}
                 <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-                    {/* Level Card */}
-                    <Card withBorder padding="lg" className="stats-card">
-                        <Group justify="space-between">
-                            <div>
-                                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                                    Level
-                                </Text>
-                                {isLoading ? (
-                                    <Skeleton height={36} width={60} mt="xs" />
-                                ) : (
-                                    <Text size="2rem" fw={700} mt="xs">
-                                        {stats?.level ?? 1}
-                                    </Text>
-                                )}
-                            </div>
-                            <ThemeIcon size={56} variant="light" color="violet" radius="xl">
-                                <IconStar size={28} />
-                            </ThemeIcon>
-                        </Group>
-                        {!isLoading && (
-                            <Tooltip label={`${stats?.xpProgress?.current ?? 0} / ${stats?.xpProgress?.required ?? 100} XP`}>
-                                <Progress
-                                    value={stats?.xpProgress?.percentage ?? 0}
-                                    size="md"
-                                    mt="md"
-                                    color="violet"
-                                    radius="xl"
-                                />
-                            </Tooltip>
-                        )}
-                    </Card>
+                    <CardStatistic
+                        type="progress"
+                        title="Level"
+                        value={stats?.level ?? 1}
+                        icon={IconStar}
+                        color="violet"
+                        progress={stats?.xpProgress?.percentage ?? 0}
+                        progressTooltip={`${stats?.xpProgress?.current ?? 0} / ${stats?.xpProgress?.required ?? 100} XP`}
+                        isLoading={isLoading}
+                    />
 
-                    {/* XP Card */}
-                    <Card withBorder padding="lg" className="stats-card">
-                        <Group justify="space-between">
-                            <div>
-                                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                                    Gesamt XP
-                                </Text>
-                                {isLoading ? (
-                                    <Skeleton height={36} width={80} mt="xs" />
-                                ) : (
-                                    <Text size="2rem" fw={700} mt="xs">
-                                        {stats?.xp?.toLocaleString() ?? 0}
-                                    </Text>
-                                )}
-                            </div>
-                            <ThemeIcon size={56} variant="light" color="yellow" radius="xl">
-                                <IconCoin size={28} />
-                            </ThemeIcon>
-                        </Group>
-                    </Card>
+                    <CardStatistic
+                        type="icon"
+                        title="Gesamt XP"
+                        value={stats?.xp?.toLocaleString() ?? 0}
+                        icon={IconCoin}
+                        color="yellow"
+                        isLoading={isLoading}
+                    />
 
-                    {/* Achievements Progress Card */}
-                    <Card withBorder padding="lg" className="stats-card">
-                        <Group justify="space-between">
-                            <div>
-                                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                                    Achievements
-                                </Text>
-                                {isLoading ? (
-                                    <Skeleton height={36} width={80} mt="xs" />
-                                ) : (
-                                    <Text size="2rem" fw={700} mt="xs">
-                                        {unlockedCount} / {totalAchievements}
-                                    </Text>
-                                )}
-                            </div>
-                            <RingProgress
-                                size={56}
-                                thickness={6}
-                                roundCaps
-                                sections={[{ value: completionPercentage, color: 'teal' }]}
-                                label={
-                                    <Text ta="center" size="xs" fw={700}>
-                                        {completionPercentage}%
-                                    </Text>
-                                }
-                            />
-                        </Group>
-                    </Card>
+                    <CardStatistic
+                        type="circular"
+                        title="Achievements"
+                        value={`${unlockedCount} / ${totalAchievements}`}
+                        progress={completionPercentage}
+                        progressLabel={
+                            <Text ta="center" size="xs" fw={700}>
+                                {completionPercentage}%
+                            </Text>
+                        }
+                        color="teal"
+                        isLoading={isLoading}
+                    />
                 </SimpleGrid>
 
                 {/* Category Filter */}

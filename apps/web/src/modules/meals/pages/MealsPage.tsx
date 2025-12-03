@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
     Container,
-    Title,
     Text,
     Button,
     Group,
@@ -18,11 +17,14 @@ import {
     Image,
     Tabs,
     Paper,
-    ThemeIcon,
     Divider,
     Checkbox,
     CloseButton,
     Box,
+    Table,
+    SegmentedControl,
+    Menu,
+    ThemeIcon,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DatePickerInput } from '@mantine/dates';
@@ -44,8 +46,13 @@ import {
     IconSoup,
     IconCoffee,
     IconCookie,
+    IconLayoutGrid,
+    IconList,
+    IconDotsVertical,
 } from '@tabler/icons-react';
-import { useRequest, useMutation } from '../../../hooks';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import type {
     MealType,
     Ingredient,
@@ -96,6 +103,9 @@ export default function MealsPage() {
     const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMealType, setSelectedMealType] = useState<string>('all');
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Fallback to 'grid' if global viewMode is not supported by this page
+    const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
 
     // Date range for meal plans (current week)
     const weekStart = useMemo(() => {
@@ -353,59 +363,42 @@ export default function MealsPage() {
     return (
         <Container size="xl" py="xl">
             <Stack gap="lg">
-                <Group justify="space-between">
-                    <div>
-                        <Title order={1}>Mahlzeiten</Title>
-                        <Text c="dimmed">Verwalte deine Rezepte und plane deine Mahlzeiten</Text>
-                    </div>
-                </Group>
+                <PageTitle title="Mahlzeiten" subtitle="Verwalte deine Rezepte und plane deine Mahlzeiten" />
 
                 {stats && (
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg">
-                        <Paper shadow="sm" p="md" radius="md" withBorder>
-                            <Group>
-                                <ThemeIcon size="lg" variant="light" color="blue">
-                                    <IconChefHat size={20} />
-                                </ThemeIcon>
-                                <div>
-                                    <Text size="xs" c="dimmed">Rezepte</Text>
-                                    <Text size="xl" fw={700}>{stats.totalMeals}</Text>
-                                </div>
-                            </Group>
-                        </Paper>
-                        <Paper shadow="sm" p="md" radius="md" withBorder>
-                            <Group>
-                                <ThemeIcon size="lg" variant="light" color="green">
-                                    <IconCheck size={20} />
-                                </ThemeIcon>
-                                <div>
-                                    <Text size="xs" c="dimmed">Gekocht</Text>
-                                    <Text size="xl" fw={700}>{stats.totalCooked}</Text>
-                                </div>
-                            </Group>
-                        </Paper>
-                        <Paper shadow="sm" p="md" radius="md" withBorder>
-                            <Group>
-                                <ThemeIcon size="lg" variant="light" color="yellow">
-                                    <IconStarFilled size={20} />
-                                </ThemeIcon>
-                                <div>
-                                    <Text size="xs" c="dimmed">Favoriten</Text>
-                                    <Text size="xl" fw={700}>{stats.favorites}</Text>
-                                </div>
-                            </Group>
-                        </Paper>
-                        <Paper shadow="sm" p="md" radius="md" withBorder>
-                            <Group>
-                                <ThemeIcon size="lg" variant="light" color="grape">
-                                    <IconToolsKitchen2 size={20} />
-                                </ThemeIcon>
-                                <div>
-                                    <Text size="xs" c="dimmed">Küchen</Text>
-                                    <Text size="xl" fw={700}>{stats.byCuisine.length}</Text>
-                                </div>
-                            </Group>
-                        </Paper>
+                        <CardStatistic
+                            type="icon"
+                            title="Rezepte"
+                            value={stats.totalMeals}
+                            icon={IconChefHat}
+                            color="blue"
+                            subtitle="Gesamt"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Gekocht"
+                            value={stats.totalCooked}
+                            icon={IconCheck}
+                            color="green"
+                            subtitle="Mal zubereitet"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Favoriten"
+                            value={stats.favorites}
+                            icon={IconStarFilled}
+                            color="yellow"
+                            subtitle="Lieblingsrezepte"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Küchen"
+                            value={stats.byCuisine.length}
+                            icon={IconToolsKitchen2}
+                            color="grape"
+                            subtitle="Verschiedene"
+                        />
                     </SimpleGrid>
                 )}
 
@@ -424,35 +417,45 @@ export default function MealsPage() {
 
                     <Tabs.Panel value="recipes" pt="xl">
                         <Stack gap="lg">
-                            <Group>
-                                <TextInput
-                                    placeholder="Rezepte durchsuchen..."
-                                    leftSection={<IconSearch size={16} />}
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    style={{ flex: 1 }}
-                                />
-                                <Select
-                                    placeholder="Mahlzeit"
-                                    data={[
-                                        { value: 'all', label: 'Alle' },
-                                        ...mealTypeOptions.map(opt => ({ value: opt.value, label: opt.label }))
-                                    ]}
-                                    value={selectedMealType}
-                                    onChange={(value) => setSelectedMealType(value || 'all')}
-                                    style={{ width: 200 }}
-                                />
-                                <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
-                                    Neues Rezept
-                                </Button>
-                            </Group>
+                            <Paper shadow="sm" withBorder p="md" radius="md">
+                                <Group>
+                                    <TextInput
+                                        placeholder="Rezepte durchsuchen..."
+                                        leftSection={<IconSearch size={16} />}
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        style={{ flex: 1 }}
+                                    />
+                                    <Select
+                                        placeholder="Mahlzeit"
+                                        data={[
+                                            { value: 'all', label: 'Alle' },
+                                            ...mealTypeOptions.map(opt => ({ value: opt.value, label: opt.label }))
+                                        ]}
+                                        value={selectedMealType}
+                                        onChange={(value) => setSelectedMealType(value || 'all')}
+                                        style={{ width: 200 }}
+                                    />
+                                    <SegmentedControl
+                                        value={viewMode}
+                                        onChange={(value) => setViewMode(value as 'grid' | 'list')}
+                                        data={[
+                                            { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                                            { value: 'list', label: <IconList size={16} /> },
+                                        ]}
+                                    />
+                                    <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
+                                        Neues Rezept
+                                    </Button>
+                                </Group>
+                            </Paper>
 
                             {isLoading ? (
                                 <Text>Lädt...</Text>
-                            ) : (
+                            ) : viewMode === 'grid' ? (
                                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
                                     {filteredMeals.map(meal => (
-                                        <Card key={meal.id} shadow="sm" padding="lg" withBorder>
+                                        <Card key={meal.id} shadow="sm" padding="lg" radius="md" withBorder>
                                             <Card.Section>
                                                 {meal.imageUrl ? (
                                                     <Image
@@ -558,6 +561,103 @@ export default function MealsPage() {
                                         </Card>
                                     ))}
                                 </SimpleGrid>
+                            ) : (
+                                <Paper shadow="sm" withBorder radius="md">
+                                    <Table striped highlightOnHover>
+                                        <Table.Thead>
+                                            <Table.Tr>
+                                                <Table.Th>Rezept</Table.Th>
+                                                <Table.Th>Typ</Table.Th>
+                                                <Table.Th>Küche</Table.Th>
+                                                <Table.Th>Zeit</Table.Th>
+                                                <Table.Th>Portionen</Table.Th>
+                                                <Table.Th>Gekocht</Table.Th>
+                                                <Table.Th>Aktionen</Table.Th>
+                                            </Table.Tr>
+                                        </Table.Thead>
+                                        <Table.Tbody>
+                                            {filteredMeals.map(meal => (
+                                                <Table.Tr key={meal.id}>
+                                                    <Table.Td>
+                                                        <Group gap="sm">
+                                                            {meal.imageUrl ? (
+                                                                <Image src={meal.imageUrl} width={40} height={40} radius="sm" fit="cover" />
+                                                            ) : (
+                                                                <ThemeIcon size={40} variant="light" color="grape">
+                                                                    <IconChefHat size={20} />
+                                                                </ThemeIcon>
+                                                            )}
+                                                            <div>
+                                                                <Group gap={4}>
+                                                                    <Text fw={500} size="sm">{meal.name}</Text>
+                                                                    {meal.isFavorite && <IconStarFilled size={14} style={{ color: 'gold' }} />}
+                                                                </Group>
+                                                                {meal.description && <Text size="xs" c="dimmed" lineClamp={1}>{meal.description}</Text>}
+                                                            </div>
+                                                        </Group>
+                                                    </Table.Td>
+                                                    <Table.Td>
+                                                        <Group gap={4}>
+                                                            {meal.mealType.map(type => (
+                                                                <Badge key={type} size="xs" variant="light">
+                                                                    {mealTypeOptions.find(opt => opt.value === type)?.label}
+                                                                </Badge>
+                                                            ))}
+                                                        </Group>
+                                                    </Table.Td>
+                                                    <Table.Td>{meal.cuisine || '-'}</Table.Td>
+                                                    <Table.Td>{formatTime((meal.prepTime || 0) + (meal.cookTime || 0))}</Table.Td>
+                                                    <Table.Td>{meal.servings || '-'}</Table.Td>
+                                                    <Table.Td>
+                                                        {meal.timesCooked > 0 ? (
+                                                            <Group gap={4}>
+                                                                <IconFlame size={14} />
+                                                                <Text size="sm">{meal.timesCooked}x</Text>
+                                                            </Group>
+                                                        ) : '-'}
+                                                    </Table.Td>
+                                                    <Table.Td>
+                                                        <Menu shadow="md" position="bottom-end">
+                                                            <Menu.Target>
+                                                                <ActionIcon variant="subtle" size="sm">
+                                                                    <IconDotsVertical size={16} />
+                                                                </ActionIcon>
+                                                            </Menu.Target>
+                                                            <Menu.Dropdown>
+                                                                <Menu.Item
+                                                                    leftSection={<IconCheck size={16} />}
+                                                                    onClick={() => handleMarkCooked(meal.id)}
+                                                                >
+                                                                    Als gekocht markieren
+                                                                </Menu.Item>
+                                                                <Menu.Item
+                                                                    leftSection={meal.isFavorite ? <IconStarFilled size={16} /> : <IconStar size={16} />}
+                                                                    onClick={() => handleToggleFavorite(meal.id)}
+                                                                >
+                                                                    {meal.isFavorite ? 'Favorit entfernen' : 'Als Favorit'}
+                                                                </Menu.Item>
+                                                                <Menu.Divider />
+                                                                <Menu.Item
+                                                                    leftSection={<IconEdit size={16} />}
+                                                                    onClick={() => openEditModal(meal)}
+                                                                >
+                                                                    Bearbeiten
+                                                                </Menu.Item>
+                                                                <Menu.Item
+                                                                    leftSection={<IconTrash size={16} />}
+                                                                    color="red"
+                                                                    onClick={() => handleDeleteMeal(meal.id)}
+                                                                >
+                                                                    Löschen
+                                                                </Menu.Item>
+                                                            </Menu.Dropdown>
+                                                        </Menu>
+                                                    </Table.Td>
+                                                </Table.Tr>
+                                            ))}
+                                        </Table.Tbody>
+                                    </Table>
+                                </Paper>
                             )}
 
                             {!isLoading && filteredMeals.length === 0 && (

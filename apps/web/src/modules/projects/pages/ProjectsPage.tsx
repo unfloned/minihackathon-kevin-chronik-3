@@ -20,6 +20,7 @@ import {
     Progress,
     ThemeIcon,
     SegmentedControl,
+    Container,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
@@ -41,7 +42,7 @@ import {
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useRequest, useMutation } from '../../../hooks';
-import PageLayout from '../../../components/PageLayout';
+import { PageTitle } from '../../../components/PageTitle';
 import type { ProjectSimple, ProjectType, ProjectStatus } from '@ycmm/core';
 
 // Alias for component usage
@@ -269,31 +270,35 @@ export default function ProjectsPage() {
     }) || [];
 
     return (
-        <PageLayout header={{ title: 'Projekte & Ziele' }}>
-            <Stack gap="md">
+        <Container size="xl" py="xl">
+            <Stack gap="lg">
+                {/* Header */}
                 <Group justify="space-between">
-                    <Group>
-                        <SegmentedControl
-                            value={view}
-                            onChange={(value) => setView(value as 'active' | 'archived')}
-                            data={[
-                                { label: 'Aktiv', value: 'active' },
-                                { label: 'Archiviert', value: 'archived' },
-                            ]}
-                        />
-                        <SegmentedControl
-                            value={filterType}
-                            onChange={(value) => setFilterType(value as ProjectType | 'all')}
-                            data={[
-                                { label: 'Alle', value: 'all' },
-                                { label: 'Projekte', value: 'project' },
-                                { label: 'Ziele', value: 'goal' },
-                            ]}
-                        />
-                    </Group>
+                    <PageTitle title="Projekte & Ziele" subtitle="Verwalte deine Projekte und Ziele" />
                     <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
                         Neues Projekt
                     </Button>
+                </Group>
+
+                {/* Filters */}
+                <Group>
+                    <SegmentedControl
+                        value={view}
+                        onChange={(value) => setView(value as 'active' | 'archived')}
+                        data={[
+                            { label: 'Aktiv', value: 'active' },
+                            { label: 'Archiviert', value: 'archived' },
+                        ]}
+                    />
+                    <SegmentedControl
+                        value={filterType}
+                        onChange={(value) => setFilterType(value as ProjectType | 'all')}
+                        data={[
+                            { label: 'Alle', value: 'all' },
+                            { label: 'Projekte', value: 'project' },
+                            { label: 'Ziele', value: 'goal' },
+                        ]}
+                    />
                 </Group>
 
                 <TextInput
@@ -468,9 +473,8 @@ export default function ProjectsPage() {
                         })}
                     </SimpleGrid>
                 )}
-            </Stack>
 
-            <Modal
+                <Modal
                 opened={opened}
                 onClose={close}
                 title={editingProject ? 'Projekt bearbeiten' : 'Neues Projekt'}
@@ -536,6 +540,7 @@ export default function ProjectsPage() {
                     </Group>
                 </Stack>
             </Modal>
-        </PageLayout>
+            </Stack>
+        </Container>
     );
 }

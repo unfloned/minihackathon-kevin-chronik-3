@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
     Container,
-    Title,
     Text,
     Card,
     Group,
@@ -36,8 +35,10 @@ import {
     IconLayoutGrid,
     IconList,
 } from '@tabler/icons-react';
-import { useRequest, useMutation } from '../../../hooks';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import type { SubscriptionSimple, SubscriptionStats, SubscriptionBillingCycle, SubscriptionStatus } from '@ycmm/core';
 
 // Alias for component usage
@@ -115,7 +116,9 @@ export default function SubscriptionsPage() {
     const [opened, { open, close }] = useDisclosure(false);
     const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
     const [formData, setFormData] = useState<CreateSubscriptionForm>(emptyForm);
-    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Map global viewMode to this page's supported modes (grid/list)
+    const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
 
     // Fetch subscriptions
     const {
@@ -326,12 +329,7 @@ export default function SubscriptionsPage() {
             <Stack gap="xl">
                 {/* Header */}
                 <Group justify="space-between" align="center">
-                    <div>
-                        <Title order={1}>Abonnements</Title>
-                        <Text c="dimmed" size="sm" mt="xs">
-                            Verwalten Sie Ihre wiederkehrenden Abonnements
-                        </Text>
-                    </div>
+                    <PageTitle title="Abonnements" subtitle="Verwalten Sie Ihre wiederkehrenden Abonnements" />
                     <Button
                         leftSection={<IconPlus size={16} />}
                         onClick={handleOpenCreateModal}
@@ -343,79 +341,47 @@ export default function SubscriptionsPage() {
 
                 {/* Stats Cards */}
                 <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
-                    <Paper shadow="sm" p="md" radius="md" withBorder>
-                        <Group justify="space-between">
-                            <div>
-                                <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
-                                    Monatliche Kosten
-                                </Text>
-                                {statsLoading ? (
-                                    <Skeleton height={32} mt="xs" />
-                                ) : (
-                                    <Text fw={700} size="xl" mt="xs">
-                                        {formatCurrency(stats?.monthlyCost || 0)}
-                                    </Text>
-                                )}
-                            </div>
-                            <ActionIcon size="lg" variant="light" color="blue" radius="md">
-                                <IconCoin size={20} />
-                            </ActionIcon>
-                        </Group>
-                    </Paper>
+                    <CardStatistic
+                        type="icon"
+                        title="Monatliche Kosten"
+                        value={formatCurrency(stats?.totalMonthly || 0)}
+                        icon={IconCoin}
+                        color="blue"
+                        subtitle="Pro Monat"
+                        isLoading={statsLoading}
+                    />
 
-                    <Paper shadow="sm" p="md" radius="md" withBorder>
-                        <Group justify="space-between">
-                            <div>
-                                <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
-                                    Jährliche Kosten
-                                </Text>
-                                {statsLoading ? (
-                                    <Skeleton height={32} mt="xs" />
-                                ) : (
-                                    <Text fw={700} size="xl" mt="xs">
-                                        {formatCurrency(stats?.yearlyCost || 0)}
-                                    </Text>
-                                )}
-                            </div>
-                            <ActionIcon size="lg" variant="light" color="green" radius="md">
-                                <IconCalendar size={20} />
-                            </ActionIcon>
-                        </Group>
-                    </Paper>
+                    <CardStatistic
+                        type="icon"
+                        title="Jährliche Kosten"
+                        value={formatCurrency(stats?.totalYearly || 0)}
+                        icon={IconCalendar}
+                        color="green"
+                        subtitle="Pro Jahr"
+                        isLoading={statsLoading}
+                    />
 
-                    <Paper shadow="sm" p="md" radius="md" withBorder>
-                        <Group justify="space-between">
-                            <div>
-                                <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
-                                    Aktive Abos
-                                </Text>
-                                {statsLoading ? (
-                                    <Skeleton height={32} mt="xs" />
-                                ) : (
-                                    <Text fw={700} size="xl" mt="xs">
-                                        {stats?.count || 0}
-                                    </Text>
-                                )}
-                            </div>
-                            <ActionIcon size="lg" variant="light" color="grape" radius="md">
-                                <IconReceipt size={20} />
-                            </ActionIcon>
-                        </Group>
-                    </Paper>
+                    <CardStatistic
+                        type="icon"
+                        title="Aktive Abos"
+                        value={stats?.activeCount || 0}
+                        icon={IconReceipt}
+                        color="grape"
+                        subtitle="Abonnements"
+                        isLoading={statsLoading}
+                    />
                 </SimpleGrid>
 
                 {/* Subscriptions List */}
                 <Stack gap="md">
                     <Group justify="space-between" align="center">
-                        <Title order={2} size="h3">
-                            Ihre Abonnements
-                        </Title>
+                        <Text fw={700} size="lg">Ihre Abonnements</Text>
                         <SegmentedControl
                             value={viewMode}
-                            onChange={(value) => setViewMode(value as 'cards' | 'table')}
+                            onChange={(value) => setViewMode(value as 'grid' | 'list')}
                             data={[
-                                { value: 'cards', label: <IconLayoutGrid size={16} /> },
-                                { value: 'table', label: <IconList size={16} /> },
+                                { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                                { value: 'list', label: <IconList size={16} /> },
                             ]}
                         />
                     </Group>
@@ -446,7 +412,7 @@ export default function SubscriptionsPage() {
                                 </Button>
                             </Stack>
                         </Paper>
-                    ) : viewMode === 'table' ? (
+                    ) : viewMode === 'list' ? (
                         <Paper shadow="sm" withBorder radius="md">
                             <Table striped highlightOnHover>
                                 <Table.Thead>

@@ -20,6 +20,9 @@ import {
     Menu,
     Paper,
     Anchor,
+    Table,
+    SegmentedControl,
+    Container,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import {
@@ -40,9 +43,12 @@ import {
     IconPlane,
     IconStar,
     IconDots,
+    IconLayoutGrid,
+    IconList,
 } from '@tabler/icons-react';
-import { useRequest, useMutation } from '../../../hooks';
-import PageLayout, { StatsGrid } from '../../../components/PageLayout';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import type {
     WishlistPriority,
     WishlistCategory,
@@ -100,6 +106,9 @@ export default function WishlistsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
     const [priorityFilter, setPriorityFilter] = useState<string>('all');
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Fallback to 'grid' if global viewMode is not supported by this page
+    const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
 
     const { data: items, isLoading, refetch } = useRequest<WishlistItem[]>('/wishlist-items');
     const { data: stats } = useRequest<WishlistStats>('/wishlist-items/stats');
@@ -239,40 +248,56 @@ export default function WishlistsPage() {
         await refetch();
     };
 
-    const statsData = [
-        {
-            value: stats?.totalItems || 0,
-            label: 'Gesamt Artikel',
-        },
-        {
-            value: formatPrice(stats?.totalValue ? { amount: stats.totalValue, currency: 'EUR' } : undefined),
-            label: 'Gesamtwert',
-        },
-        {
-            value: stats?.giftIdeas || 0,
-            label: 'Geschenkideen',
-        },
-        {
-            value: stats?.purchased || 0,
-            label: 'Gekauft',
-        },
-    ];
-
     return (
-        <PageLayout
-            header={{
-                title: 'Wunschliste',
-                subtitle: 'Verwalte deine Wünsche und Geschenkideen',
-                actionLabel: 'Neuer Artikel',
-                onAction: openCreateModal,
-            }}
-            stats={<StatsGrid stats={statsData} />}
-            searchBar={{
-                value: searchQuery,
-                onChange: setSearchQuery,
-                placeholder: 'Artikel suchen...',
-                rightSection: (
-                    <Group gap="xs">
+        <Container size="xl" py="xl">
+            <Stack gap="lg">
+                {/* Header */}
+                <Group justify="space-between">
+                    <PageTitle title="Wunschliste" subtitle="Verwalte deine Wünsche und Geschenkideen" />
+                    <Button onClick={openCreateModal}>Neuer Artikel</Button>
+                </Group>
+
+                {/* Stats */}
+                <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
+                    <CardStatistic
+                        type="icon"
+                        title="Gesamt Artikel"
+                        value={stats?.totalItems || 0}
+                        icon={IconHeart}
+                        color="pink"
+                    />
+                    <CardStatistic
+                        type="icon"
+                        title="Gesamtwert"
+                        value={formatPrice(stats?.totalValue ? { amount: stats.totalValue, currency: 'EUR' } : undefined)}
+                        icon={IconCurrencyEuro}
+                        color="green"
+                    />
+                    <CardStatistic
+                        type="icon"
+                        title="Geschenkideen"
+                        value={stats?.giftIdeas || 0}
+                        icon={IconGift}
+                        color="violet"
+                    />
+                    <CardStatistic
+                        type="icon"
+                        title="Gekauft"
+                        value={stats?.purchased || 0}
+                        icon={IconShoppingCart}
+                        color="blue"
+                    />
+                </SimpleGrid>
+
+                {/* Search Bar */}
+                <Paper shadow="sm" withBorder p="md" radius="md">
+                    <Group>
+                        <TextInput
+                            placeholder="Artikel suchen..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                            style={{ flex: 1 }}
+                        />
                         <Select
                             placeholder="Kategorie"
                             data={[
@@ -293,11 +318,19 @@ export default function WishlistsPage() {
                             onChange={(value) => setPriorityFilter(value || 'all')}
                             style={{ width: 180 }}
                         />
+                        <SegmentedControl
+                            value={viewMode}
+                            onChange={(value) => setViewMode(value as 'grid' | 'list')}
+                            data={[
+                                { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                                { value: 'list', label: <IconList size={16} /> },
+                            ]}
+                        />
                     </Group>
-                ),
-            }}
-        >
-            <Tabs value={activeTab} onChange={setActiveTab}>
+                </Paper>
+
+                {/* Content */}
+                <Tabs value={activeTab} onChange={setActiveTab}>
                 <Tabs.List>
                     <Tabs.Tab value="all" leftSection={<IconHeart size={16} />}>
                         Alle Artikel
@@ -328,7 +361,7 @@ export default function WishlistsPage() {
                                 </Button>
                             </Stack>
                         </Paper>
-                    ) : (
+                    ) : viewMode === 'grid' ? (
                         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
                             {filteredItems.map((item) => (
                                 <Card key={item.id} shadow="sm" padding="lg" radius="md" withBorder>
@@ -448,6 +481,98 @@ export default function WishlistsPage() {
                                 </Card>
                             ))}
                         </SimpleGrid>
+                    ) : (
+                        <Paper shadow="sm" withBorder radius="md">
+                            <Table striped highlightOnHover>
+                                <Table.Thead>
+                                    <Table.Tr>
+                                        <Table.Th>Artikel</Table.Th>
+                                        <Table.Th>Kategorie</Table.Th>
+                                        <Table.Th>Priorität</Table.Th>
+                                        <Table.Th>Preis</Table.Th>
+                                        <Table.Th>Shop</Table.Th>
+                                        <Table.Th>Aktionen</Table.Th>
+                                    </Table.Tr>
+                                </Table.Thead>
+                                <Table.Tbody>
+                                    {filteredItems.map((item) => (
+                                        <Table.Tr key={item.id}>
+                                            <Table.Td>
+                                                <Group gap="sm">
+                                                    {item.imageUrl ? (
+                                                        <Image src={item.imageUrl} width={40} height={40} radius="sm" fit="cover" />
+                                                    ) : (
+                                                        <ThemeIcon size={40} variant="light" radius="sm">
+                                                            {getCategoryIcon(item.category)}
+                                                        </ThemeIcon>
+                                                    )}
+                                                    <div>
+                                                        <Text fw={500} size="sm">{item.name}</Text>
+                                                        {item.isGiftIdea && (
+                                                            <Badge size="xs" color="pink" leftSection={<IconGift size={10} />}>
+                                                                Geschenk
+                                                            </Badge>
+                                                        )}
+                                                    </div>
+                                                </Group>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Badge size="xs" variant="light" leftSection={getCategoryIcon(item.category)}>
+                                                    {categoryOptions.find(c => c.value === item.category)?.label}
+                                                </Badge>
+                                            </Table.Td>
+                                            <Table.Td>{getPriorityBadge(item.priority)}</Table.Td>
+                                            <Table.Td>{item.price ? formatPrice(item.price) : '-'}</Table.Td>
+                                            <Table.Td>{item.store || '-'}</Table.Td>
+                                            <Table.Td>
+                                                <Group gap="xs">
+                                                    <ActionIcon
+                                                        variant="light"
+                                                        color="green"
+                                                        size="sm"
+                                                        onClick={() => handlePurchase(item.id)}
+                                                    >
+                                                        <IconCheck size={14} />
+                                                    </ActionIcon>
+                                                    <Menu shadow="md" position="bottom-end">
+                                                        <Menu.Target>
+                                                            <ActionIcon variant="subtle" size="sm">
+                                                                <IconDots size={16} />
+                                                            </ActionIcon>
+                                                        </Menu.Target>
+                                                        <Menu.Dropdown>
+                                                            {item.productUrl && (
+                                                                <Menu.Item
+                                                                    leftSection={<IconExternalLink size={14} />}
+                                                                    component="a"
+                                                                    href={item.productUrl}
+                                                                    target="_blank"
+                                                                >
+                                                                    Zum Produkt
+                                                                </Menu.Item>
+                                                            )}
+                                                            <Menu.Item
+                                                                leftSection={<IconEdit size={14} />}
+                                                                onClick={() => openEditModal(item)}
+                                                            >
+                                                                Bearbeiten
+                                                            </Menu.Item>
+                                                            <Menu.Item
+                                                                leftSection={<IconTrash size={14} />}
+                                                                color="red"
+                                                                onClick={() => handleDelete(item.id)}
+                                                            >
+                                                                Löschen
+                                                            </Menu.Item>
+                                                        </Menu.Dropdown>
+                                                    </Menu>
+                                                </Group>
+                                            </Table.Td>
+                                        </Table.Tr>
+                                    ))}
+                                </Table.Tbody>
+                            </Table>
+                        </Paper>
                     )}
                 </Tabs.Panel>
 
@@ -839,6 +964,7 @@ export default function WishlistsPage() {
                     </Stack>
                 </form>
             </Modal>
-        </PageLayout>
+            </Stack>
+        </Container>
     );
 }

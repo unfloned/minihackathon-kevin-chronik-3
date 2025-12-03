@@ -15,7 +15,6 @@ import {
     ColorInput,
     NumberInput,
     SimpleGrid,
-    RingProgress,
     Skeleton,
     Menu,
     Paper,
@@ -39,8 +38,9 @@ import {
     IconLayoutGrid,
     IconList,
 } from '@tabler/icons-react';
-import { useRequest, useMutation, useConfetti } from '../../../hooks';
+import { useRequest, useMutation, useConfetti, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import { CardStatistic } from '../../../components/CardStatistic';
 import type { HabitStats, HabitWithStatus, HabitType, HabitFrequency } from '@ycmm/core';
 
 // Alias for component usage
@@ -272,7 +272,9 @@ const HabitCard = memo(function HabitCard({
 export default function HabitsPage() {
     const [opened, { open, close }] = useDisclosure(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
-    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Map global viewMode to this page's supported modes (grid/list)
+    const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
     const confetti = useConfetti();
 
     const [form, setForm] = useState<CreateHabitForm>({
@@ -472,41 +474,40 @@ export default function HabitsPage() {
             {/* Stats */}
             {stats && (
                 <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
-                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
-                        <RingProgress
-                            size={60}
-                            thickness={6}
-                            roundCaps
-                            sections={[
-                                { value: stats.totalToday > 0 ? (stats.completedToday / stats.totalToday) * 100 : 0, color: 'green' },
-                            ]}
-                            mx="auto"
-                            mb="xs"
-                        />
-                        <Text size="sm" c="dimmed">Heute</Text>
-                        <Text fw={700}>{stats.completedToday}/{stats.totalToday}</Text>
-                    </Paper>
-                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
-                        <ThemeIcon size={40} radius="xl" color="orange" variant="light" mx="auto" mb="xs">
-                            <IconFlame size={24} />
-                        </ThemeIcon>
-                        <Text size="sm" c="dimmed">Aktuelle Streak</Text>
-                        <Text fw={700}>{stats.currentStreak} Tage</Text>
-                    </Paper>
-                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
-                        <ThemeIcon size={40} radius="xl" color="violet" variant="light" mx="auto" mb="xs">
-                            <IconTrendingUp size={24} />
-                        </ThemeIcon>
-                        <Text size="sm" c="dimmed">Längste Streak</Text>
-                        <Text fw={700}>{stats.longestStreak} Tage</Text>
-                    </Paper>
-                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
-                        <ThemeIcon size={40} radius="xl" color="blue" variant="light" mx="auto" mb="xs">
-                            <IconTarget size={24} />
-                        </ThemeIcon>
-                        <Text size="sm" c="dimmed">Aktive Habits</Text>
-                        <Text fw={700}>{stats.activeHabits}</Text>
-                    </Paper>
+                    <CardStatistic
+                        type="circular"
+                        title="Heute"
+                        value={`${stats.completedToday}/${stats.totalToday}`}
+                        progress={stats.totalToday > 0 ? (stats.completedToday / stats.totalToday) * 100 : 0}
+                        color="green"
+                        subtitle="Erledigt"
+                        ringSize={40}
+                        ringThickness={4}
+                    />
+                    <CardStatistic
+                        type="icon"
+                        title="Aktuelle Streak"
+                        value={stats.currentStreak}
+                        icon={IconFlame}
+                        color="orange"
+                        subtitle="Tage"
+                    />
+                    <CardStatistic
+                        type="icon"
+                        title="Längste Streak"
+                        value={stats.longestStreak}
+                        icon={IconTrendingUp}
+                        color="violet"
+                        subtitle="Tage"
+                    />
+                    <CardStatistic
+                        type="icon"
+                        title="Aktive Habits"
+                        value={stats.activeHabits}
+                        icon={IconTarget}
+                        color="blue"
+                        subtitle="Gesamt"
+                    />
                 </SimpleGrid>
             )}
 
@@ -514,10 +515,10 @@ export default function HabitsPage() {
             <Group justify="flex-end" mb="md">
                 <SegmentedControl
                     value={viewMode}
-                    onChange={(value) => setViewMode(value as 'cards' | 'table')}
+                    onChange={(value) => setViewMode(value as 'grid' | 'list')}
                     data={[
-                        { value: 'cards', label: <IconLayoutGrid size={16} /> },
-                        { value: 'table', label: <IconList size={16} /> },
+                        { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                        { value: 'list', label: <IconList size={16} /> },
                     ]}
                 />
             </Group>
@@ -541,7 +542,7 @@ export default function HabitsPage() {
                         Erstes Habit erstellen
                     </Button>
                 </Paper>
-            ) : viewMode === 'table' ? (
+            ) : viewMode === 'list' ? (
                 <Paper shadow="sm" withBorder radius="md">
                     <Table striped highlightOnHover>
                         <Table.Thead>

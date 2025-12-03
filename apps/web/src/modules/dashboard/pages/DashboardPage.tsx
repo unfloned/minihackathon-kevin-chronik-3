@@ -1,12 +1,10 @@
 import { useNavigate } from 'react-router-dom';
 import {
     Container,
-    Title,
     Text,
     SimpleGrid,
     Card,
     Group,
-    RingProgress,
     Stack,
     Badge,
     ThemeIcon,
@@ -14,9 +12,7 @@ import {
     Button,
     Progress,
     Skeleton,
-    Tooltip,
     Anchor,
-    ActionIcon,
 } from '@mantine/core';
 import {
     IconTrophy,
@@ -31,10 +27,11 @@ import {
     IconStar,
     IconCode,
     IconChartBar,
-    IconInfoCircle,
 } from '@tabler/icons-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRequest } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import { ExpenseChart } from '../../../components/ExpenseChart';
 import { StreakVisualization } from '../../../components/StreakVisualization';
 import type { DashboardStats } from '@ycmm/core';
@@ -76,12 +73,7 @@ export default function DashboardPage() {
         <Container size="xl" py="xl">
             <Stack gap="lg">
                 {/* Header */}
-                <div>
-                    <Title order={2}>Dashboard</Title>
-                    <Text c="dimmed">
-                        Willkommen zurück, {user?.displayName}!
-                    </Text>
-                </div>
+                <PageTitle title="Dashboard" subtitle={`Willkommen zurück, ${user?.displayName}!`} />
 
             {/* Demo Banner */}
             {user?.isDemo && (
@@ -102,122 +94,45 @@ export default function DashboardPage() {
 
             {/* Top Stats */}
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-                {/* Chaos Score */}
-                <Card withBorder padding="lg" className="stats-card">
-                    <Group justify="space-between" align="flex-start">
-                        <div>
-                            <Group gap={4}>
-                                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                                    Chaos Score
-                                </Text>
-                                <Tooltip
-                                    label="Der Chaos Score zeigt wie organisiert du bist. 0% = perfekt organisiert, 100% = totales Chaos. Er basiert auf offenen Aufgaben, verpassten Deadlines, unerledigten Habits und mehr."
-                                    multiline
-                                    w={280}
-                                    withArrow
-                                    position="top"
-                                >
-                                    <ActionIcon variant="subtle" size="xs" color="dimmed">
-                                        <IconInfoCircle size={14} />
-                                    </ActionIcon>
-                                </Tooltip>
-                            </Group>
-                            {isLoading ? (
-                                <Skeleton height={32} width={60} mt="xs" />
-                            ) : (
-                                <>
-                                    <Text size="xl" fw={700} mt="xs">
-                                        {stats?.chaosScore ?? 0}%
-                                    </Text>
-                                    <Group gap={4} mt={4}>
-                                        {getChaosTrendIcon(stats?.chaosScoreTrend ?? 0)}
-                                        <Text size="xs" c={getChaosTrendColor(stats?.chaosScoreTrend ?? 0)}>
-                                            {stats?.chaosScoreTrend ?? 0 > 0 ? '+' : ''}
-                                            {stats?.chaosScoreTrend ?? 0}% diese Woche
-                                        </Text>
-                                    </Group>
-                                </>
-                            )}
-                        </div>
-                        {isLoading ? (
-                            <Skeleton height={80} width={80} radius="xl" />
-                        ) : (
-                            <RingProgress
-                                size={80}
-                                thickness={8}
-                                roundCaps
-                                sections={[
-                                    {
-                                        value: stats?.chaosScore ?? 0,
-                                        color: getChaosColor(stats?.chaosScore ?? 100),
-                                    },
-                                ]}
-                            />
-                        )}
-                    </Group>
-                </Card>
+                <CardStatistic
+                    type="circular"
+                    title="Chaos Score"
+                    value={`${stats?.chaosScore ?? 0}%`}
+                    progress={stats?.chaosScore ?? 0}
+                    color={getChaosColor(stats?.chaosScore ?? 100)}
+                    ringSize={80}
+                    ringThickness={8}
+                    tooltip="Der Chaos Score zeigt wie organisiert du bist. 0% = perfekt organisiert, 100% = totales Chaos. Er basiert auf offenen Aufgaben, verpassten Deadlines, unerledigten Habits und mehr."
+                    trend={{
+                        value: stats?.chaosScoreTrend ?? 0,
+                        label: `${(stats?.chaosScoreTrend ?? 0) > 0 ? '+' : ''}${stats?.chaosScoreTrend ?? 0}% diese Woche`,
+                        icon: getChaosTrendIcon(stats?.chaosScoreTrend ?? 0),
+                        color: getChaosTrendColor(stats?.chaosScoreTrend ?? 0),
+                    }}
+                    isLoading={isLoading}
+                />
 
-                {/* Level & XP */}
-                <Card withBorder padding="lg" className="stats-card">
-                    <Group justify="space-between" align="flex-start">
-                        <div style={{ flex: 1 }}>
-                            <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                                Level
-                            </Text>
-                            {isLoading ? (
-                                <Skeleton height={32} width={40} mt="xs" />
-                            ) : (
-                                <>
-                                    <Text size="xl" fw={700} mt="xs">
-                                        {stats?.level ?? 1}
-                                    </Text>
-                                    <Tooltip
-                                        label={`${stats?.xpProgress?.current ?? 0} / ${stats?.xpProgress?.required ?? 100} XP`}
-                                    >
-                                        <Progress
-                                            value={stats?.xpProgress?.percentage ?? 0}
-                                            size="sm"
-                                            mt="xs"
-                                            color="violet"
-                                        />
-                                    </Tooltip>
-                                    <Text size="xs" c="dimmed" mt={4}>
-                                        {stats?.xp ?? 0} XP gesamt
-                                    </Text>
-                                </>
-                            )}
-                        </div>
-                        <ThemeIcon size={48} radius="md" variant="light" color="violet">
-                            <IconTrophy size={28} />
-                        </ThemeIcon>
-                    </Group>
-                </Card>
+                <CardStatistic
+                    type="extended"
+                    title="Level"
+                    value={stats?.level ?? 1}
+                    icon={IconTrophy}
+                    color="violet"
+                    progress={stats?.xpProgress?.percentage ?? 0}
+                    progressTooltip={`${stats?.xpProgress?.current ?? 0} / ${stats?.xpProgress?.required ?? 100} XP`}
+                    subtitle={`${stats?.xp ?? 0} XP gesamt`}
+                    isLoading={isLoading}
+                />
 
-                {/* Streak */}
-                <Card withBorder padding="lg" className="stats-card">
-                    <Group justify="space-between" align="flex-start">
-                        <div>
-                            <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                                Streak
-                            </Text>
-                            {isLoading ? (
-                                <Skeleton height={32} width={80} mt="xs" />
-                            ) : (
-                                <>
-                                    <Text size="xl" fw={700} mt="xs">
-                                        {stats?.streak ?? 0} Tage
-                                    </Text>
-                                    <Text size="xs" c="dimmed" mt={4}>
-                                        {(stats?.streak ?? 0) > 0 ? 'Weiter so!' : 'Starte deine Streak!'}
-                                    </Text>
-                                </>
-                            )}
-                        </div>
-                        <ThemeIcon size={48} radius="md" variant="light" color="orange">
-                            <IconFlame size={28} />
-                        </ThemeIcon>
-                    </Group>
-                </Card>
+                <CardStatistic
+                    type="icon"
+                    title="Streak"
+                    value={`${stats?.streak ?? 0} Tage`}
+                    icon={IconFlame}
+                    color="orange"
+                    subtitle={(stats?.streak ?? 0) > 0 ? 'Weiter so!' : 'Starte deine Streak!'}
+                    isLoading={isLoading}
+                />
             </SimpleGrid>
 
             {/* Module Panels */}

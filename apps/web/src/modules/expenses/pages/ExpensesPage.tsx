@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
     Container,
-    Title,
     Text,
     Card,
     Group,
@@ -9,7 +8,6 @@ import {
     Button,
     ActionIcon,
     Badge,
-    ThemeIcon,
     Modal,
     TextInput,
     NumberInput,
@@ -19,6 +17,9 @@ import {
     Loader,
     Menu,
     Paper,
+    SegmentedControl,
+    ThemeIcon,
+    Progress,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
@@ -30,9 +31,14 @@ import {
     IconChartPie,
     IconReceipt,
     IconCategory,
+    IconLayoutGrid,
+    IconList,
+    IconCalendar,
 } from '@tabler/icons-react';
-import { useRequest, useMutation } from '../../../hooks';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import type { ExpenseWithCategory, ExpenseStats, ExpenseCategorySimple } from '@ycmm/core';
 
 // Alias for component usage
@@ -49,6 +55,9 @@ interface ExpenseFormData {
 export default function ExpensesPage() {
     const [opened, { open, close }] = useDisclosure(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Fallback to 'grid' if global viewMode is not supported by this page
+    const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
 
     // Current month and year
     const currentDate = new Date();
@@ -265,12 +274,7 @@ export default function ExpensesPage() {
             <Stack gap="xl">
                 {/* Header */}
                 <Group justify="space-between" align="center">
-                    <div>
-                        <Title order={1}>Ausgaben</Title>
-                        <Text c="dimmed" size="sm" mt="xs">
-                            {getMonthName()}
-                        </Text>
-                    </div>
+                    <PageTitle title="Ausgaben" subtitle={getMonthName()} />
                     <Button
                         leftSection={<IconPlus size={18} />}
                         onClick={() => handleOpenModal()}
@@ -281,60 +285,36 @@ export default function ExpensesPage() {
 
                 {/* Stats Cards */}
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
-                    <Card shadow="sm" padding="lg" radius="md" withBorder>
-                        <Group justify="space-between" mb="md">
-                            <Text size="sm" c="dimmed" fw={500}>
-                                Gesamt Ausgaben
-                            </Text>
-                            <ThemeIcon color="blue" variant="light" size="lg" radius="md">
-                                <IconReceipt size={20} />
-                            </ThemeIcon>
-                        </Group>
-                        <Text size="xl" fw={700}>
-                            {formatCurrency(stats?.total || 0)}
-                        </Text>
-                        <Text size="xs" c="dimmed" mt="xs">
-                            {expenses?.length || 0} Transaktionen
-                        </Text>
-                    </Card>
+                    <CardStatistic
+                        type="icon"
+                        title="Gesamt Ausgaben"
+                        value={formatCurrency(stats?.total || 0)}
+                        icon={IconReceipt}
+                        color="blue"
+                        subtitle={`${expenses?.length || 0} Transaktionen`}
+                    />
 
-                    <Card shadow="sm" padding="lg" radius="md" withBorder>
-                        <Group justify="space-between" mb="md">
-                            <Text size="sm" c="dimmed" fw={500}>
-                                Kategorien
-                            </Text>
-                            <ThemeIcon color="grape" variant="light" size="lg" radius="md">
-                                <IconCategory size={20} />
-                            </ThemeIcon>
-                        </Group>
-                        <Text size="xl" fw={700}>
-                            {stats?.byCategory?.length || 0}
-                        </Text>
-                        <Text size="xs" c="dimmed" mt="xs">
-                            Verschiedene Kategorien
-                        </Text>
-                    </Card>
+                    <CardStatistic
+                        type="icon"
+                        title="Kategorien"
+                        value={stats?.byCategory?.length || 0}
+                        icon={IconCategory}
+                        color="grape"
+                        subtitle="Verschiedene Kategorien"
+                    />
 
-                    <Card shadow="sm" padding="lg" radius="md" withBorder>
-                        <Group justify="space-between" mb="md">
-                            <Text size="sm" c="dimmed" fw={500}>
-                                Durchschnitt
-                            </Text>
-                            <ThemeIcon color="teal" variant="light" size="lg" radius="md">
-                                <IconChartPie size={20} />
-                            </ThemeIcon>
-                        </Group>
-                        <Text size="xl" fw={700}>
-                            {formatCurrency(
-                                expenses && expenses.length > 0
-                                    ? (stats?.total || 0) / expenses.length
-                                    : 0
-                            )}
-                        </Text>
-                        <Text size="xs" c="dimmed" mt="xs">
-                            Pro Transaktion
-                        </Text>
-                    </Card>
+                    <CardStatistic
+                        type="icon"
+                        title="Durchschnitt"
+                        value={formatCurrency(
+                            expenses && expenses.length > 0
+                                ? (stats?.total || 0) / expenses.length
+                                : 0
+                        )}
+                        icon={IconChartPie}
+                        color="teal"
+                        subtitle="Pro Transaktion"
+                    />
                 </SimpleGrid>
 
                 {/* Category Breakdown */}
@@ -343,45 +323,124 @@ export default function ExpensesPage() {
                         <Text size="lg" fw={600} mb="md">
                             Ausgaben nach Kategorie
                         </Text>
-                        <Stack gap="md">
-                            {stats.byCategory.map((cat) => (
-                                <Paper key={cat.categoryId} p="sm" withBorder>
-                                    <Group justify="space-between" mb="xs">
-                                        <Group gap="xs">
-                                            <Badge color={cat.categoryColor} variant="light">
-                                                {cat.categoryIcon}
-                                            </Badge>
-                                            <Text fw={500}>{cat.categoryName}</Text>
+                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                            {stats.byCategory.map((cat) => {
+                                const percentage = ((cat.amount / (stats.total || 1)) * 100);
+                                return (
+                                    <Paper key={cat.categoryId} p="md" withBorder radius="md">
+                                        <Group justify="space-between" mb="sm">
+                                            <Group gap="sm">
+                                                <ThemeIcon size={36} variant="light" color={cat.categoryColor || 'gray'} radius="md">
+                                                    <Text size="lg">{cat.categoryIcon}</Text>
+                                                </ThemeIcon>
+                                                <div>
+                                                    <Text fw={500} size="sm">{cat.categoryName}</Text>
+                                                    <Text size="xs" c="dimmed">
+                                                        {cat.count} {cat.count === 1 ? 'Transaktion' : 'Transaktionen'}
+                                                    </Text>
+                                                </div>
+                                            </Group>
+                                            <Text fw={700} size="lg">{formatCurrency(cat.amount)}</Text>
                                         </Group>
-                                        <Text fw={700}>{formatCurrency(cat.amount)}</Text>
-                                    </Group>
-                                    <Group gap="xs">
-                                        <Text size="xs" c="dimmed">
-                                            {cat.count} {cat.count === 1 ? 'Transaktion' : 'Transaktionen'}
+                                        <Progress
+                                            value={percentage}
+                                            color={cat.categoryColor || 'blue'}
+                                            size="sm"
+                                            radius="xl"
+                                        />
+                                        <Text size="xs" c="dimmed" ta="right" mt={4}>
+                                            {percentage.toFixed(1)}% des Gesamts
                                         </Text>
-                                        <Text size="xs" c="dimmed">
-                                            •
-                                        </Text>
-                                        <Text size="xs" c="dimmed">
-                                            {((cat.amount / (stats.total || 1)) * 100).toFixed(1)}%
-                                        </Text>
-                                    </Group>
-                                </Paper>
-                            ))}
-                        </Stack>
+                                    </Paper>
+                                );
+                            })}
+                        </SimpleGrid>
                     </Card>
                 )}
 
-                {/* Expenses List */}
-                <Card shadow="sm" padding="lg" radius="md" withBorder>
-                    <Text size="lg" fw={600} mb="md">
-                        Alle Ausgaben
-                    </Text>
-                    {!expenses || expenses.length === 0 ? (
-                        <Text c="dimmed" ta="center" py="xl">
+                {/* View Toggle */}
+                <Paper shadow="sm" withBorder p="md" radius="md">
+                    <Group justify="space-between">
+                        <Text fw={500}>Alle Ausgaben</Text>
+                        <SegmentedControl
+                            value={viewMode}
+                            onChange={(value) => setViewMode(value as 'grid' | 'list')}
+                            data={[
+                                { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                                { value: 'list', label: <IconList size={16} /> },
+                            ]}
+                        />
+                    </Group>
+                </Paper>
+
+                {/* Expenses Grid/List */}
+                {!expenses || expenses.length === 0 ? (
+                    <Paper shadow="sm" withBorder p="xl" radius="md" ta="center">
+                        <ThemeIcon size={64} variant="light" color="gray" radius="xl" mx="auto">
+                            <IconReceipt size={32} />
+                        </ThemeIcon>
+                        <Text mt="md" c="dimmed">
                             Keine Ausgaben für diesen Monat vorhanden
                         </Text>
-                    ) : (
+                        <Button mt="md" onClick={() => handleOpenModal()}>
+                            Erste Ausgabe hinzufügen
+                        </Button>
+                    </Paper>
+                ) : viewMode === 'grid' ? (
+                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
+                        {expenses.map((expense) => (
+                            <Card key={expense.id} shadow="sm" padding="lg" radius="md" withBorder>
+                                <Group justify="space-between" mb="sm">
+                                    <Group gap="sm">
+                                        <ThemeIcon
+                                            size={40}
+                                            variant="light"
+                                            color={expense.categoryColor || 'gray'}
+                                            radius="md"
+                                        >
+                                            <Text size="lg">{expense.categoryIcon || '📦'}</Text>
+                                        </ThemeIcon>
+                                        <div>
+                                            <Text fw={500} lineClamp={1}>{expense.description}</Text>
+                                            <Text size="xs" c="dimmed">{expense.categoryName || 'Keine Kategorie'}</Text>
+                                        </div>
+                                    </Group>
+                                    <Menu shadow="md" width={200}>
+                                        <Menu.Target>
+                                            <ActionIcon variant="subtle" color="gray">
+                                                <IconDotsVertical size={16} />
+                                            </ActionIcon>
+                                        </Menu.Target>
+                                        <Menu.Dropdown>
+                                            <Menu.Item
+                                                leftSection={<IconEdit size={16} />}
+                                                onClick={() => handleOpenModal(expense)}
+                                            >
+                                                Bearbeiten
+                                            </Menu.Item>
+                                            <Menu.Divider />
+                                            <Menu.Item
+                                                color="red"
+                                                leftSection={<IconTrash size={16} />}
+                                                onClick={() => handleDelete(expense.id)}
+                                            >
+                                                Löschen
+                                            </Menu.Item>
+                                        </Menu.Dropdown>
+                                    </Menu>
+                                </Group>
+                                <Group justify="space-between" mt="md">
+                                    <Group gap="xs">
+                                        <IconCalendar size={14} color="var(--mantine-color-dimmed)" />
+                                        <Text size="sm" c="dimmed">{formatDate(expense.date)}</Text>
+                                    </Group>
+                                    <Text fw={700} size="lg" c="blue">{formatCurrency(expense.amount)}</Text>
+                                </Group>
+                            </Card>
+                        ))}
+                    </SimpleGrid>
+                ) : (
+                    <Paper shadow="sm" withBorder radius="md">
                         <Table striped highlightOnHover>
                             <Table.Thead>
                                 <Table.Tr>
@@ -400,7 +459,7 @@ export default function ExpensesPage() {
                                         <Table.Td>
                                             {expense.categoryName ? (
                                                 <Badge
-                                                    color={expense.categoryColor}
+                                                    color={expense.categoryColor || 'gray'}
                                                     variant="light"
                                                     leftSection={<span>{expense.categoryIcon}</span>}
                                                 >
@@ -444,8 +503,8 @@ export default function ExpensesPage() {
                                 ))}
                             </Table.Tbody>
                         </Table>
-                    )}
-                </Card>
+                    </Paper>
+                )}
             </Stack>
 
             {/* Create/Edit Modal */}

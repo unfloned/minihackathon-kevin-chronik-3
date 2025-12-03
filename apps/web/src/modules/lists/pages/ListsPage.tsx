@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Container,
-  Title,
   Card,
   Text,
   Button,
@@ -38,6 +37,7 @@ import {
 } from '@tabler/icons-react';
 import { useRequest } from '../../../hooks';
 import { useMutation } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
 import type { ListSimple, ListItem, ListType } from '@ycmm/core';
 
 // Alias for component usage
@@ -361,7 +361,7 @@ function ListsPage() {
     <Container size="xl" py="xl">
       <Stack gap="lg">
         <Group justify="space-between" align="center">
-          <Title order={1}>Listen</Title>
+          <PageTitle title="Listen" subtitle="Verwalte deine Einkaufs-, To-Do- und Packlisten" />
           <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
             Neue Liste
           </Button>

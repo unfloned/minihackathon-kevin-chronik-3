@@ -18,6 +18,8 @@ import {
     Skeleton,
     ThemeIcon,
     Table,
+    SegmentedControl,
+    Container,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
@@ -32,10 +34,14 @@ import {
     IconArrowBack,
     IconCurrencyEuro,
     IconQrcode,
+    IconLayoutGrid,
+    IconList,
+    IconCategory,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useRequest, useMutation } from '../../../hooks';
-import PageLayout, { StatsGrid } from '../../../components/PageLayout';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 
 
 interface ItemLocation {
@@ -98,7 +104,9 @@ export default function InventoryPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterCategory, setFilterCategory] = useState<string | null>(null);
     const [filterLocation, setFilterLocation] = useState<string | null>(null);
-    const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Map global viewMode to this page's supported modes (grid/list)
+    const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
     const [lendTo, setLendTo] = useState('');
     const [lendReturn, setLendReturn] = useState<Date | null>(null);
 
@@ -439,31 +447,57 @@ export default function InventoryPage() {
     );
 
     return (
-        <PageLayout
-            header={{
-                title: 'Inventar',
-                subtitle: 'Verwalten Sie Ihre Gegenstände',
-                actionLabel: 'Neuer Artikel',
-                onAction: handleOpenCreate,
-            }}
-            stats={
-                stats && (
-                    <StatsGrid
-                        stats={[
-                            { value: stats.totalItems, label: 'Artikel' },
-                            { value: `${stats.totalValue.toFixed(2)} EUR`, label: 'Gesamtwert' },
-                            { value: stats.lentItems, label: 'Verliehen' },
-                            { value: stats.categories, label: 'Kategorien' },
-                        ]}
-                    />
-                )
-            }
-            searchBar={{
-                value: searchQuery,
-                onChange: setSearchQuery,
-                placeholder: 'Artikel suchen...',
-                rightSection: (
+        <Container size="xl" py="xl">
+            <Stack gap="lg">
+                {/* Header */}
+                <Group justify="space-between">
+                    <PageTitle title="Inventar" subtitle="Verwalten Sie Ihre Gegenstände" />
+                    <Button onClick={handleOpenCreate}>Neuer Artikel</Button>
+                </Group>
+
+                {/* Stats */}
+                {stats && (
+                    <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
+                        <CardStatistic
+                            type="icon"
+                            title="Artikel"
+                            value={stats.totalItems}
+                            icon={IconBox}
+                            color="blue"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Gesamtwert"
+                            value={`${stats.totalValue.toFixed(2)} EUR`}
+                            icon={IconCurrencyEuro}
+                            color="green"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Verliehen"
+                            value={stats.lentItems}
+                            icon={IconUser}
+                            color="orange"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Kategorien"
+                            value={stats.categories}
+                            icon={IconCategory}
+                            color="violet"
+                        />
+                    </SimpleGrid>
+                )}
+
+                {/* Search Bar */}
+                <Paper shadow="sm" withBorder p="md" radius="md">
                     <Group>
+                        <TextInput
+                            placeholder="Artikel suchen..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                            style={{ flex: 1 }}
+                        />
                         <Select
                             placeholder="Kategorie"
                             data={categories || []}
@@ -480,25 +514,19 @@ export default function InventoryPage() {
                             clearable
                             style={{ width: 200 }}
                         />
-                        <Button.Group>
-                            <Button
-                                variant={viewMode === 'grid' ? 'filled' : 'default'}
-                                onClick={() => setViewMode('grid')}
-                            >
-                                Kacheln
-                            </Button>
-                            <Button
-                                variant={viewMode === 'table' ? 'filled' : 'default'}
-                                onClick={() => setViewMode('table')}
-                            >
-                                Tabelle
-                            </Button>
-                        </Button.Group>
+                        <SegmentedControl
+                            value={viewMode}
+                            onChange={(value) => setViewMode(value as 'grid' | 'list')}
+                            data={[
+                                { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                                { value: 'list', label: <IconList size={16} /> },
+                            ]}
+                        />
                     </Group>
-                ),
-            }}
-        >
-            {isLoading ? (
+                </Paper>
+
+                {/* Content */}
+                {isLoading ? (
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
                     {[...Array(6)].map((_, i) => (
                         <Skeleton key={i} height={200} />
@@ -508,7 +536,7 @@ export default function InventoryPage() {
                 <Paper withBorder p="xl" ta="center">
                     <Text c="dimmed">Keine Artikel gefunden</Text>
                 </Paper>
-            ) : viewMode === 'grid' ? (
+            ) : viewMode !== 'list' ? (
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
                     {filteredItems.map(renderItemCard)}
                 </SimpleGrid>
@@ -677,6 +705,7 @@ export default function InventoryPage() {
                     </Group>
                 </Stack>
             </Modal>
-        </PageLayout>
+            </Stack>
+        </Container>
     );
 }

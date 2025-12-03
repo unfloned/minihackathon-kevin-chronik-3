@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Container,
-  Title,
   Card,
   Text,
   Button,
@@ -14,11 +13,10 @@ import {
   Badge,
   ActionIcon,
   Tabs,
-  Grid,
-  Paper,
   Loader,
   Center,
   Menu,
+  SimpleGrid,
 } from '@mantine/core';
 import { DateInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
@@ -36,6 +34,8 @@ import {
 } from '@tabler/icons-react';
 import { useRequest } from '../../../hooks';
 import { useMutation } from '../../../hooks';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import type { DeadlineSimple, DeadlineStats, DeadlinePriority } from '@ycmm/core';
 
 // Alias for component usage
@@ -257,82 +257,47 @@ function DeadlinesPage() {
   };
 
   const renderStats = () => {
-    if (statsLoading) {
-      return (
-        <Center>
-          <Loader />
-        </Center>
-      );
-    }
-
-    if (!stats) return null;
+    if (!stats && !statsLoading) return null;
 
     return (
-      <Grid mb="xl">
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                  Gesamt
-                </Text>
-                <Text size="xl" fw={700}>
-                  {stats.total}
-                </Text>
-              </div>
-              <IconCalendar size={32} style={{ opacity: 0.5 }} />
-            </Group>
-          </Paper>
-        </Grid.Col>
-
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                  Anstehend
-                </Text>
-                <Text size="xl" fw={700} c="blue">
-                  {stats.upcoming}
-                </Text>
-              </div>
-              <IconClock size={32} style={{ opacity: 0.5 }} color="var(--mantine-color-blue-6)" />
-            </Group>
-          </Paper>
-        </Grid.Col>
-
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                  Überfällig
-                </Text>
-                <Text size="xl" fw={700} c="red">
-                  {stats.overdue}
-                </Text>
-              </div>
-              <IconAlertTriangle size={32} style={{ opacity: 0.5 }} color="var(--mantine-color-red-6)" />
-            </Group>
-          </Paper>
-        </Grid.Col>
-
-        <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper shadow="sm" p="md" radius="md" withBorder>
-            <Group justify="space-between">
-              <div>
-                <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                  Erledigt
-                </Text>
-                <Text size="xl" fw={700} c="green">
-                  {stats.completed}
-                </Text>
-              </div>
-              <IconCircleCheck size={32} style={{ opacity: 0.5 }} color="var(--mantine-color-green-6)" />
-            </Group>
-          </Paper>
-        </Grid.Col>
-      </Grid>
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg" mb="xl">
+        <CardStatistic
+          type="icon"
+          title="Gesamt"
+          value={stats?.total || 0}
+          icon={IconCalendar}
+          color="gray"
+          subtitle="Fristen"
+          isLoading={statsLoading}
+        />
+        <CardStatistic
+          type="icon"
+          title="Anstehend"
+          value={stats?.upcoming || 0}
+          icon={IconClock}
+          color="blue"
+          subtitle="Demnächst fällig"
+          isLoading={statsLoading}
+        />
+        <CardStatistic
+          type="icon"
+          title="Überfällig"
+          value={stats?.overdue || 0}
+          icon={IconAlertTriangle}
+          color="red"
+          subtitle="Verpasst"
+          isLoading={statsLoading}
+        />
+        <CardStatistic
+          type="icon"
+          title="Erledigt"
+          value={stats?.completed || 0}
+          icon={IconCircleCheck}
+          color="green"
+          subtitle="Abgeschlossen"
+          isLoading={statsLoading}
+        />
+      </SimpleGrid>
     );
   };
 
@@ -462,7 +427,7 @@ function DeadlinesPage() {
   return (
     <Container size="lg" py="xl">
       <Group justify="space-between" mb="xl">
-        <Title order={1}>Fristen</Title>
+        <PageTitle title="Fristen" subtitle="Verwalte deine Fristen und Termine" />
         <Button leftSection={<IconPlus size={18} />} onClick={() => handleOpenModal()}>
           Neue Frist
         </Button>

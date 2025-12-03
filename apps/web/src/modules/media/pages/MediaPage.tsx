@@ -21,8 +21,11 @@ import {
     Menu,
     ThemeIcon,
     Skeleton,
+    Table,
+    Container,
 } from '@mantine/core';
-import { PageLayout, StatsGrid } from '../../../components/PageLayout';
+import { PageTitle } from '../../../components/PageTitle';
+import { CardStatistic } from '../../../components/CardStatistic';
 import { useForm } from '@mantine/form';
 import {
     IconMovie,
@@ -42,7 +45,7 @@ import {
     IconStar,
     IconStarFilled,
 } from '@tabler/icons-react';
-import { useRequest, useMutation } from '../../../hooks';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
 import type {
     MediaType,
@@ -94,7 +97,9 @@ export default function MediaPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [typeFilter, setTypeFilter] = useState<string>('all');
     const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [globalViewMode, setViewMode] = useViewMode();
+    // Fallback to 'grid' if global viewMode is not supported by this page
+    const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
 
 
     const { data: items, isLoading, refetch } = useRequest<MediaItem[]>('/media');
@@ -398,39 +403,41 @@ export default function MediaPage() {
         );
     };
 
-    // Stats for display
-    const statsData = useMemo(() => {
-        if (!stats) return [];
-        return [
-            {
-                label: 'Gesamt',
-                value: stats.total.toString(),
-                icon: IconLayoutGrid,
-            },
-            {
-                label: 'Abgeschlossen dieses Jahr',
-                value: stats.completedThisYear.toString(),
-                icon: IconCheck,
-            },
-            {
-                label: 'Durchschnittliche Bewertung',
-                value: stats.averageRating ? stats.averageRating.toFixed(1) : '-',
-                icon: IconStar,
-            },
-        ];
-    }, [stats]);
-
     return (
-        <PageLayout
-            header={{
-                title: 'Medien',
-                subtitle: 'Verwalte deine Filme, Serien, Bücher und mehr',
-                actionLabel: 'Medium hinzufügen',
-                onAction: openCreateModal,
-            }}
-        >
-            {/* Stats */}
-            {stats && <StatsGrid stats={statsData} />}
+        <Container size="xl" py="xl">
+            <Stack gap="lg">
+                {/* Header */}
+                <Group justify="space-between">
+                    <PageTitle title="Medien" subtitle="Verwalte deine Filme, Serien, Bücher und mehr" />
+                    <Button onClick={openCreateModal}>Medium hinzufügen</Button>
+                </Group>
+
+                {/* Stats */}
+                {stats && (
+                    <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
+                        <CardStatistic
+                            type="icon"
+                            title="Gesamt"
+                            value={stats.total}
+                            icon={IconLayoutGrid}
+                            color="blue"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Abgeschlossen dieses Jahr"
+                            value={stats.completedThisYear}
+                            icon={IconCheck}
+                            color="green"
+                        />
+                        <CardStatistic
+                            type="icon"
+                            title="Durchschnittliche Bewertung"
+                            value={stats.averageRating ? stats.averageRating.toFixed(1) : '-'}
+                            icon={IconStar}
+                            color="yellow"
+                        />
+                    </SimpleGrid>
+                )}
 
             {/* Filters */}
             <Paper shadow="sm" withBorder p="md" radius="md" mb="lg">
@@ -472,7 +479,7 @@ export default function MediaPage() {
                 </Group>
             </Paper>
 
-            {/* Media Grid */}
+            {/* Media Grid/List */}
             {isLoading ? (
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }}>
                     {[...Array(8)].map((_, i) => (
@@ -495,12 +502,105 @@ export default function MediaPage() {
                         </Button>
                     )}
                 </Paper>
-            ) : (
+            ) : viewMode === 'grid' ? (
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }}>
                     {filteredItems.map((item) => (
                         <MediaCard key={item.id} item={item} />
                     ))}
                 </SimpleGrid>
+            ) : (
+                <Paper shadow="sm" withBorder radius="md">
+                    <Table striped highlightOnHover>
+                        <Table.Thead>
+                            <Table.Tr>
+                                <Table.Th>Titel</Table.Th>
+                                <Table.Th>Typ</Table.Th>
+                                <Table.Th>Jahr</Table.Th>
+                                <Table.Th>Status</Table.Th>
+                                <Table.Th>Bewertung</Table.Th>
+                                <Table.Th>Fortschritt</Table.Th>
+                                <Table.Th>Aktionen</Table.Th>
+                            </Table.Tr>
+                        </Table.Thead>
+                        <Table.Tbody>
+                            {filteredItems.map((item) => {
+                                const typeConfig = mediaTypes.find(t => t.value === item.type);
+                                const progressPercent = item.progress?.total && item.progress.total > 0
+                                    ? (item.progress.current / item.progress.total) * 100
+                                    : 0;
+                                return (
+                                    <Table.Tr key={item.id}>
+                                        <Table.Td>
+                                            <Group gap="sm">
+                                                {item.coverUrl ? (
+                                                    <Image src={item.coverUrl} width={40} height={56} radius="sm" fit="cover" />
+                                                ) : (
+                                                    <ThemeIcon size={40} variant="light" color="gray">
+                                                        {typeConfig?.icon ? <typeConfig.icon size={20} /> : <IconMovie size={20} />}
+                                                    </ThemeIcon>
+                                                )}
+                                                <div>
+                                                    <Text fw={500} size="sm">{item.title}</Text>
+                                                    {item.creator && <Text size="xs" c="dimmed">{item.creator}</Text>}
+                                                </div>
+                                            </Group>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Badge variant="light" size="sm">
+                                                {typeConfig?.label || item.type}
+                                            </Badge>
+                                        </Table.Td>
+                                        <Table.Td>{item.year || '-'}</Table.Td>
+                                        <Table.Td>{getStatusBadge(item.status)}</Table.Td>
+                                        <Table.Td>
+                                            {item.rating ? (
+                                                <Group gap={4}>
+                                                    <IconStarFilled size={14} style={{ color: 'gold' }} />
+                                                    <Text size="sm">{item.rating}/10</Text>
+                                                </Group>
+                                            ) : '-'}
+                                        </Table.Td>
+                                        <Table.Td>
+                                            {item.progress && item.progress.total > 0 ? (
+                                                <Group gap="xs">
+                                                    <Progress value={progressPercent} size="sm" style={{ width: 60 }} />
+                                                    <Text size="xs" c="dimmed">
+                                                        {item.progress.current}/{item.progress.total}
+                                                    </Text>
+                                                </Group>
+                                            ) : '-'}
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Menu shadow="md" position="bottom-end">
+                                                <Menu.Target>
+                                                    <ActionIcon variant="subtle" size="sm">
+                                                        <IconDotsVertical size={16} />
+                                                    </ActionIcon>
+                                                </Menu.Target>
+                                                <Menu.Dropdown>
+                                                    <Menu.Item
+                                                        leftSection={<IconEdit size={16} />}
+                                                        onClick={() => openEditModal(item)}
+                                                    >
+                                                        Bearbeiten
+                                                    </Menu.Item>
+                                                    <Menu.Divider />
+                                                    <Menu.Item
+                                                        leftSection={<IconTrash size={16} />}
+                                                        color="red"
+                                                        onClick={() => handleDelete(item.id)}
+                                                    >
+                                                        Löschen
+                                                    </Menu.Item>
+                                                </Menu.Dropdown>
+                                            </Menu>
+                                        </Table.Td>
+                                    </Table.Tr>
+                                );
+                            })}
+                        </Table.Tbody>
+                    </Table>
+                </Paper>
             )}
 
             {/* Create/Edit Modal */}
@@ -639,6 +739,7 @@ export default function MediaPage() {
                     </Group>
                 </Stack>
             </Modal>
-        </PageLayout>
+            </Stack>
+        </Container>
     );
 }
