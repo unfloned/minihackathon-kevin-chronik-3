@@ -6,9 +6,35 @@ interface RequestOptions extends RequestInit {
 
 type UnauthorizedCallback = () => void;
 
+// Event-based system for unauthorized handling
+const unauthorizedListeners: Set<UnauthorizedCallback> = new Set();
+let isHandlingUnauthorized = false;
+
+export function addUnauthorizedListener(callback: UnauthorizedCallback): () => void {
+    unauthorizedListeners.add(callback);
+    return () => {
+        unauthorizedListeners.delete(callback);
+    };
+}
+
+function notifyUnauthorized() {
+    if (isHandlingUnauthorized) return;
+    isHandlingUnauthorized = true;
+
+    unauthorizedListeners.forEach(cb => cb());
+
+    // Fallback: if no listeners, redirect directly
+    if (unauthorizedListeners.size === 0) {
+        window.location.href = '/auth';
+    }
+
+    setTimeout(() => {
+        isHandlingUnauthorized = false;
+    }, 1000);
+}
+
 class ApiClient {
     private baseUrl: string;
-    private onUnauthorized: UnauthorizedCallback | null = null;
     private isRefreshing = false;
     private refreshPromise: Promise<boolean> | null = null;
 
@@ -16,8 +42,9 @@ class ApiClient {
         this.baseUrl = baseUrl;
     }
 
-    setOnUnauthorized(callback: UnauthorizedCallback | null) {
-        this.onUnauthorized = callback;
+    // Legacy method for backwards compatibility
+    setOnUnauthorized(_callback: UnauthorizedCallback | null) {
+        // No-op - using event system now
     }
 
     private async tryRefreshToken(): Promise<boolean> {
@@ -54,12 +81,6 @@ class ApiClient {
         }
     }
 
-    private handleUnauthorized() {
-        if (this.onUnauthorized) {
-            this.onUnauthorized();
-        }
-    }
-
     async request<T>(endpoint: string, options: RequestOptions = {}, retryCount = 0): Promise<T> {
         const { auth = true, ...fetchOptions } = options;
 
@@ -82,14 +103,14 @@ class ApiClient {
                 if (refreshed) {
                     return this.request<T>(endpoint, options, retryCount + 1);
                 } else {
-                    this.handleUnauthorized();
+                    notifyUnauthorized();
                     throw new Error('Session expired. Please login again.');
                 }
             }
 
             if (response.status === 403) {
                 const error = await response.json().catch(() => ({ message: 'Access denied' }));
-                this.handleUnauthorized();
+                notifyUnauthorized();
                 throw new Error(error.message || 'Access denied');
             }
 

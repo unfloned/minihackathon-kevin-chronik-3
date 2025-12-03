@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
-import { api } from '../config/api';
+import { api, addUnauthorizedListener } from '../config/api';
 import type { UserPublic, SessionResponse } from '@ycmm/core';
 
 interface AuthContextType {
@@ -59,10 +59,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [navigate]);
 
     useEffect(() => {
-        api.setOnUnauthorized(handleUnauthorized);
-        return () => {
-            api.setOnUnauthorized(null);
-        };
+        const removeListener = addUnauthorizedListener(handleUnauthorized);
+        return removeListener;
     }, [handleUnauthorized]);
 
     const fetchUser = useCallback(async () => {
