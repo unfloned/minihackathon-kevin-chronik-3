@@ -33,3 +33,6 @@ uploads/
 
 # Cache
 .cache/
+
+# Debug/Runtime
+apps/server/var/
