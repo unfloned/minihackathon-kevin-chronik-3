@@ -285,9 +285,11 @@ export interface DeadlineStats {
 }
 
 export interface SubscriptionStats {
-    monthlyCost: number;
-    yearlyCost: number;
-    count: number;
+    totalMonthly: number;
+    totalYearly: number;
+    activeCount: number;
+    pausedCount: number;
+    byCategory: { category: string; amount: number; count: number }[];
 }
 
 export interface MediaItemWithDetails {
