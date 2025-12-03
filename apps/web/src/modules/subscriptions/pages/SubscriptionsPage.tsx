@@ -19,6 +19,8 @@ import {
     Menu,
     Paper,
     Flex,
+    Table,
+    SegmentedControl,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -31,6 +33,8 @@ import {
     IconCoin,
     IconCalendar,
     IconReceipt,
+    IconLayoutGrid,
+    IconList,
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
@@ -111,6 +115,7 @@ export default function SubscriptionsPage() {
     const [opened, { open, close }] = useDisclosure(false);
     const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
     const [formData, setFormData] = useState<CreateSubscriptionForm>(emptyForm);
+    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
     // Fetch subscriptions
     const {
@@ -338,7 +343,7 @@ export default function SubscriptionsPage() {
 
                 {/* Stats Cards */}
                 <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
-                    <Paper shadow="xs" p="md" radius="md" withBorder>
+                    <Paper shadow="sm" p="md" radius="md" withBorder>
                         <Group justify="space-between">
                             <div>
                                 <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
@@ -358,7 +363,7 @@ export default function SubscriptionsPage() {
                         </Group>
                     </Paper>
 
-                    <Paper shadow="xs" p="md" radius="md" withBorder>
+                    <Paper shadow="sm" p="md" radius="md" withBorder>
                         <Group justify="space-between">
                             <div>
                                 <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
@@ -378,7 +383,7 @@ export default function SubscriptionsPage() {
                         </Group>
                     </Paper>
 
-                    <Paper shadow="xs" p="md" radius="md" withBorder>
+                    <Paper shadow="sm" p="md" radius="md" withBorder>
                         <Group justify="space-between">
                             <div>
                                 <Text c="dimmed" size="xs" tt="uppercase" fw={700}>
@@ -401,9 +406,19 @@ export default function SubscriptionsPage() {
 
                 {/* Subscriptions List */}
                 <Stack gap="md">
-                    <Title order={2} size="h3">
-                        Ihre Abonnements
-                    </Title>
+                    <Group justify="space-between" align="center">
+                        <Title order={2} size="h3">
+                            Ihre Abonnements
+                        </Title>
+                        <SegmentedControl
+                            value={viewMode}
+                            onChange={(value) => setViewMode(value as 'cards' | 'table')}
+                            data={[
+                                { value: 'cards', label: <IconLayoutGrid size={16} /> },
+                                { value: 'table', label: <IconList size={16} /> },
+                            ]}
+                        />
+                    </Group>
 
                     {isLoading ? (
                         <Stack gap="md">
@@ -412,7 +427,7 @@ export default function SubscriptionsPage() {
                             ))}
                         </Stack>
                     ) : !subscriptions || subscriptions.length === 0 ? (
-                        <Paper shadow="xs" p="xl" radius="md" withBorder>
+                        <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <IconReceipt size={48} style={{ opacity: 0.3 }} />
                                 <div style={{ textAlign: 'center' }}>
@@ -431,10 +446,94 @@ export default function SubscriptionsPage() {
                                 </Button>
                             </Stack>
                         </Paper>
+                    ) : viewMode === 'table' ? (
+                        <Paper shadow="sm" withBorder radius="md">
+                            <Table striped highlightOnHover>
+                                <Table.Thead>
+                                    <Table.Tr>
+                                        <Table.Th>Name</Table.Th>
+                                        <Table.Th>Betrag</Table.Th>
+                                        <Table.Th>Zyklus</Table.Th>
+                                        <Table.Th>Kategorie</Table.Th>
+                                        <Table.Th>Status</Table.Th>
+                                        <Table.Th>Nächste Abrechnung</Table.Th>
+                                        <Table.Th>Aktionen</Table.Th>
+                                    </Table.Tr>
+                                </Table.Thead>
+                                <Table.Tbody>
+                                    {subscriptions.map((subscription) => (
+                                        <Table.Tr key={subscription.id}>
+                                            <Table.Td>
+                                                <Text size="sm" fw={500}>{subscription.name}</Text>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Text size="sm" fw={700} c="blue">{formatCurrency(subscription.amount)}</Text>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Text size="sm">{billingCycleLabels[subscription.billingCycle]}</Text>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Badge size="sm" variant="light">
+                                                    {categoryLabels[subscription.category] || subscription.category}
+                                                </Badge>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Badge color={statusColors[subscription.status]} size="sm">
+                                                    {statusLabels[subscription.status]}
+                                                </Badge>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Text size="sm">{formatDate(subscription.nextBillingDate)}</Text>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Menu shadow="md" width={200}>
+                                                    <Menu.Target>
+                                                        <ActionIcon variant="subtle" color="gray">
+                                                            <IconDotsVertical size={16} />
+                                                        </ActionIcon>
+                                                    </Menu.Target>
+                                                    <Menu.Dropdown>
+                                                        <Menu.Item
+                                                            leftSection={<IconEdit size={14} />}
+                                                            onClick={() => handleOpenEditModal(subscription)}
+                                                        >
+                                                            Bearbeiten
+                                                        </Menu.Item>
+                                                        {subscription.status === 'active' ? (
+                                                            <Menu.Item
+                                                                leftSection={<IconPlayerPause size={14} />}
+                                                                onClick={() => handlePause(subscription.id)}
+                                                            >
+                                                                Pausieren
+                                                            </Menu.Item>
+                                                        ) : subscription.status === 'paused' ? (
+                                                            <Menu.Item
+                                                                leftSection={<IconPlayerPlay size={14} />}
+                                                                onClick={() => handleResume(subscription.id)}
+                                                            >
+                                                                Fortsetzen
+                                                            </Menu.Item>
+                                                        ) : null}
+                                                        <Menu.Divider />
+                                                        <Menu.Item
+                                                            color="red"
+                                                            leftSection={<IconTrash size={14} />}
+                                                            onClick={() => handleDelete(subscription.id)}
+                                                        >
+                                                            Löschen
+                                                        </Menu.Item>
+                                                    </Menu.Dropdown>
+                                                </Menu>
+                                            </Table.Td>
+                                        </Table.Tr>
+                                    ))}
+                                </Table.Tbody>
+                            </Table>
+                        </Paper>
                     ) : (
                         <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="md">
                             {subscriptions.map((subscription) => (
-                                <Card key={subscription.id} shadow="xs" padding="lg" radius="md" withBorder>
+                                <Card key={subscription.id} shadow="sm" padding="lg" radius="md" withBorder>
                                     <Card.Section withBorder inheritPadding py="xs">
                                         <Group justify="space-between">
                                             <Text fw={600} size="lg">

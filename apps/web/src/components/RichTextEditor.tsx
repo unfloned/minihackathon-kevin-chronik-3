@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { RichTextEditor, Link } from '@mantine/tiptap';
 import { useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -32,6 +33,13 @@ export function NoteRichTextEditor({ content, onChange, placeholder }: RichTextE
         },
         immediatelyRender: false,
     });
+
+    // Update editor content when prop changes (e.g., when loading existing note)
+    useEffect(() => {
+        if (editor && content !== editor.getHTML()) {
+            editor.commands.setContent(content);
+        }
+    }, [content, editor]);
 
     return (
         <RichTextEditor editor={editor} styles={{ content: { minHeight: 300 } }}>
@@ -104,6 +112,13 @@ export function RichTextViewer({ content }: RichTextViewerProps) {
         editable: false,
         immediatelyRender: false,
     });
+
+    // Update viewer content when prop changes
+    useEffect(() => {
+        if (editor && content !== editor.getHTML()) {
+            editor.commands.setContent(content);
+        }
+    }, [content, editor]);
 
     return (
         <RichTextEditor editor={editor} styles={{ root: { border: 'none' } }}>

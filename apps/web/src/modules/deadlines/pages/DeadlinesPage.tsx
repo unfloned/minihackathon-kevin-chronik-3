@@ -270,7 +270,7 @@ function DeadlinesPage() {
     return (
       <Grid mb="xl">
         <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" withBorder>
+          <Paper shadow="sm" p="md" radius="md" withBorder>
             <Group justify="space-between">
               <div>
                 <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
@@ -286,7 +286,7 @@ function DeadlinesPage() {
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" withBorder>
+          <Paper shadow="sm" p="md" radius="md" withBorder>
             <Group justify="space-between">
               <div>
                 <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
@@ -302,7 +302,7 @@ function DeadlinesPage() {
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" withBorder>
+          <Paper shadow="sm" p="md" radius="md" withBorder>
             <Group justify="space-between">
               <div>
                 <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
@@ -318,7 +318,7 @@ function DeadlinesPage() {
         </Grid.Col>
 
         <Grid.Col span={{ base: 12, sm: 6, md: 3 }}>
-          <Paper p="md" withBorder>
+          <Paper shadow="sm" p="md" radius="md" withBorder>
             <Group justify="space-between">
               <div>
                 <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
@@ -341,7 +341,7 @@ function DeadlinesPage() {
     const isOverdue = !deadline.isCompleted && dueDate < new Date();
 
     return (
-      <Card key={deadline.id} withBorder mb="md" p="md">
+      <Card key={deadline.id} shadow="sm" withBorder radius="md" mb="md" p="md">
         <Group justify="space-between" mb="xs">
           <Group>
             <Text fw={500} size="lg">

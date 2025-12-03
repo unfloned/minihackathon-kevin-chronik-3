@@ -362,7 +362,7 @@ export default function MealsPage() {
 
                 {stats && (
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg">
-                        <Paper p="md" withBorder>
+                        <Paper shadow="sm" p="md" radius="md" withBorder>
                             <Group>
                                 <ThemeIcon size="lg" variant="light" color="blue">
                                     <IconChefHat size={20} />
@@ -373,7 +373,7 @@ export default function MealsPage() {
                                 </div>
                             </Group>
                         </Paper>
-                        <Paper p="md" withBorder>
+                        <Paper shadow="sm" p="md" radius="md" withBorder>
                             <Group>
                                 <ThemeIcon size="lg" variant="light" color="green">
                                     <IconCheck size={20} />
@@ -384,7 +384,7 @@ export default function MealsPage() {
                                 </div>
                             </Group>
                         </Paper>
-                        <Paper p="md" withBorder>
+                        <Paper shadow="sm" p="md" radius="md" withBorder>
                             <Group>
                                 <ThemeIcon size="lg" variant="light" color="yellow">
                                     <IconStarFilled size={20} />
@@ -395,7 +395,7 @@ export default function MealsPage() {
                                 </div>
                             </Group>
                         </Paper>
-                        <Paper p="md" withBorder>
+                        <Paper shadow="sm" p="md" radius="md" withBorder>
                             <Group>
                                 <ThemeIcon size="lg" variant="light" color="grape">
                                     <IconToolsKitchen2 size={20} />
@@ -561,7 +561,7 @@ export default function MealsPage() {
                             )}
 
                             {!isLoading && filteredMeals.length === 0 && (
-                                <Paper p="xl" withBorder>
+                                <Paper shadow="sm" p="xl" radius="md" withBorder>
                                     <Stack align="center" gap="md">
                                         <IconChefHat size={60} opacity={0.3} />
                                         <Text size="lg" c="dimmed">Keine Rezepte gefunden</Text>
@@ -594,7 +594,9 @@ export default function MealsPage() {
                                     return (
                                         <Paper
                                             key={date.toISOString()}
+                                            shadow="sm"
                                             p="md"
+                                            radius="md"
                                             withBorder
                                             style={{
                                                 background: isToday ? 'var(--mantine-color-blue-0)' : undefined
@@ -680,7 +682,7 @@ export default function MealsPage() {
                             </Group>
 
                             {shoppingList && shoppingList.length > 0 ? (
-                                <Paper p="lg" withBorder>
+                                <Paper shadow="sm" p="lg" radius="md" withBorder>
                                     <Stack gap="md">
                                         {shoppingList.map((item, idx) => (
                                             <Group key={idx} gap="md">
@@ -698,7 +700,7 @@ export default function MealsPage() {
                                     </Stack>
                                 </Paper>
                             ) : (
-                                <Paper p="xl" withBorder>
+                                <Paper shadow="sm" p="xl" radius="md" withBorder>
                                     <Stack align="center" gap="md">
                                         <IconShoppingCart size={60} opacity={0.3} />
                                         <Text size="lg" c="dimmed">Keine Einkaufsliste verfügbar</Text>

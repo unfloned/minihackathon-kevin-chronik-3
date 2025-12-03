@@ -20,6 +20,8 @@ import {
     Menu,
     Paper,
     Text,
+    Table,
+    SegmentedControl,
 } from '@mantine/core';
 import { PageLayout } from '../../../components/PageLayout';
 import { useDisclosure } from '@mantine/hooks';
@@ -34,6 +36,8 @@ import {
     IconPlus,
     IconPlayerPlay,
     IconPlayerStop,
+    IconLayoutGrid,
+    IconList,
 } from '@tabler/icons-react';
 import { useRequest, useMutation, useConfetti } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
@@ -152,7 +156,7 @@ const HabitCard = memo(function HabitCard({
         : ((habit.todayValue || 0) / (habit.targetValue || 1)) * 100;
 
     return (
-        <Card withBorder padding="lg" style={{ borderColor: isCompleted ? habit.color : undefined }}>
+        <Card shadow="sm" withBorder padding="lg" radius="md" style={{ borderColor: isCompleted ? habit.color : undefined }}>
             <Group justify="space-between" align="flex-start" mb="sm">
                 <Group gap="sm">
                     <ThemeIcon size="lg" radius="md" color={habit.color} variant={isCompleted ? 'filled' : 'light'}>
@@ -268,6 +272,7 @@ const HabitCard = memo(function HabitCard({
 export default function HabitsPage() {
     const [opened, { open, close }] = useDisclosure(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
+    const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
     const confetti = useConfetti();
 
     const [form, setForm] = useState<CreateHabitForm>({
@@ -467,7 +472,7 @@ export default function HabitsPage() {
             {/* Stats */}
             {stats && (
                 <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
-                    <Paper withBorder p="md" ta="center">
+                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
                         <RingProgress
                             size={60}
                             thickness={6}
@@ -481,21 +486,21 @@ export default function HabitsPage() {
                         <Text size="sm" c="dimmed">Heute</Text>
                         <Text fw={700}>{stats.completedToday}/{stats.totalToday}</Text>
                     </Paper>
-                    <Paper withBorder p="md" ta="center">
+                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
                         <ThemeIcon size={40} radius="xl" color="orange" variant="light" mx="auto" mb="xs">
                             <IconFlame size={24} />
                         </ThemeIcon>
                         <Text size="sm" c="dimmed">Aktuelle Streak</Text>
                         <Text fw={700}>{stats.currentStreak} Tage</Text>
                     </Paper>
-                    <Paper withBorder p="md" ta="center">
+                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
                         <ThemeIcon size={40} radius="xl" color="violet" variant="light" mx="auto" mb="xs">
                             <IconTrendingUp size={24} />
                         </ThemeIcon>
                         <Text size="sm" c="dimmed">Längste Streak</Text>
                         <Text fw={700}>{stats.longestStreak} Tage</Text>
                     </Paper>
-                    <Paper withBorder p="md" ta="center">
+                    <Paper shadow="sm" withBorder p="md" radius="md" ta="center">
                         <ThemeIcon size={40} radius="xl" color="blue" variant="light" mx="auto" mb="xs">
                             <IconTarget size={24} />
                         </ThemeIcon>
@@ -505,7 +510,19 @@ export default function HabitsPage() {
                 </SimpleGrid>
             )}
 
-            {/* Habits Grid */}
+            {/* View Mode Toggle */}
+            <Group justify="flex-end" mb="md">
+                <SegmentedControl
+                    value={viewMode}
+                    onChange={(value) => setViewMode(value as 'cards' | 'table')}
+                    data={[
+                        { value: 'cards', label: <IconLayoutGrid size={16} /> },
+                        { value: 'table', label: <IconList size={16} /> },
+                    ]}
+                />
+            </Group>
+
+            {/* Habits Grid/Table */}
             {isLoading ? (
                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
                     {[...Array(6)].map((_, i) => (
@@ -523,6 +540,151 @@ export default function HabitsPage() {
                     <Button mt="md" onClick={handleOpenCreate}>
                         Erstes Habit erstellen
                     </Button>
+                </Paper>
+            ) : viewMode === 'table' ? (
+                <Paper shadow="sm" withBorder radius="md">
+                    <Table striped highlightOnHover>
+                        <Table.Thead>
+                            <Table.Tr>
+                                <Table.Th>Name</Table.Th>
+                                <Table.Th>Typ</Table.Th>
+                                <Table.Th>Fortschritt</Table.Th>
+                                <Table.Th>Streak</Table.Th>
+                                <Table.Th>Status</Table.Th>
+                                <Table.Th>Aktionen</Table.Th>
+                            </Table.Tr>
+                        </Table.Thead>
+                        <Table.Tbody>
+                            {habits?.map((habit) => {
+                                const isCompleted = habit.completedToday;
+                                const progress = habit.type === 'boolean'
+                                    ? (isCompleted ? 100 : 0)
+                                    : ((habit.todayValue || 0) / (habit.targetValue || 1)) * 100;
+
+                                return (
+                                    <Table.Tr key={habit.id}>
+                                        <Table.Td>
+                                            <Group gap="xs">
+                                                <ThemeIcon size={24} radius="md" color={habit.color} variant={isCompleted ? 'filled' : 'light'}>
+                                                    <IconTarget size={14} />
+                                                </ThemeIcon>
+                                                <div>
+                                                    <Text size="sm" fw={500}>{habit.name}</Text>
+                                                    {habit.description && (
+                                                        <Text size="xs" c="dimmed" lineClamp={1}>{habit.description}</Text>
+                                                    )}
+                                                </div>
+                                            </Group>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Badge variant="light" size="sm">
+                                                {habit.type === 'boolean' ? 'Ja/Nein' : habit.type === 'quantity' ? 'Menge' : 'Dauer'}
+                                            </Badge>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Group gap="xs">
+                                                <Progress value={progress} color={habit.color} size="sm" style={{ width: 80 }} />
+                                                {habit.type !== 'boolean' && (
+                                                    <Text size="xs" c="dimmed">
+                                                        {habit.todayValue || 0}/{habit.targetValue} {formatUnit(habit.unit)}
+                                                    </Text>
+                                                )}
+                                            </Group>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Badge size="sm" variant="light" color="orange" leftSection={<IconFlame size={10} />}>
+                                                {habit.currentStreak} Tage
+                                            </Badge>
+                                        </Table.Td>
+                                        <Table.Td>
+                                            {isCompleted ? (
+                                                <Badge color="green" variant="filled" size="sm">Erledigt</Badge>
+                                            ) : (
+                                                <Badge color="gray" variant="light" size="sm">Offen</Badge>
+                                            )}
+                                        </Table.Td>
+                                        <Table.Td>
+                                            <Group gap="xs">
+                                                {/* Boolean habit button */}
+                                                {!isCompleted && habit.type === 'boolean' && (
+                                                    <ActionIcon
+                                                        size="sm"
+                                                        color={habit.color}
+                                                        variant="filled"
+                                                        onClick={() => handleLog(habit)}
+                                                    >
+                                                        <IconCheck size={14} />
+                                                    </ActionIcon>
+                                                )}
+
+                                                {/* Quantity habit button */}
+                                                {!isCompleted && habit.type === 'quantity' && (
+                                                    <Button
+                                                        size="xs"
+                                                        color={habit.color}
+                                                        variant="filled"
+                                                        onClick={() => handleLog(habit, (habit.todayValue || 0) + 1)}
+                                                    >
+                                                        +1
+                                                    </Button>
+                                                )}
+
+                                                {/* Duration habit timer controls */}
+                                                {!isCompleted && habit.type === 'duration' && (
+                                                    <>
+                                                        {habit.timerRunning && habit.timerStartedAt ? (
+                                                            <ActionIcon
+                                                                size="sm"
+                                                                color="red"
+                                                                variant="filled"
+                                                                onClick={() => stopTimer(habit)}
+                                                            >
+                                                                <IconPlayerStop size={14} />
+                                                            </ActionIcon>
+                                                        ) : (
+                                                            <ActionIcon
+                                                                size="sm"
+                                                                color={habit.color}
+                                                                variant="filled"
+                                                                onClick={() => startTimer(habit)}
+                                                                disabled={hasActiveTimer}
+                                                            >
+                                                                <IconPlayerPlay size={14} />
+                                                            </ActionIcon>
+                                                        )}
+                                                    </>
+                                                )}
+
+                                                <Menu shadow="md">
+                                                    <Menu.Target>
+                                                        <ActionIcon variant="subtle" size="sm">
+                                                            <IconDotsVertical size={14} />
+                                                        </ActionIcon>
+                                                    </Menu.Target>
+                                                    <Menu.Dropdown>
+                                                        <Menu.Item
+                                                            leftSection={<IconEdit size={14} />}
+                                                            onClick={() => handleOpenEdit(habit)}
+                                                        >
+                                                            Bearbeiten
+                                                        </Menu.Item>
+                                                        <Menu.Divider />
+                                                        <Menu.Item
+                                                            leftSection={<IconTrash size={14} />}
+                                                            color="red"
+                                                            onClick={() => handleDelete(habit.id)}
+                                                        >
+                                                            Löschen
+                                                        </Menu.Item>
+                                                    </Menu.Dropdown>
+                                                </Menu>
+                                            </Group>
+                                        </Table.Td>
+                                    </Table.Tr>
+                                );
+                            })}
+                        </Table.Tbody>
+                    </Table>
                 </Paper>
             ) : (
                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>

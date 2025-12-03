@@ -284,7 +284,7 @@ export default function MediaPage() {
             : 0;
 
         return (
-            <Card withBorder padding="lg" style={{ height: '100%' }}>
+            <Card shadow="sm" withBorder padding="lg" radius="md" style={{ height: '100%' }}>
                 <Card.Section>
                     {item.coverUrl ? (
                         <Image src={item.coverUrl} height={200} alt={item.title} fit="cover" />
@@ -433,7 +433,7 @@ export default function MediaPage() {
             {stats && <StatsGrid stats={statsData} />}
 
             {/* Filters */}
-            <Paper withBorder p="md" mb="lg">
+            <Paper shadow="sm" withBorder p="md" radius="md" mb="lg">
                 <Group>
                     <TextInput
                         placeholder="Suchen..."
@@ -480,7 +480,7 @@ export default function MediaPage() {
                     ))}
                 </SimpleGrid>
             ) : filteredItems.length === 0 ? (
-                <Paper withBorder p="xl" ta="center">
+                <Paper shadow="sm" withBorder p="xl" radius="md" ta="center">
                     <ThemeIcon size={64} variant="light" color="gray" radius="xl" mx="auto">
                         <IconMovie size={32} />
                     </ThemeIcon>

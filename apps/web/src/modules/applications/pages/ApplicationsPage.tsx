@@ -20,6 +20,8 @@ import {
     NumberInput,
     Divider,
     Avatar,
+    Table,
+    SegmentedControl,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -32,6 +34,9 @@ import {
     IconCurrencyEuro,
     IconExternalLink,
     IconUser,
+    IconLayoutGrid,
+    IconLayoutKanban,
+    IconList,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useRequest, useMutation } from '../../../hooks';
@@ -177,7 +182,7 @@ export default function ApplicationsPage() {
     const [selectedApp, setSelectedApp] = useState<Application | null>(null);
     const [form, setForm] = useState<CreateApplicationForm>(defaultForm);
     const [searchQuery, setSearchQuery] = useState('');
-    const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+    const [viewMode, setViewMode] = useState<'kanban' | 'cards' | 'table'>('kanban');
 
     const { data: applications, isLoading, refetch } = useRequest<Application[]>('/applications');
     const { data: stats } = useRequest<{
@@ -343,7 +348,7 @@ export default function ApplicationsPage() {
     };
 
     const renderApplicationCard = (app: Application) => (
-        <Card key={app.id} withBorder shadow="sm" p="md" style={{ cursor: 'pointer' }}>
+        <Card key={app.id} shadow="sm" withBorder p="md" radius="md" style={{ cursor: 'pointer' }}>
             <Stack gap="sm">
                 <Group justify="space-between">
                     <Group>
@@ -439,7 +444,7 @@ export default function ApplicationsPage() {
                 {kanbanColumns.map((column) => {
                     const apps = getApplicationsByStatus(column.status);
                     return (
-                        <Paper key={column.status} withBorder p="md" style={{ minWidth: 300, maxWidth: 350 }}>
+                        <Paper key={column.status} shadow="sm" withBorder p="md" radius="md" style={{ minWidth: 300, maxWidth: 350 }}>
                             <Stack gap="md">
                                 <Group justify="space-between">
                                     <Text fw={600} size="sm">{column.label}</Text>
@@ -461,7 +466,7 @@ export default function ApplicationsPage() {
         </ScrollArea>
     );
 
-    const renderListView = () => (
+    const renderCardsView = () => (
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
             {filteredApplications.map((app) => renderApplicationCard(app))}
             {filteredApplications.length === 0 && (
@@ -470,6 +475,102 @@ export default function ApplicationsPage() {
                 </Text>
             )}
         </SimpleGrid>
+    );
+
+    const renderTableView = () => (
+        <Paper shadow="sm" withBorder radius="md">
+            <Table striped highlightOnHover>
+                <Table.Thead>
+                    <Table.Tr>
+                        <Table.Th>Firma</Table.Th>
+                        <Table.Th>Position</Table.Th>
+                        <Table.Th>Status</Table.Th>
+                        <Table.Th>Standort</Table.Th>
+                        <Table.Th>Remote</Table.Th>
+                        <Table.Th>Gehalt</Table.Th>
+                        <Table.Th>Beworben am</Table.Th>
+                        <Table.Th>Aktionen</Table.Th>
+                    </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                    {filteredApplications.map((app) => (
+                        <Table.Tr key={app.id} style={{ cursor: 'pointer' }} onClick={() => handleViewDetail(app)}>
+                            <Table.Td>
+                                <Group gap="xs">
+                                    {app.companyLogo ? (
+                                        <Avatar src={app.companyLogo} size={24} radius="sm" />
+                                    ) : (
+                                        <ThemeIcon size={24} radius="sm" variant="light">
+                                            <IconBuilding size={14} />
+                                        </ThemeIcon>
+                                    )}
+                                    <Text size="sm" fw={500}>{app.companyName}</Text>
+                                </Group>
+                            </Table.Td>
+                            <Table.Td>
+                                <Text size="sm">{app.jobTitle}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                                <Badge color={statusColors[app.status]} size="sm">
+                                    {statusLabels[app.status]}
+                                </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                                <Text size="sm">{app.location}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                                <Badge variant="light" size="sm">
+                                    {remoteLabels[app.remote]}
+                                </Badge>
+                            </Table.Td>
+                            <Table.Td>
+                                <Text size="sm">{formatSalary(app.salary) || '-'}</Text>
+                            </Table.Td>
+                            <Table.Td>
+                                <Text size="sm">
+                                    {app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('de-DE') : '-'}
+                                </Text>
+                            </Table.Td>
+                            <Table.Td>
+                                <Menu shadow="md" width={200}>
+                                    <Menu.Target>
+                                        <ActionIcon variant="subtle" onClick={(e) => e.stopPropagation()}>
+                                            <IconDotsVertical size={16} />
+                                        </ActionIcon>
+                                    </Menu.Target>
+                                    <Menu.Dropdown>
+                                        <Menu.Item
+                                            leftSection={<IconEdit size={14} />}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenEdit(app);
+                                            }}
+                                        >
+                                            Bearbeiten
+                                        </Menu.Item>
+                                        <Menu.Item
+                                            leftSection={<IconTrash size={14} />}
+                                            color="red"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(app.id);
+                                            }}
+                                        >
+                                            Löschen
+                                        </Menu.Item>
+                                    </Menu.Dropdown>
+                                </Menu>
+                            </Table.Td>
+                        </Table.Tr>
+                    ))}
+                </Table.Tbody>
+            </Table>
+            {filteredApplications.length === 0 && (
+                <Text c="dimmed" ta="center" py="xl">
+                    Keine Bewerbungen gefunden
+                </Text>
+            )}
+        </Paper>
     );
 
     const statsData = stats ? [
@@ -509,28 +610,21 @@ export default function ApplicationsPage() {
                 onChange: setSearchQuery,
                 placeholder: 'Suche nach Firma, Position oder Ort...',
                 rightSection: (
-                    <Group>
-                        <Button.Group>
-                            <Button
-                                variant={viewMode === 'kanban' ? 'filled' : 'default'}
-                                onClick={() => setViewMode('kanban')}
-                                size="sm"
-                            >
-                                Kanban
-                            </Button>
-                            <Button
-                                variant={viewMode === 'list' ? 'filled' : 'default'}
-                                onClick={() => setViewMode('list')}
-                                size="sm"
-                            >
-                                Liste
-                            </Button>
-                        </Button.Group>
-                    </Group>
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={(value) => setViewMode(value as 'kanban' | 'cards' | 'table')}
+                        data={[
+                            { value: 'kanban', label: <IconLayoutKanban size={16} /> },
+                            { value: 'cards', label: <IconLayoutGrid size={16} /> },
+                            { value: 'table', label: <IconList size={16} /> },
+                        ]}
+                    />
                 ),
             }}
         >
-            {viewMode === 'kanban' ? renderKanbanView() : renderListView()}
+            {viewMode === 'kanban' && renderKanbanView()}
+            {viewMode === 'cards' && renderCardsView()}
+            {viewMode === 'table' && renderTableView()}
 
             {/* Create/Edit Modal */}
             <Modal

@@ -314,7 +314,7 @@ export default function WishlistsPage() {
                     {isLoading ? (
                         <Text>Laden...</Text>
                     ) : filteredItems.length === 0 ? (
-                        <Paper p="xl" withBorder>
+                        <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <ThemeIcon size={60} radius="xl" variant="light">
                                     <IconHeart size={32} />
@@ -455,7 +455,7 @@ export default function WishlistsPage() {
                     {isLoading ? (
                         <Text>Laden...</Text>
                     ) : filteredItems.length === 0 ? (
-                        <Paper p="xl" withBorder>
+                        <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <ThemeIcon size={60} radius="xl" variant="light" color="pink">
                                     <IconGift size={32} />
@@ -586,7 +586,7 @@ export default function WishlistsPage() {
                     {isLoading ? (
                         <Text>Laden...</Text>
                     ) : filteredItems.length === 0 ? (
-                        <Paper p="xl" withBorder>
+                        <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <ThemeIcon size={60} radius="xl" variant="light" color="green">
                                     <IconShoppingCart size={32} />
