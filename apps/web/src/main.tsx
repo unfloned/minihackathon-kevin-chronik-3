@@ -11,7 +11,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { VersionProvider } from './contexts/VersionContext';
 import { LevelUpProvider } from './contexts/LevelUpContext';
 import { QuickCreateProvider } from './contexts/QuickCreateContext';
-import { createModals } from './components/CreateModals';
+import { lazyCreateModals } from './components/LazyCreateModals';
 
 import './i18n';
 
@@ -24,7 +24,7 @@ import './styles/transitions.css';
 
 createRoot(document.getElementById('root')!).render(
     <MantineProvider defaultColorScheme="auto">
-        <ModalsProvider modals={createModals}>
+        <ModalsProvider modals={lazyCreateModals}>
             <Notifications position="top-right" />
             <BrowserRouter>
                 <VersionProvider>
