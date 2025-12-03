@@ -1,6 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
-import { Note } from '@ycmm/core';
+import { Note, User } from '@ycmm/core';
 
 export interface CreateNoteDto {
     title: string;
@@ -24,7 +23,8 @@ export class NoteService {
 
     async getAll(userId: string): Promise<Note[]> {
         return this.db.query(Note)
-            .filter({ userId, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: false })
             .orderBy('isPinned', 'desc')
             .orderBy('updatedAt', 'desc')
             .find();
@@ -32,20 +32,23 @@ export class NoteService {
 
     async getArchived(userId: string): Promise<Note[]> {
         return this.db.query(Note)
-            .filter({ userId, isArchived: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: true })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<Note | undefined> {
         return this.db.query(Note)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async search(userId: string, query: string): Promise<Note[]> {
         const notes = await this.db.query(Note)
-            .filter({ userId, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: false })
             .find();
 
         const lowerQuery = query.toLowerCase();
@@ -58,7 +61,8 @@ export class NoteService {
 
     async getByTag(userId: string, tag: string): Promise<Note[]> {
         const notes = await this.db.query(Note)
-            .filter({ userId, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: false })
             .find();
 
         return notes.filter(note =>
@@ -68,7 +72,7 @@ export class NoteService {
 
     async getAllTags(userId: string): Promise<string[]> {
         const notes = await this.db.query(Note)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const tagSet = new Set<string>();
@@ -78,8 +82,7 @@ export class NoteService {
 
     async create(userId: string, dto: CreateNoteDto): Promise<Note> {
         const note = new Note();
-        note.id = uuidv4();
-        note.userId = userId;
+        note.user = this.db.getReference(User, userId);
         note.title = dto.title;
         note.content = dto.content || '';
         note.tags = dto.tags || [];

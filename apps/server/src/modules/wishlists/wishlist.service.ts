@@ -1,6 +1,6 @@
-import { WishlistItem, Wishlist, WishlistPriority, WishlistCategory, PriceInfo } from '@ycmm/core';
+import { WishlistItem, Wishlist, WishlistPriority, WishlistCategory, PriceInfo, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 export interface CreateWishlistItemDto {
     name: string;
@@ -57,42 +57,45 @@ export class WishlistService {
     // Wishlist Items
     async getAllItems(userId: string): Promise<WishlistItem[]> {
         return this.database.query(WishlistItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('priority', 'desc')
             .find();
     }
 
     async getItemsByCategory(userId: string, category: WishlistCategory): Promise<WishlistItem[]> {
         return this.database.query(WishlistItem)
-            .filter({ userId, category })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ category })
             .orderBy('priority', 'desc')
             .find();
     }
 
     async getGiftIdeas(userId: string): Promise<WishlistItem[]> {
         return this.database.query(WishlistItem)
-            .filter({ userId, isGiftIdea: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isGiftIdea: true })
             .orderBy('occasion', 'asc')
             .find();
     }
 
     async getPurchasedItems(userId: string): Promise<WishlistItem[]> {
         return this.database.query(WishlistItem)
-            .filter({ userId, isPurchased: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isPurchased: true })
             .orderBy('purchasedAt', 'desc')
             .find();
     }
 
     async getItemById(id: string, userId: string): Promise<WishlistItem | undefined> {
         return this.database.query(WishlistItem)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async createItem(userId: string, dto: CreateWishlistItemDto): Promise<WishlistItem> {
         const item = new WishlistItem();
-        item.id = uuidv4();
-        item.userId = userId;
+        item.user = this.database.getReference(User, userId);
         item.name = dto.name;
         item.description = dto.description || '';
         item.imageUrl = dto.imageUrl || '';
@@ -159,14 +162,15 @@ export class WishlistService {
     // Wishlists (Collections)
     async getAllWishlists(userId: string): Promise<Wishlist[]> {
         return this.database.query(Wishlist)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getWishlistById(id: string, userId: string): Promise<Wishlist | undefined> {
         return this.database.query(Wishlist)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
@@ -193,8 +197,7 @@ export class WishlistService {
 
     async createWishlist(userId: string, dto: CreateWishlistDto): Promise<Wishlist> {
         const wishlist = new Wishlist();
-        wishlist.id = uuidv4();
-        wishlist.userId = userId;
+        wishlist.user = this.database.getReference(User, userId);
         wishlist.name = dto.name;
         wishlist.description = dto.description || '';
         wishlist.isPublic = dto.isPublic || false;
@@ -269,11 +272,11 @@ export class WishlistService {
         giftIdeas: number;
     }> {
         const items = await this.database.query(WishlistItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const wishlists = await this.database.query(Wishlist)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const categoryCounts: Record<string, number> = {};
@@ -314,6 +317,6 @@ export class WishlistService {
             .replace(/[^a-z0-9]/g, '-')
             .replace(/-+/g, '-')
             .replace(/^-|-$/g, '');
-        return `${base}-${uuidv4().slice(0, 8)}`;
+        return `${base}-${crypto.randomUUID().slice(0, 8)}`;
     }
 }

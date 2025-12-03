@@ -1,6 +1,6 @@
-import { Meal, MealPlan, MealType, Ingredient, NutritionInfo } from '@ycmm/core';
+import { Meal, MealPlan, MealType, Ingredient, NutritionInfo, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
-import { v4 as uuidv4 } from 'uuid';
+import type { Reference } from '@deepkit/type';
 
 export interface CreateMealDto {
     name: string;
@@ -59,35 +59,36 @@ export class MealService {
     // Meals (Recipes)
     async getAllMeals(userId: string): Promise<Meal[]> {
         return this.database.query(Meal)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getMealsByType(userId: string, mealType: MealType): Promise<Meal[]> {
         const all = await this.database.query(Meal)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
         return all.filter(m => m.mealType.includes(mealType));
     }
 
     async getFavoriteMeals(userId: string): Promise<Meal[]> {
         return this.database.query(Meal)
-            .filter({ userId, isFavorite: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isFavorite: true })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getMealById(id: string, userId: string): Promise<Meal | undefined> {
         return this.database.query(Meal)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async createMeal(userId: string, dto: CreateMealDto): Promise<Meal> {
         const meal = new Meal();
-        meal.id = uuidv4();
-        meal.userId = userId;
+        meal.user = this.database.getReference(User, userId);
         meal.name = dto.name;
         meal.description = dto.description || '';
         meal.imageUrl = dto.imageUrl || '';
@@ -168,7 +169,7 @@ export class MealService {
     // Meal Plans
     async getMealPlans(userId: string, startDate: Date, endDate: Date): Promise<MealPlan[]> {
         const all = await this.database.query(MealPlan)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         return all.filter(plan => {
@@ -179,17 +180,19 @@ export class MealService {
 
     async getMealPlanById(id: string, userId: string): Promise<MealPlan | undefined> {
         return this.database.query(MealPlan)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async createMealPlan(userId: string, dto: CreateMealPlanDto): Promise<MealPlan> {
         const plan = new MealPlan();
-        plan.id = uuidv4();
-        plan.userId = userId;
+        plan.user = this.database.getReference(User, userId);
         plan.date = new Date(dto.date);
         plan.mealType = dto.mealType;
-        plan.mealId = dto.mealId;
+        if (dto.mealId) {
+            plan.meal = this.database.getReference(Meal, dto.mealId);
+        }
         plan.customMealName = dto.customMealName || '';
         plan.notes = dto.notes || '';
         plan.createdAt = new Date();
@@ -204,7 +207,9 @@ export class MealService {
 
         if (dto.date !== undefined) plan.date = new Date(dto.date);
         if (dto.mealType !== undefined) plan.mealType = dto.mealType;
-        if (dto.mealId !== undefined) plan.mealId = dto.mealId;
+        if (dto.mealId !== undefined) {
+            plan.meal = dto.mealId ? this.database.getReference(Meal, dto.mealId) : undefined;
+        }
         if (dto.customMealName !== undefined) plan.customMealName = dto.customMealName;
         if (dto.notes !== undefined) plan.notes = dto.notes;
 
@@ -229,7 +234,7 @@ export class MealService {
         recentlyCooked: Meal[];
     }> {
         const all = await this.database.query(Meal)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const cuisineCounts: Record<string, number> = {};
@@ -268,8 +273,8 @@ export class MealService {
         const ingredientMap: Record<string, { amounts: string[]; meals: string[] }> = {};
 
         for (const plan of plans) {
-            if (plan.mealId) {
-                const meal = await this.getMealById(plan.mealId, userId);
+            if (plan.meal) {
+                const meal = await this.getMealById(plan.meal.id, userId);
                 if (meal) {
                     for (const ing of meal.ingredients) {
                         const key = ing.name.toLowerCase();

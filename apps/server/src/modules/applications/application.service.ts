@@ -1,6 +1,6 @@
-import { Application, ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview } from '@ycmm/core';
+import { Application, ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 export interface CreateApplicationDto {
     companyName: string;
@@ -59,28 +59,29 @@ export class ApplicationService {
 
     async getAll(userId: string): Promise<Application[]> {
         return this.database.query(Application)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getByStatus(userId: string, status: ApplicationStatus): Promise<Application[]> {
         return this.database.query(Application)
-            .filter({ userId, status })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ status })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<Application | undefined> {
         return this.database.query(Application)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async create(userId: string, dto: CreateApplicationDto): Promise<Application> {
         const app = new Application();
-        app.id = uuidv4();
-        app.userId = userId;
+        app.user = this.database.getReference(User, userId);
         app.companyName = dto.companyName;
         app.jobTitle = dto.jobTitle;
         app.companyWebsite = dto.companyWebsite || '';
@@ -165,7 +166,7 @@ export class ApplicationService {
         if (!app) return null;
 
         const interview: Interview = {
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             type: dto.type,
             scheduledAt: dto.scheduledAt,
             duration: dto.duration,
@@ -227,7 +228,7 @@ export class ApplicationService {
         averageResponseDays: number | null;
     }> {
         const all = await this.database.query(Application)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const byStatus: { status: ApplicationStatus; count: number }[] = [];

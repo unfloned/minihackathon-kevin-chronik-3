@@ -1,5 +1,4 @@
 import { HttpError } from '@deepkit/http';
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
 import { AuthService } from '../auth/auth.service';
 import {
@@ -56,33 +55,59 @@ export class AdminService {
     }
 
     async deleteUserData(userId: string): Promise<void> {
-        // Delete all user-related data
-        const tables = [
-            { query: this.db.query(HabitLog), filter: { userId } },
-            { query: this.db.query(Habit), filter: { userId } },
-            { query: this.db.query(Expense), filter: { userId } },
-            { query: this.db.query(ExpenseCategory), filter: { userId } },
-            { query: this.db.query(Deadline), filter: { userId } },
-            { query: this.db.query(Subscription), filter: { userId } },
-            { query: this.db.query(Note), filter: { userId } },
-            { query: this.db.query(List), filter: { userId } },
-            { query: this.db.query(Project), filter: { userId } },
-            { query: this.db.query(InventoryItem), filter: { userId } },
-            { query: this.db.query(Application), filter: { userId } },
-            { query: this.db.query(MediaItem), filter: { userId } },
-            { query: this.db.query(Meal), filter: { userId } },
-            { query: this.db.query(WishlistItem), filter: { userId } },
-            { query: this.db.query(Wishlist), filter: { userId } },
-            { query: this.db.query(UserAchievement), filter: { userId } },
-            { query: this.db.query(Notification), filter: { userId } },
-        ];
+        // Delete all user-related data - each entity needs separate query with proper join
+        // Delete in order to respect foreign key constraints
 
-        for (const { query, filter } of tables) {
-            const items = await query.filter(filter).find();
-            for (const item of items) {
-                await this.db.remove(item);
-            }
-        }
+        const habitLogs = await this.db.query(HabitLog).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of habitLogs) await this.db.remove(item);
+
+        const habits = await this.db.query(Habit).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of habits) await this.db.remove(item);
+
+        const expenses = await this.db.query(Expense).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of expenses) await this.db.remove(item);
+
+        const categories = await this.db.query(ExpenseCategory).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of categories) await this.db.remove(item);
+
+        const deadlines = await this.db.query(Deadline).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of deadlines) await this.db.remove(item);
+
+        const subscriptions = await this.db.query(Subscription).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of subscriptions) await this.db.remove(item);
+
+        const notes = await this.db.query(Note).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of notes) await this.db.remove(item);
+
+        const lists = await this.db.query(List).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of lists) await this.db.remove(item);
+
+        const projects = await this.db.query(Project).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of projects) await this.db.remove(item);
+
+        const inventoryItems = await this.db.query(InventoryItem).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of inventoryItems) await this.db.remove(item);
+
+        const applications = await this.db.query(Application).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of applications) await this.db.remove(item);
+
+        const mediaItems = await this.db.query(MediaItem).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of mediaItems) await this.db.remove(item);
+
+        const meals = await this.db.query(Meal).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of meals) await this.db.remove(item);
+
+        const wishlistItems = await this.db.query(WishlistItem).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of wishlistItems) await this.db.remove(item);
+
+        const wishlists = await this.db.query(Wishlist).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of wishlists) await this.db.remove(item);
+
+        const userAchievements = await this.db.query(UserAchievement).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of userAchievements) await this.db.remove(item);
+
+        const notifications = await this.db.query(Notification).useInnerJoinWith('user').filter({ id: userId }).end().find();
+        for (const item of notifications) await this.db.remove(item);
     }
 
     async resetDemoData(): Promise<void> {
@@ -94,17 +119,20 @@ export class AdminService {
         // Ensure demo user exists
         await this.authService.createDemoUser();
 
+        // Fetch demo user for References
+        const user = await this.db.query(User).filter({ id: demoUserId }).findOne();
+
         // Seed fresh demo data
-        await this.seedDemoData(demoUserId);
+        await this.seedDemoData(user);
     }
 
-    async seedDemoData(userId: string): Promise<void> {
+    async seedDemoData(user: User): Promise<void> {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
 
         // ===== HABITS =====
         const habits: Habit[] = [
-            this.createHabit(userId, {
+            this.createHabit(user, {
                 name: 'Meditation',
                 description: '10 Minuten Achtsamkeit am Morgen',
                 icon: '🧘',
@@ -115,7 +143,7 @@ export class AdminService {
                 longestStreak: 21,
                 totalCompletions: 45,
             }),
-            this.createHabit(userId, {
+            this.createHabit(user, {
                 name: 'Sport',
                 description: 'Mindestens 30 Minuten Bewegung',
                 icon: '💪',
@@ -126,7 +154,7 @@ export class AdminService {
                 longestStreak: 14,
                 totalCompletions: 32,
             }),
-            this.createHabit(userId, {
+            this.createHabit(user, {
                 name: 'Wasser trinken',
                 description: '2 Liter Wasser pro Tag',
                 icon: '💧',
@@ -139,7 +167,7 @@ export class AdminService {
                 longestStreak: 30,
                 totalCompletions: 67,
             }),
-            this.createHabit(userId, {
+            this.createHabit(user, {
                 name: 'Lesen',
                 description: '30 Minuten lesen vor dem Schlafen',
                 icon: '📚',
@@ -160,11 +188,11 @@ export class AdminService {
 
         // ===== EXPENSE CATEGORIES =====
         const categories: ExpenseCategory[] = [
-            this.createExpenseCategory(userId, { name: 'Lebensmittel', icon: '🛒', color: '#22C55E', budget: 400 }),
-            this.createExpenseCategory(userId, { name: 'Transport', icon: '🚗', color: '#3B82F6', budget: 150 }),
-            this.createExpenseCategory(userId, { name: 'Unterhaltung', icon: '🎬', color: '#EF4444', budget: 100 }),
-            this.createExpenseCategory(userId, { name: 'Restaurant', icon: '🍽️', color: '#F59E0B', budget: 200 }),
-            this.createExpenseCategory(userId, { name: 'Shopping', icon: '🛍️', color: '#EC4899', budget: 150 }),
+            this.createExpenseCategory(user, { name: 'Lebensmittel', icon: '🛒', color: '#22C55E', budget: 400 }),
+            this.createExpenseCategory(user, { name: 'Transport', icon: '🚗', color: '#3B82F6', budget: 150 }),
+            this.createExpenseCategory(user, { name: 'Unterhaltung', icon: '🎬', color: '#EF4444', budget: 100 }),
+            this.createExpenseCategory(user, { name: 'Restaurant', icon: '🍽️', color: '#F59E0B', budget: 200 }),
+            this.createExpenseCategory(user, { name: 'Shopping', icon: '🛍️', color: '#EC4899', budget: 150 }),
         ];
 
         for (const cat of categories) {
@@ -173,10 +201,10 @@ export class AdminService {
 
         // ===== EXPENSES =====
         const expenses: Expense[] = [
-            this.createExpense(userId, categories[0].id, { amount: 85.50, description: 'Wocheneinkauf REWE', date: today }),
-            this.createExpense(userId, categories[3].id, { amount: 42.00, description: 'Sushi Restaurant', date: today }),
-            this.createExpense(userId, categories[1].id, { amount: 49.00, description: 'Deutschland-Ticket', date: today, isRecurring: true, recurringInterval: 'monthly' }),
-            this.createExpense(userId, categories[2].id, { amount: 15.99, description: 'Kino', date: today }),
+            this.createExpense(user, categories[0], { amount: 85.50, description: 'Wocheneinkauf REWE', date: today }),
+            this.createExpense(user, categories[3], { amount: 42.00, description: 'Sushi Restaurant', date: today }),
+            this.createExpense(user, categories[1], { amount: 49.00, description: 'Deutschland-Ticket', date: today, isRecurring: true, recurringInterval: 'monthly' }),
+            this.createExpense(user, categories[2], { amount: 15.99, description: 'Kino', date: today }),
         ];
 
         for (const exp of expenses) {
@@ -190,7 +218,7 @@ export class AdminService {
         nextMonth.setMonth(nextMonth.getMonth() + 1);
 
         const deadlines: Deadline[] = [
-            this.createDeadline(userId, {
+            this.createDeadline(user, {
                 title: 'Steuererklärung abgeben',
                 description: 'Alle Belege sammeln und Elster ausfüllen',
                 dueDate: nextMonth.toISOString().split('T')[0],
@@ -199,7 +227,7 @@ export class AdminService {
                 color: '#EF4444',
                 reminderDaysBefore: 7,
             }),
-            this.createDeadline(userId, {
+            this.createDeadline(user, {
                 title: 'Zahnarzt Termin',
                 description: 'Routinekontrolle',
                 dueDate: nextWeek.toISOString().split('T')[0],
@@ -208,7 +236,7 @@ export class AdminService {
                 color: '#3B82F6',
                 reminderDaysBefore: 1,
             }),
-            this.createDeadline(userId, {
+            this.createDeadline(user, {
                 title: 'Geburtstagsgeschenk für Mama',
                 description: 'Etwas Schönes besorgen',
                 dueDate: nextWeek.toISOString().split('T')[0],
@@ -225,7 +253,7 @@ export class AdminService {
 
         // ===== SUBSCRIPTIONS =====
         const subscriptions: Subscription[] = [
-            this.createSubscription(userId, {
+            this.createSubscription(user, {
                 name: 'Netflix',
                 description: 'Standard-Abo',
                 amount: 12.99,
@@ -238,7 +266,7 @@ export class AdminService {
                 website: 'https://netflix.com',
                 startDate: '2023-01-15',
             }),
-            this.createSubscription(userId, {
+            this.createSubscription(user, {
                 name: 'Spotify',
                 description: 'Premium Family',
                 amount: 17.99,
@@ -251,7 +279,7 @@ export class AdminService {
                 website: 'https://spotify.com',
                 startDate: '2022-06-01',
             }),
-            this.createSubscription(userId, {
+            this.createSubscription(user, {
                 name: 'ChatGPT Plus',
                 description: 'GPT-4 Zugang',
                 amount: 20.00,
@@ -272,7 +300,7 @@ export class AdminService {
 
         // ===== MEDIA ITEMS =====
         const mediaItems: MediaItem[] = [
-            this.createMediaItem(userId, {
+            this.createMediaItem(user, {
                 title: 'Breaking Bad',
                 type: 'series',
                 status: 'completed',
@@ -280,7 +308,7 @@ export class AdminService {
                 review: 'Eine der besten Serien aller Zeiten!',
                 coverUrl: 'https://m.media-amazon.com/images/M/MV5BYmQ4YWMxYjUtNjZmYi00MDQ1LWFjMjMtNjA5ZDdiYjdiODU5XkEyXkFqcGdeQXVyMTMzNDExODE5._V1_.jpg',
             }),
-            this.createMediaItem(userId, {
+            this.createMediaItem(user, {
                 title: 'The Last of Us',
                 type: 'series',
                 status: 'in_progress',
@@ -288,14 +316,14 @@ export class AdminService {
                 review: 'Sehr emotional und packend',
                 coverUrl: 'https://m.media-amazon.com/images/M/MV5BZGUzYTI3M2EtZmM0Yy00NGUyLWI4ODEtN2Q3ZGJlYzhhZjU3XkEyXkFqcGdeQXVyNTM0OTY1OQ@@._V1_.jpg',
             }),
-            this.createMediaItem(userId, {
+            this.createMediaItem(user, {
                 title: 'Dune: Part Two',
                 type: 'movie',
                 status: 'wishlist',
                 review: 'Unbedingt im IMAX schauen!',
                 coverUrl: 'https://m.media-amazon.com/images/M/MV5BN2QyZGU4ZDctOWMzMy00NTc5LThlOGQtODhmNDI1NmY5YzAwXkEyXkFqcGdeQXVyMDM2NDM2MQ@@._V1_.jpg',
             }),
-            this.createMediaItem(userId, {
+            this.createMediaItem(user, {
                 title: 'Atomic Habits',
                 type: 'book',
                 status: 'completed',
@@ -303,7 +331,7 @@ export class AdminService {
                 creator: 'James Clear',
                 review: 'Super hilfreich für Gewohnheitsbildung',
             }),
-            this.createMediaItem(userId, {
+            this.createMediaItem(user, {
                 title: 'Baldur\'s Gate 3',
                 type: 'game',
                 status: 'in_progress',
@@ -320,7 +348,7 @@ export class AdminService {
 
         // ===== PROJECTS =====
         const projects: Project[] = [
-            this.createProject(userId, {
+            this.createProject(user, {
                 name: 'Website Redesign',
                 description: 'Komplette Überarbeitung der persönlichen Portfolio-Website',
                 type: 'project',
@@ -339,7 +367,7 @@ export class AdminService {
                     { id: '1', title: 'MVP fertig', targetDate: nextMonth.toISOString(), completed: false },
                 ],
             }),
-            this.createProject(userId, {
+            this.createProject(user, {
                 name: 'Deutsch B2 Zertifikat',
                 description: 'Deutsch auf B2-Niveau erreichen',
                 type: 'goal',
@@ -362,19 +390,19 @@ export class AdminService {
 
         // ===== NOTES =====
         const notes: Note[] = [
-            this.createNote(userId, {
+            this.createNote(user, {
                 title: 'Meeting Notizen',
                 content: '# Team Meeting 15.11.\n\n## Agenda\n- Sprint Review\n- Neue Features besprechen\n- Roadmap Q1 2025\n\n## Action Items\n- [ ] Design Review mit Lisa\n- [ ] API Dokumentation updaten\n- [x] Deployment Pipeline fixen',
                 color: '#3B82F6',
                 isPinned: true,
             }),
-            this.createNote(userId, {
+            this.createNote(user, {
                 title: 'Bucket List 2025',
                 content: '# Bucket List\n\n1. 🏔️ Alpen wandern\n2. 🎸 Gitarre lernen\n3. 🇯🇵 Japan besuchen\n4. 📖 20 Bücher lesen\n5. 🏃 Halbmarathon laufen',
                 color: '#22C55E',
                 isPinned: false,
             }),
-            this.createNote(userId, {
+            this.createNote(user, {
                 title: 'Rezept: Pasta Carbonara',
                 content: '# Pasta Carbonara\n\n## Zutaten\n- 400g Spaghetti\n- 200g Guanciale\n- 4 Eigelb\n- 100g Pecorino\n- Schwarzer Pfeffer\n\n## Zubereitung\n1. Pasta kochen\n2. Guanciale knusprig braten\n3. Eigelb mit Käse mischen\n4. Alles vermengen (Herd aus!)',
                 color: '#F59E0B',
@@ -388,7 +416,7 @@ export class AdminService {
 
         // ===== LISTS =====
         const lists: List[] = [
-            this.createList(userId, {
+            this.createList(user, {
                 name: 'Einkaufsliste',
                 icon: '🛒',
                 color: '#22C55E',
@@ -401,7 +429,7 @@ export class AdminService {
                     { id: '5', text: 'Tomaten', completed: true, order: 4 },
                 ],
             }),
-            this.createList(userId, {
+            this.createList(user, {
                 name: 'Packliste Urlaub',
                 icon: '🧳',
                 color: '#3B82F6',
@@ -422,10 +450,10 @@ export class AdminService {
 
         // ===== INVENTORY =====
         const inventory: InventoryItem[] = [
-            this.createInventoryItem(userId, { name: 'MacBook Pro 14"', category: 'Elektronik', location: { area: 'Büro' }, purchaseDate: new Date('2023-06-15'), purchasePrice: 2499, description: 'M3 Pro, 18GB RAM' }),
-            this.createInventoryItem(userId, { name: 'iPhone 15 Pro', category: 'Elektronik', location: { area: 'Tasche' }, purchaseDate: new Date('2023-09-22'), purchasePrice: 1199 }),
-            this.createInventoryItem(userId, { name: 'Sony WH-1000XM5', category: 'Elektronik', location: { area: 'Büro' }, purchaseDate: new Date('2023-03-10'), purchasePrice: 379, description: 'Noise Cancelling Kopfhörer' }),
-            this.createInventoryItem(userId, { name: 'IKEA MARKUS', category: 'Möbel', location: { area: 'Büro' }, purchaseDate: new Date('2022-01-20'), purchasePrice: 229, description: 'Bürostuhl' }),
+            this.createInventoryItem(user, { name: 'MacBook Pro 14"', category: 'Elektronik', location: { area: 'Büro' }, purchaseDate: new Date('2023-06-15'), purchasePrice: 2499, description: 'M3 Pro, 18GB RAM' }),
+            this.createInventoryItem(user, { name: 'iPhone 15 Pro', category: 'Elektronik', location: { area: 'Tasche' }, purchaseDate: new Date('2023-09-22'), purchasePrice: 1199 }),
+            this.createInventoryItem(user, { name: 'Sony WH-1000XM5', category: 'Elektronik', location: { area: 'Büro' }, purchaseDate: new Date('2023-03-10'), purchasePrice: 379, description: 'Noise Cancelling Kopfhörer' }),
+            this.createInventoryItem(user, { name: 'IKEA MARKUS', category: 'Möbel', location: { area: 'Büro' }, purchaseDate: new Date('2022-01-20'), purchasePrice: 229, description: 'Bürostuhl' }),
         ];
 
         for (const inv of inventory) {
@@ -434,7 +462,7 @@ export class AdminService {
 
         // ===== APPLICATIONS =====
         const applications: Application[] = [
-            this.createApplication(userId, {
+            this.createApplication(user, {
                 companyName: 'Tech Corp GmbH',
                 jobTitle: 'Senior Frontend Developer',
                 status: 'interviewed',
@@ -444,7 +472,7 @@ export class AdminService {
                 notes: 'Sehr interessantes Projekt, Team wirkt sympathisch',
                 appliedAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
             }),
-            this.createApplication(userId, {
+            this.createApplication(user, {
                 companyName: 'Startup XYZ',
                 jobTitle: 'Full Stack Developer',
                 status: 'applied',
@@ -462,8 +490,7 @@ export class AdminService {
 
         // ===== WISHLISTS =====
         const wishlist = new Wishlist();
-        wishlist.id = uuidv4();
-        wishlist.userId = userId;
+        wishlist.user = user;
         wishlist.name = 'Technik Wünsche';
         wishlist.description = 'Gadgets die ich mir wünsche';
         wishlist.isPublic = false;
@@ -472,18 +499,142 @@ export class AdminService {
         await this.db.persist(wishlist);
 
         const wishlistItems: WishlistItem[] = [
-            this.createWishlistItem(userId, { name: 'Steam Deck OLED', price: { amount: 569, currency: 'EUR' }, productUrl: 'https://store.steampowered.com/steamdeck', priority: 'high', notes: 'Für unterwegs zocken', category: 'tech' }),
-            this.createWishlistItem(userId, { name: 'Kindle Paperwhite', price: { amount: 149, currency: 'EUR' }, productUrl: 'https://amazon.de', priority: 'medium', notes: 'Zum Lesen im Urlaub', category: 'tech' }),
+            this.createWishlistItem(user, { name: 'Steam Deck OLED', price: { amount: 569, currency: 'EUR' }, productUrl: 'https://store.steampowered.com/steamdeck', priority: 'high', notes: 'Für unterwegs zocken', category: 'tech' }),
+            this.createWishlistItem(user, { name: 'Kindle Paperwhite', price: { amount: 149, currency: 'EUR' }, productUrl: 'https://amazon.de', priority: 'medium', notes: 'Zum Lesen im Urlaub', category: 'tech' }),
         ];
 
         for (const item of wishlistItems) {
             await this.db.persist(item);
         }
 
+        // ===== MEALS =====
+        const meals: Meal[] = [
+            this.createMeal(user, {
+                name: 'Spaghetti Bolognese',
+                description: 'Klassiker der italienischen Küche',
+                mealType: ['dinner'],
+                cuisine: 'Italienisch',
+                prepTime: 15,
+                cookTime: 45,
+                servings: 4,
+                ingredients: [
+                    { name: 'Spaghetti', amount: '400', unit: 'g' },
+                    { name: 'Hackfleisch', amount: '500', unit: 'g' },
+                    { name: 'Zwiebel', amount: '1', unit: 'Stück' },
+                    { name: 'Knoblauch', amount: '2', unit: 'Zehen' },
+                    { name: 'Passierte Tomaten', amount: '500', unit: 'ml' },
+                    { name: 'Tomatenmark', amount: '2', unit: 'EL' },
+                    { name: 'Olivenöl', amount: '2', unit: 'EL' },
+                    { name: 'Parmesan', amount: '50', unit: 'g' },
+                ],
+                instructions: '1. Zwiebel und Knoblauch fein hacken\n2. Hackfleisch in Olivenöl anbraten\n3. Zwiebel und Knoblauch dazugeben\n4. Tomatenmark kurz mitrösten\n5. Passierte Tomaten zugeben und 30 Min köcheln\n6. Mit Salz, Pfeffer und Oregano würzen\n7. Spaghetti al dente kochen\n8. Mit Parmesan servieren',
+                nutrition: { calories: 650, protein: 35, carbs: 75, fat: 22 },
+                tags: ['Pasta', 'Fleisch', 'Familienessen'],
+                isFavorite: true,
+                timesCooked: 8,
+            }),
+            this.createMeal(user, {
+                name: 'Chicken Teriyaki Bowl',
+                description: 'Asiatische Bowl mit mariniertem Hähnchen',
+                mealType: ['lunch', 'dinner'],
+                cuisine: 'Japanisch',
+                prepTime: 20,
+                cookTime: 20,
+                servings: 2,
+                ingredients: [
+                    { name: 'Hähnchenbrustfilet', amount: '400', unit: 'g' },
+                    { name: 'Jasminreis', amount: '200', unit: 'g' },
+                    { name: 'Sojasauce', amount: '4', unit: 'EL' },
+                    { name: 'Mirin', amount: '2', unit: 'EL' },
+                    { name: 'Honig', amount: '2', unit: 'EL' },
+                    { name: 'Brokkoli', amount: '200', unit: 'g' },
+                    { name: 'Edamame', amount: '100', unit: 'g' },
+                    { name: 'Sesam', amount: '1', unit: 'EL' },
+                ],
+                instructions: '1. Hähnchen in Streifen schneiden\n2. Teriyaki-Sauce aus Sojasauce, Mirin und Honig mischen\n3. Hähnchen 30 Min marinieren\n4. Reis kochen\n5. Hähnchen anbraten und mit Marinade glasieren\n6. Brokkoli dämpfen\n7. In Bowls anrichten und mit Sesam bestreuen',
+                nutrition: { calories: 580, protein: 45, carbs: 65, fat: 12 },
+                tags: ['Bowl', 'Asiatisch', 'Gesund'],
+                isFavorite: true,
+                timesCooked: 5,
+            }),
+            this.createMeal(user, {
+                name: 'Avocado Toast',
+                description: 'Schnelles und gesundes Frühstück',
+                mealType: ['breakfast', 'snack'],
+                cuisine: 'International',
+                prepTime: 10,
+                cookTime: 5,
+                servings: 2,
+                ingredients: [
+                    { name: 'Sauerteigbrot', amount: '4', unit: 'Scheiben' },
+                    { name: 'Avocado', amount: '2', unit: 'Stück' },
+                    { name: 'Eier', amount: '2', unit: 'Stück' },
+                    { name: 'Kirschtomaten', amount: '100', unit: 'g' },
+                    { name: 'Limette', amount: '1', unit: 'Stück' },
+                    { name: 'Chiliflocken', amount: '1', unit: 'Prise' },
+                ],
+                instructions: '1. Brot toasten\n2. Avocado zerdrücken und mit Limettensaft mischen\n3. Eier pochieren oder als Spiegelei braten\n4. Avocado auf Toast verteilen\n5. Ei und Tomaten darauf\n6. Mit Chiliflocken, Salz und Pfeffer würzen',
+                nutrition: { calories: 420, protein: 15, carbs: 35, fat: 28 },
+                tags: ['Frühstück', 'Vegetarisch', 'Schnell'],
+                isFavorite: false,
+                timesCooked: 12,
+            }),
+            this.createMeal(user, {
+                name: 'Thai Curry',
+                description: 'Cremiges rotes Thai-Curry mit Gemüse',
+                mealType: ['dinner'],
+                cuisine: 'Thai',
+                prepTime: 15,
+                cookTime: 25,
+                servings: 4,
+                ingredients: [
+                    { name: 'Kokosmilch', amount: '400', unit: 'ml' },
+                    { name: 'Rote Currypaste', amount: '3', unit: 'EL' },
+                    { name: 'Tofu', amount: '300', unit: 'g' },
+                    { name: 'Paprika', amount: '2', unit: 'Stück' },
+                    { name: 'Zucchini', amount: '1', unit: 'Stück' },
+                    { name: 'Bambussprossen', amount: '150', unit: 'g' },
+                    { name: 'Thai-Basilikum', amount: '1', unit: 'Bund' },
+                    { name: 'Jasminreis', amount: '300', unit: 'g' },
+                ],
+                instructions: '1. Tofu würfeln und anbraten\n2. Currypaste in etwas Kokosmilch anrösten\n3. Restliche Kokosmilch zugeben\n4. Gemüse hinzufügen und köcheln lassen\n5. Tofu zurück in die Sauce\n6. Mit Fischsauce und Zucker abschmecken\n7. Mit Thai-Basilikum garnieren\n8. Mit Reis servieren',
+                nutrition: { calories: 520, protein: 22, carbs: 55, fat: 24 },
+                tags: ['Curry', 'Vegan möglich', 'Scharf'],
+                isFavorite: false,
+                timesCooked: 3,
+            }),
+            this.createMeal(user, {
+                name: 'Griechischer Salat',
+                description: 'Frischer Salat mit Feta und Oliven',
+                mealType: ['lunch', 'dinner'],
+                cuisine: 'Griechisch',
+                prepTime: 15,
+                cookTime: 0,
+                servings: 2,
+                ingredients: [
+                    { name: 'Gurke', amount: '1', unit: 'Stück' },
+                    { name: 'Tomaten', amount: '4', unit: 'Stück' },
+                    { name: 'Rote Zwiebel', amount: '1', unit: 'Stück' },
+                    { name: 'Feta', amount: '200', unit: 'g' },
+                    { name: 'Kalamata-Oliven', amount: '100', unit: 'g' },
+                    { name: 'Olivenöl', amount: '4', unit: 'EL' },
+                    { name: 'Oregano', amount: '1', unit: 'TL' },
+                ],
+                instructions: '1. Gurke und Tomaten in große Stücke schneiden\n2. Zwiebel in Ringe schneiden\n3. Alles in eine Schüssel geben\n4. Oliven hinzufügen\n5. Mit Olivenöl, Salz und Oregano würzen\n6. Feta in Scheiben obenauf legen',
+                nutrition: { calories: 380, protein: 14, carbs: 12, fat: 32 },
+                tags: ['Salat', 'Vegetarisch', 'Kein Kochen'],
+                isFavorite: true,
+                timesCooked: 6,
+            }),
+        ];
+
+        for (const meal of meals) {
+            await this.db.persist(meal);
+        }
+
         // Create notification
         const notification = new Notification();
-        notification.id = uuidv4();
-        notification.userId = userId;
+        notification.user = user;
         notification.type = 'info';
         notification.title = 'Willkommen zur Demo!';
         notification.message = 'Erkunde alle Features von YCMM. Die Demo-Daten werden regelmäßig zurückgesetzt.';
@@ -492,11 +643,10 @@ export class AdminService {
         await this.db.persist(notification);
     }
 
-    // Helper methods
-    private createHabit(userId: string, data: Partial<Habit>): Habit {
+    // Helper methods - now accept User reference
+    private createHabit(user: User, data: Partial<Habit>): Habit {
         const habit = new Habit();
-        habit.id = uuidv4();
-        habit.userId = userId;
+        habit.user = user;
         habit.name = data.name || '';
         habit.description = data.description;
         habit.icon = data.icon || '✅';
@@ -514,10 +664,9 @@ export class AdminService {
         return habit;
     }
 
-    private createExpenseCategory(userId: string, data: Partial<ExpenseCategory>): ExpenseCategory {
+    private createExpenseCategory(user: User, data: Partial<ExpenseCategory>): ExpenseCategory {
         const cat = new ExpenseCategory();
-        cat.id = uuidv4();
-        cat.userId = userId;
+        cat.user = user;
         cat.name = data.name || '';
         cat.icon = data.icon || '💰';
         cat.color = data.color || '#228be6';
@@ -527,11 +676,10 @@ export class AdminService {
         return cat;
     }
 
-    private createExpense(userId: string, categoryId: string, data: Partial<Expense>): Expense {
+    private createExpense(user: User, category: ExpenseCategory, data: Partial<Expense>): Expense {
         const exp = new Expense();
-        exp.id = uuidv4();
-        exp.userId = userId;
-        exp.categoryId = categoryId;
+        exp.user = user;
+        exp.category = category;
         exp.amount = data.amount || 0;
         exp.description = data.description || '';
         exp.date = data.date || new Date().toISOString().split('T')[0];
@@ -542,10 +690,9 @@ export class AdminService {
         return exp;
     }
 
-    private createDeadline(userId: string, data: Partial<Deadline>): Deadline {
+    private createDeadline(user: User, data: Partial<Deadline>): Deadline {
         const dl = new Deadline();
-        dl.id = uuidv4();
-        dl.userId = userId;
+        dl.user = user;
         dl.title = data.title || '';
         dl.description = data.description;
         dl.dueDate = data.dueDate || new Date().toISOString().split('T')[0];
@@ -560,10 +707,9 @@ export class AdminService {
         return dl;
     }
 
-    private createSubscription(userId: string, data: Partial<Subscription>): Subscription {
+    private createSubscription(user: User, data: Partial<Subscription>): Subscription {
         const sub = new Subscription();
-        sub.id = uuidv4();
-        sub.userId = userId;
+        sub.user = user;
         sub.name = data.name || '';
         sub.description = data.description;
         sub.amount = data.amount || 0;
@@ -584,10 +730,9 @@ export class AdminService {
         return sub;
     }
 
-    private createMediaItem(userId: string, data: Partial<MediaItem>): MediaItem {
+    private createMediaItem(user: User, data: Partial<MediaItem>): MediaItem {
         const media = new MediaItem();
-        media.id = uuidv4();
-        media.userId = userId;
+        media.user = user;
         media.title = data.title || '';
         media.type = data.type || 'movie';
         media.status = data.status || 'wishlist';
@@ -602,10 +747,9 @@ export class AdminService {
         return media;
     }
 
-    private createProject(userId: string, data: Partial<Project>): Project {
+    private createProject(user: User, data: Partial<Project>): Project {
         const proj = new Project();
-        proj.id = uuidv4();
-        proj.userId = userId;
+        proj.user = user;
         proj.name = data.name || '';
         proj.description = data.description || '';
         proj.type = data.type || 'project';
@@ -620,10 +764,9 @@ export class AdminService {
         return proj;
     }
 
-    private createNote(userId: string, data: Partial<Note>): Note {
+    private createNote(user: User, data: Partial<Note>): Note {
         const note = new Note();
-        note.id = uuidv4();
-        note.userId = userId;
+        note.user = user;
         note.title = data.title || '';
         note.content = data.content || '';
         note.color = data.color || '#228be6';
@@ -633,10 +776,9 @@ export class AdminService {
         return note;
     }
 
-    private createList(userId: string, data: Partial<List>): List {
+    private createList(user: User, data: Partial<List>): List {
         const list = new List();
-        list.id = uuidv4();
-        list.userId = userId;
+        list.user = user;
         list.name = data.name || '';
         list.icon = data.icon || '📝';
         list.color = data.color || '#228be6';
@@ -647,10 +789,9 @@ export class AdminService {
         return list;
     }
 
-    private createInventoryItem(userId: string, data: Partial<InventoryItem>): InventoryItem {
+    private createInventoryItem(user: User, data: Partial<InventoryItem>): InventoryItem {
         const inv = new InventoryItem();
-        inv.id = uuidv4();
-        inv.userId = userId;
+        inv.user = user;
         inv.name = data.name || '';
         inv.description = data.description || '';
         inv.category = data.category || '';
@@ -662,10 +803,9 @@ export class AdminService {
         return inv;
     }
 
-    private createApplication(userId: string, data: Partial<Application>): Application {
+    private createApplication(user: User, data: Partial<Application>): Application {
         const app = new Application();
-        app.id = uuidv4();
-        app.userId = userId;
+        app.user = user;
         app.companyName = data.companyName || '';
         app.jobTitle = data.jobTitle || '';
         app.status = data.status || 'draft';
@@ -679,10 +819,9 @@ export class AdminService {
         return app;
     }
 
-    private createWishlistItem(userId: string, data: Partial<WishlistItem>): WishlistItem {
+    private createWishlistItem(user: User, data: Partial<WishlistItem>): WishlistItem {
         const item = new WishlistItem();
-        item.id = uuidv4();
-        item.userId = userId;
+        item.user = user;
         item.name = data.name || '';
         item.price = data.price;
         item.productUrl = data.productUrl || '';
@@ -692,5 +831,30 @@ export class AdminService {
         item.createdAt = new Date();
         item.updatedAt = new Date();
         return item;
+    }
+
+    private createMeal(user: User, data: Partial<Meal>): Meal {
+        const meal = new Meal();
+        meal.user = user;
+        meal.name = data.name || '';
+        meal.description = data.description || '';
+        meal.imageUrl = data.imageUrl || '';
+        meal.ingredients = data.ingredients || [];
+        meal.instructions = data.instructions || '';
+        meal.prepTime = data.prepTime;
+        meal.cookTime = data.cookTime;
+        meal.servings = data.servings;
+        meal.mealType = data.mealType || [];
+        meal.cuisine = data.cuisine || '';
+        meal.tags = data.tags || [];
+        meal.nutrition = data.nutrition;
+        meal.isFavorite = data.isFavorite || false;
+        meal.lastMade = data.lastMade;
+        meal.timesCooked = data.timesCooked || 0;
+        meal.recipeUrl = data.recipeUrl || '';
+        meal.source = data.source || '';
+        meal.createdAt = new Date();
+        meal.updatedAt = new Date();
+        return meal;
     }
 }

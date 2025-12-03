@@ -1,7 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
 import { GamificationService } from '../gamification/gamification.service';
-import { Habit, HabitLog, type HabitType, type HabitFrequency } from '@ycmm/core';
+import { Habit, HabitLog, User, type HabitType, type HabitFrequency } from '@ycmm/core';
 
 export interface CreateHabitDto {
     name: string;
@@ -67,8 +66,7 @@ export class HabitService {
 
     async create(userId: string, dto: CreateHabitDto): Promise<Habit> {
         const habit = new Habit();
-        habit.id = uuidv4();
-        habit.userId = userId;
+        habit.user = this.db.getReference(User, userId);
         habit.name = dto.name;
         habit.description = dto.description;
         habit.icon = dto.icon || 'check';
@@ -91,7 +89,8 @@ export class HabitService {
     }
 
     async getAll(userId: string, includeArchived = false): Promise<Habit[]> {
-        const query = this.db.query(Habit).filter({ userId });
+        const query = this.db.query(Habit)
+            .useInnerJoinWith('user').filter({ id: userId }).end();
 
         if (!includeArchived) {
             query.filter({ isArchived: false });
@@ -102,7 +101,8 @@ export class HabitService {
 
     async getById(habitId: string, userId: string): Promise<Habit | undefined> {
         return this.db.query(Habit)
-            .filter({ id: habitId, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id: habitId })
             .findOneOrUndefined();
     }
 
@@ -132,7 +132,9 @@ export class HabitService {
         if (!habit) return false;
 
         // Delete all logs for this habit
-        const logs = await this.db.query(HabitLog).filter({ habitId }).find();
+        const logs = await this.db.query(HabitLog)
+            .useInnerJoinWith('habit').filter({ id: habitId }).end()
+            .find();
         for (const log of logs) {
             await this.db.remove(log);
         }
@@ -147,10 +149,12 @@ export class HabitService {
 
         const habits = await this.getAll(userId, false);
         const todayLogs = await this.db.query(HabitLog)
-            .filter({ userId, date: today })
+            .joinWith('habit')
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ date: today })
             .find();
 
-        const logMap = new Map(todayLogs.map(log => [log.habitId, log]));
+        const logMap = new Map(todayLogs.map((log: HabitLog) => [log.habit.id, log]));
 
         return habits
             .filter(habit => this.isHabitDueToday(habit, dayOfWeek))
@@ -191,7 +195,9 @@ export class HabitService {
 
         // Check for existing log
         let log = await this.db.query(HabitLog)
-            .filter({ habitId, userId, date: today })
+            .useInnerJoinWith('habit').filter({ id: habitId }).end()
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ date: today })
             .findOneOrUndefined();
 
         const isNewCompletion = !log?.completed;
@@ -204,9 +210,8 @@ export class HabitService {
         } else {
             // Create new log
             log = new HabitLog();
-            log.id = uuidv4();
-            log.userId = userId;
-            log.habitId = habitId;
+            log.user = this.db.getReference(User, userId);
+            log.habit = this.db.getReference(Habit, habitId);
             log.date = today;
             log.value = value;
             log.completed = this.isCompleted(habit, value);
@@ -225,7 +230,7 @@ export class HabitService {
             xpAwarded = xpResult.xpAwarded;
 
             // Update streak
-            streakUpdated = await this.updateStreak(habit);
+            streakUpdated = await this.updateStreak(habit, userId);
 
             // Check habit completion achievements
             habit.totalCompletions++;
@@ -250,7 +255,9 @@ export class HabitService {
 
         // Check for existing log
         let log = await this.db.query(HabitLog)
-            .filter({ habitId, userId, date: today })
+            .useInnerJoinWith('habit').filter({ id: habitId }).end()
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ date: today })
             .findOneOrUndefined();
 
         if (log) {
@@ -264,9 +271,8 @@ export class HabitService {
         } else {
             // Create new log with timer started
             log = new HabitLog();
-            log.id = uuidv4();
-            log.userId = userId;
-            log.habitId = habitId;
+            log.user = this.db.getReference(User, userId);
+            log.habit = this.db.getReference(Habit, habitId);
             log.date = today;
             log.value = 0;
             log.completed = false;
@@ -285,7 +291,9 @@ export class HabitService {
         const today = this.getToday();
 
         const log = await this.db.query(HabitLog)
-            .filter({ habitId, userId, date: today })
+            .useInnerJoinWith('habit').filter({ id: habitId }).end()
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ date: today })
             .findOneOrUndefined();
 
         if (!log || !log.timerStartedAt) return null;
@@ -327,7 +335,7 @@ export class HabitService {
         if (log.completed && isNewCompletion) {
             const xpResult = await this.gamificationService.awardXp(userId, 10, 'habit_completed');
             xpAwarded = xpResult.xpAwarded;
-            streakUpdated = await this.updateStreak(habit);
+            streakUpdated = await this.updateStreak(habit, userId);
 
             habit.totalCompletions++;
             await this.db.persist(habit);
@@ -348,7 +356,7 @@ export class HabitService {
         return value >= 1;
     }
 
-    private async updateStreak(habit: Habit): Promise<boolean> {
+    private async updateStreak(habit: Habit, userId: string): Promise<boolean> {
         const today = new Date();
         const yesterday = new Date(today);
         yesterday.setDate(yesterday.getDate() - 1);
@@ -356,7 +364,8 @@ export class HabitService {
 
         // Check if there was a log yesterday
         const yesterdayLog = await this.db.query(HabitLog)
-            .filter({ habitId: habit.id, date: yesterdayStr, completed: true })
+            .useInnerJoinWith('habit').filter({ id: habit.id }).end()
+            .filter({ date: yesterdayStr, completed: true })
             .findOneOrUndefined();
 
         if (yesterdayLog) {
@@ -374,13 +383,13 @@ export class HabitService {
 
         // Check streak achievements
         if (habit.currentStreak === 3) {
-            await this.gamificationService.checkAndUnlockAchievement(habit.userId, 'streak_3');
+            await this.gamificationService.checkAndUnlockAchievement(userId, 'streak_3');
         } else if (habit.currentStreak === 7) {
-            await this.gamificationService.checkAndUnlockAchievement(habit.userId, 'streak_7');
+            await this.gamificationService.checkAndUnlockAchievement(userId, 'streak_7');
         } else if (habit.currentStreak === 30) {
-            await this.gamificationService.checkAndUnlockAchievement(habit.userId, 'streak_30');
+            await this.gamificationService.checkAndUnlockAchievement(userId, 'streak_30');
         } else if (habit.currentStreak === 100) {
-            await this.gamificationService.checkAndUnlockAchievement(habit.userId, 'streak_100');
+            await this.gamificationService.checkAndUnlockAchievement(userId, 'streak_100');
         }
 
         return true;
@@ -395,7 +404,8 @@ export class HabitService {
         const startDateStr = startDate.toISOString().split('T')[0];
 
         return this.db.query(HabitLog)
-            .filter({ habitId, date: { $gte: startDateStr } })
+            .useInnerJoinWith('habit').filter({ id: habitId }).end()
+            .filter({ date: { $gte: startDateStr } })
             .orderBy('date', 'desc')
             .find();
     }
@@ -418,7 +428,8 @@ export class HabitService {
             const dateStr = date.toISOString().split('T')[0];
 
             const logsForDay = await this.db.query(HabitLog)
-                .filter({ userId, date: dateStr, completed: true })
+                .useInnerJoinWith('user').filter({ id: userId }).end()
+                .filter({ date: dateStr, completed: true })
                 .count();
 
             weeklyCompletion.push(logsForDay);
@@ -460,7 +471,8 @@ export class HabitService {
         const startDateStr = startDate.toISOString().split('T')[0];
 
         const logs = await this.db.query(HabitLog)
-            .filter({ userId, date: { $gte: startDateStr }, completed: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ date: { $gte: startDateStr }, completed: true })
             .find();
 
         // Group logs by date

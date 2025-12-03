@@ -1,8 +1,7 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
 import { GamificationService } from '../gamification/gamification.service';
 import { NotificationService } from '../notifications/notification.service';
-import { Deadline, DeadlinePriority, DeadlineStatus } from '@ycmm/core';
+import { Deadline, DeadlinePriority, DeadlineStatus, User } from '@ycmm/core';
 
 export interface CreateDeadlineDto {
     title: string;
@@ -49,8 +48,7 @@ export class DeadlineService {
 
     async create(userId: string, dto: CreateDeadlineDto): Promise<Deadline> {
         const deadline = new Deadline();
-        deadline.id = uuidv4();
-        deadline.userId = userId;
+        deadline.user = this.db.getReference(User, userId);
         deadline.title = dto.title;
         deadline.description = dto.description;
         deadline.dueDate = dto.dueDate;
@@ -77,14 +75,15 @@ export class DeadlineService {
 
     async getAll(userId: string): Promise<Deadline[]> {
         return this.db.query(Deadline)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('dueDate', 'asc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<Deadline | undefined> {
         return this.db.query(Deadline)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
@@ -95,8 +94,8 @@ export class DeadlineService {
         const endDate = futureDate.toISOString().split('T')[0];
 
         return this.db.query(Deadline)
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .filter({
-                userId,
                 status: 'pending',
                 dueDate: { $gte: today, $lte: endDate }
             })
@@ -108,8 +107,8 @@ export class DeadlineService {
         const today = new Date().toISOString().split('T')[0];
 
         const overdue = await this.db.query(Deadline)
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .filter({
-                userId,
                 status: 'pending',
                 dueDate: { $lt: today }
             })
@@ -253,7 +252,8 @@ export class DeadlineService {
     async checkAndNotifyUpcoming(userId: string): Promise<void> {
         const today = new Date().toISOString().split('T')[0];
         const deadlines = await this.db.query(Deadline)
-            .filter({ userId, status: 'pending', reminderEnabled: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ status: 'pending', reminderEnabled: true })
             .find();
 
         for (const deadline of deadlines) {

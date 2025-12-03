@@ -1,7 +1,6 @@
 import { HttpUnauthorizedError, HttpBadRequestError, HttpNotFoundError } from '@deepkit/http';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 import { AppDatabase } from '../../app/database';
 import { AppConfig } from '../../app/config';
@@ -32,7 +31,6 @@ export class AuthService {
         const hashedPassword = await bcrypt.hash(password, 12);
 
         const user = new User();
-        user.id = uuidv4();
         user.email = email;
         user.password = hashedPassword;
         user.displayName = displayName;
@@ -68,8 +66,8 @@ export class AuthService {
         return user;
     }
 
-    // Fixed demo account credentials
-    static readonly DEMO_USER_ID = 'demo-user-fixed-id';
+    // Fixed demo account credentials (using a valid UUID)
+    static readonly DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
     static readonly DEMO_EMAIL = 'demo@ycmm.app';
     static readonly DEMO_PASSWORD = 'demo';
 
@@ -119,14 +117,13 @@ export class AuthService {
             expiresIn: this.config.jwtExpiresIn as jwt.SignOptions['expiresIn'],
         });
 
-        const refreshTokenValue = uuidv4();
+        const refreshTokenValue = crypto.randomUUID();
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7);
 
         const refreshToken = new RefreshToken();
-        refreshToken.id = uuidv4();
         refreshToken.token = refreshTokenValue;
-        refreshToken.userId = user.id;
+        refreshToken.user = user;
         refreshToken.expiresAt = expiresAt;
         refreshToken.createdAt = new Date();
 
@@ -137,6 +134,7 @@ export class AuthService {
 
     async refreshTokens(refreshTokenValue: string): Promise<{ accessToken: string; refreshToken: string }> {
         const tokenRecord = await this.db.query(RefreshToken)
+            .joinWith('user')
             .filter({ token: refreshTokenValue })
             .findOneOrUndefined();
 
@@ -149,13 +147,7 @@ export class AuthService {
             throw new HttpUnauthorizedError('Refresh Token abgelaufen');
         }
 
-        const user = await this.db.query(User)
-            .filter({ id: tokenRecord.userId })
-            .findOneOrUndefined();
-
-        if (!user) {
-            throw new HttpUnauthorizedError('Benutzer nicht gefunden');
-        }
+        const user = tokenRecord.user;
 
         // Remove old refresh token
         await this.db.remove(tokenRecord);
@@ -191,7 +183,7 @@ export class AuthService {
 
     async revokeAllUserTokens(userId: string): Promise<void> {
         const tokens = await this.db.query(RefreshToken)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         for (const token of tokens) {
@@ -208,7 +200,9 @@ export class AuthService {
             isAdmin: user.isAdmin,
             level: user.level,
             xp: user.xp,
+            locale: user.locale,
             createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
         };
     }
 
@@ -224,7 +218,7 @@ export class AuthService {
 
         // Delete any existing reset tokens for this user
         const existingTokens = await this.db.query(PasswordResetToken)
-            .filter({ userId: user.id })
+            .useInnerJoinWith('user').filter({ id: user.id }).end()
             .find();
 
         for (const token of existingTokens) {
@@ -237,9 +231,8 @@ export class AuthService {
         expiresAt.setHours(expiresAt.getHours() + 1); // Token valid for 1 hour
 
         const resetToken = new PasswordResetToken();
-        resetToken.id = uuidv4();
         resetToken.token = tokenValue;
-        resetToken.userId = user.id;
+        resetToken.user = user;
         resetToken.expiresAt = expiresAt;
         resetToken.createdAt = new Date();
 
@@ -250,6 +243,7 @@ export class AuthService {
 
     async validatePasswordResetToken(token: string): Promise<{ valid: boolean; email?: string }> {
         const tokenRecord = await this.db.query(PasswordResetToken)
+            .useInnerJoinWith('user').end()
             .filter({ token })
             .findOneOrUndefined();
 
@@ -262,20 +256,12 @@ export class AuthService {
             return { valid: false };
         }
 
-        const user = await this.db.query(User)
-            .filter({ id: tokenRecord.userId })
-            .findOneOrUndefined();
-
-        if (!user) {
-            await this.db.remove(tokenRecord);
-            return { valid: false };
-        }
-
-        return { valid: true, email: user.email };
+        return { valid: true, email: tokenRecord.user.email };
     }
 
     async resetPassword(token: string, newPassword: string): Promise<void> {
         const tokenRecord = await this.db.query(PasswordResetToken)
+            .useInnerJoinWith('user').end()
             .filter({ token })
             .findOneOrUndefined();
 
@@ -288,14 +274,7 @@ export class AuthService {
             throw new HttpBadRequestError('Link ist abgelaufen');
         }
 
-        const user = await this.db.query(User)
-            .filter({ id: tokenRecord.userId })
-            .findOneOrUndefined();
-
-        if (!user) {
-            await this.db.remove(tokenRecord);
-            throw new HttpNotFoundError('Benutzer nicht gefunden');
-        }
+        const user = tokenRecord.user;
 
         // Hash new password and update user
         user.password = await bcrypt.hash(newPassword, 12);

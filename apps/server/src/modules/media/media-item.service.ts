@@ -1,4 +1,4 @@
-import { MediaItem, MediaType, MediaStatus, MediaProgress, SeriesSeason, ExternalIds } from '@ycmm/core';
+import { MediaItem, MediaType, MediaStatus, MediaProgress, SeriesSeason, ExternalIds, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -46,35 +46,37 @@ export class MediaItemService {
 
     async getAll(userId: string): Promise<MediaItem[]> {
         return this.database.query(MediaItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getByType(userId: string, type: MediaType): Promise<MediaItem[]> {
         return this.database.query(MediaItem)
-            .filter({ userId, type })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ type })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getByStatus(userId: string, status: MediaStatus): Promise<MediaItem[]> {
         return this.database.query(MediaItem)
-            .filter({ userId, status })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ status })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<MediaItem | undefined> {
         return this.database.query(MediaItem)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async create(userId: string, dto: CreateMediaItemDto): Promise<MediaItem> {
         const item = new MediaItem();
-        item.id = uuidv4();
-        item.userId = userId;
+        item.user = this.database.getReference(User, userId);
         item.type = dto.type;
         item.title = dto.title;
         item.originalTitle = dto.originalTitle || '';
@@ -171,7 +173,7 @@ export class MediaItemService {
         totalPagesRead?: number;
     }> {
         const all = await this.database.query(MediaItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const byType: { type: MediaType; count: number }[] = [];
@@ -225,7 +227,7 @@ export class MediaItemService {
         };
     }> {
         const all = await this.database.query(MediaItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const completed = all.filter(i => i.status === 'completed');

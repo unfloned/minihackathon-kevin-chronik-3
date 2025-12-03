@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
 import { NotificationService } from '../notifications/index';
 import {
@@ -226,7 +225,6 @@ export class GamificationService {
             if ( exists ) continue;
 
             const achievement = new Achievement();
-            achievement.id = uuidv4();
             achievement.key = achievementData.key;
             achievement.name = achievementData.name;
             achievement.description = achievementData.description;
@@ -270,15 +268,17 @@ export class GamificationService {
     async checkAndUnlockAchievement(userId: string, achievementKey: string): Promise<AchievementPublic | null> {
         // Get all user achievements and check if already unlocked
         const userAchievements = await this.db.query(UserAchievement)
-            .filter({ userId })
+            .joinWith('achievement')
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         // Get achievement IDs the user has
-        const unlockedAchievementIds = userAchievements.map(ua => ua.achievementId);
+        const unlockedAchievementIds = userAchievements.map((ua: UserAchievement) => ua.achievement.id);
 
-        // Get all achievements to check if key is already unlocked
-        const achievements = await this.db.query(Achievement).find();
-        const achievementByKey = achievements.find(a => a.key === achievementKey);
+        // Get achievement by key
+        const achievementByKey = await this.db.query(Achievement)
+            .filter({ key: achievementKey })
+            .findOneOrUndefined();
 
         if (!achievementByKey) {
             return null;
@@ -290,9 +290,8 @@ export class GamificationService {
 
         // Unlock achievement
         const userAchievement = new UserAchievement();
-        userAchievement.id = uuidv4();
-        userAchievement.userId = userId;
-        userAchievement.achievementId = achievementByKey.id;
+        userAchievement.user = this.db.getReference(User, userId);
+        userAchievement.achievement = achievementByKey;
         userAchievement.unlockedAt = new Date();
 
         await this.db.persist(userAchievement);
@@ -324,42 +323,32 @@ export class GamificationService {
 
     async getUserAchievements(userId: string): Promise<AchievementPublic[]> {
         const userAchievements = await this.db.query(UserAchievement)
-            .filter({ userId })
+            .joinWith('achievement')
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         if (userAchievements.length === 0) {
             return [];
         }
 
-        const achievementIds = userAchievements.map(ua => ua.achievementId);
-        const achievements = await this.db.query(Achievement)
-            .filter({ id: { $in: achievementIds } })
-            .find();
-
-        const achievementMap = new Map(achievements.map(a => [a.id, a]));
-
-        return userAchievements
-            .filter(ua => achievementMap.has(ua.achievementId))
-            .map(ua => {
-                const achievement = achievementMap.get(ua.achievementId)!;
-                return {
-                    id: achievement.id,
-                    key: achievement.key,
-                    name: achievement.name,
-                    description: achievement.description,
-                    icon: achievement.icon,
-                    category: achievement.category,
-                    xpReward: achievement.xpReward,
-                    type: achievement.type,
-                    tier: achievement.tier,
-                    unlockedAt: ua.unlockedAt,
-                };
-            });
+        return userAchievements.map((ua: UserAchievement) => ({
+            id: ua.achievement.id,
+            key: ua.achievement.key,
+            name: ua.achievement.name,
+            description: ua.achievement.description,
+            icon: ua.achievement.icon,
+            category: ua.achievement.category,
+            xpReward: ua.achievement.xpReward,
+            type: ua.achievement.type,
+            tier: ua.achievement.tier,
+            unlockedAt: ua.unlockedAt,
+        }));
     }
 
     async getRecentAchievements(userId: string, limit = 3): Promise<AchievementPublic[]> {
         const userAchievements = await this.db.query(UserAchievement)
-            .filter({ userId })
+            .joinWith('achievement')
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('unlockedAt', 'desc')
             .limit(limit)
             .find();
@@ -368,30 +357,18 @@ export class GamificationService {
             return [];
         }
 
-        const achievementIds = userAchievements.map(ua => ua.achievementId);
-        const achievements = await this.db.query(Achievement)
-            .filter({ id: { $in: achievementIds } })
-            .find();
-
-        const achievementMap = new Map(achievements.map(a => [a.id, a]));
-
-        return userAchievements
-            .filter(ua => achievementMap.has(ua.achievementId))
-            .map(ua => {
-                const achievement = achievementMap.get(ua.achievementId)!;
-                return {
-                    id: achievement.id,
-                    key: achievement.key,
-                    name: achievement.name,
-                    description: achievement.description,
-                    icon: achievement.icon,
-                    category: achievement.category,
-                    xpReward: achievement.xpReward,
-                    type: achievement.type,
-                    tier: achievement.tier,
-                    unlockedAt: ua.unlockedAt,
-                };
-            });
+        return userAchievements.map((ua: UserAchievement) => ({
+            id: ua.achievement.id,
+            key: ua.achievement.key,
+            name: ua.achievement.name,
+            description: ua.achievement.description,
+            icon: ua.achievement.icon,
+            category: ua.achievement.category,
+            xpReward: ua.achievement.xpReward,
+            type: ua.achievement.type,
+            tier: ua.achievement.tier,
+            unlockedAt: ua.unlockedAt,
+        }));
     }
 
     async getAllAchievements(): Promise<Achievement[]> {

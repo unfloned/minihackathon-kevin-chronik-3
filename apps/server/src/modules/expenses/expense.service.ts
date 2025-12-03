@@ -1,7 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
 import { GamificationService } from '../gamification/gamification.service';
-import { Expense, ExpenseCategory } from '@ycmm/core';
+import { Expense, ExpenseCategory, User } from '@ycmm/core';
 
 const DEFAULT_CATEGORIES = [
     { name: 'Essen & Trinken', icon: 'burger', color: '#fa5252' },
@@ -59,14 +58,13 @@ export class ExpenseService {
 
     async initializeDefaultCategories(userId: string): Promise<void> {
         const existingCategories = await this.db.query(ExpenseCategory)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .count();
 
         if (existingCategories === 0) {
             for (const cat of DEFAULT_CATEGORIES) {
                 const category = new ExpenseCategory();
-                category.id = uuidv4();
-                category.userId = userId;
+                category.user = this.db.getReference(User, userId);
                 category.name = cat.name;
                 category.icon = cat.icon;
                 category.color = cat.color;
@@ -81,15 +79,14 @@ export class ExpenseService {
     async getCategories(userId: string): Promise<ExpenseCategory[]> {
         await this.initializeDefaultCategories(userId);
         return this.db.query(ExpenseCategory)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('name', 'asc')
             .find();
     }
 
     async createCategory(userId: string, dto: CreateCategoryDto): Promise<ExpenseCategory> {
         const category = new ExpenseCategory();
-        category.id = uuidv4();
-        category.userId = userId;
+        category.user = this.db.getReference(User, userId);
         category.name = dto.name;
         category.icon = dto.icon || 'coin';
         category.color = dto.color || '#228be6';
@@ -107,7 +104,8 @@ export class ExpenseService {
         dto: Partial<CreateCategoryDto>
     ): Promise<ExpenseCategory | null> {
         const category = await this.db.query(ExpenseCategory)
-            .filter({ id: categoryId, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id: categoryId })
             .findOneOrUndefined();
 
         if (!category) return null;
@@ -123,14 +121,15 @@ export class ExpenseService {
 
     async deleteCategory(categoryId: string, userId: string): Promise<boolean> {
         const category = await this.db.query(ExpenseCategory)
-            .filter({ id: categoryId, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id: categoryId })
             .findOneOrUndefined();
 
         if (!category) return false;
 
         // Check for expenses using this category
         const expenseCount = await this.db.query(Expense)
-            .filter({ categoryId })
+            .useInnerJoinWith('category').filter({ id: categoryId }).end()
             .count();
 
         if (expenseCount > 0) {
@@ -143,9 +142,8 @@ export class ExpenseService {
 
     async create(userId: string, dto: CreateExpenseDto): Promise<Expense> {
         const expense = new Expense();
-        expense.id = uuidv4();
-        expense.userId = userId;
-        expense.categoryId = dto.categoryId;
+        expense.user = this.db.getReference(User, userId);
+        expense.category = this.db.getReference(ExpenseCategory, dto.categoryId);
         expense.amount = dto.amount;
         expense.description = dto.description;
         expense.date = dto.date;
@@ -163,7 +161,9 @@ export class ExpenseService {
         await this.gamificationService.awardXp(userId, 5, 'expense_logged');
 
         // Check for expense count achievements
-        const expenseCount = await this.db.query(Expense).filter({ userId }).count();
+        const expenseCount = await this.db.query(Expense)
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .count();
         if (expenseCount >= 10) {
             await this.gamificationService.checkAndUnlockAchievement(userId, 'expenses_10');
         }
@@ -176,23 +176,18 @@ export class ExpenseService {
 
     async getAll(userId: string, limit = 50): Promise<ExpenseWithCategory[]> {
         const expenses = await this.db.query(Expense)
-            .filter({ userId })
+            .joinWith('category')
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('date', 'desc')
             .limit(limit)
             .find();
 
-        const categories = await this.getCategories(userId);
-        const categoryMap = new Map(categories.map(c => [c.id, c]));
-
-        return expenses.map(expense => {
-            const category = categoryMap.get(expense.categoryId);
-            return {
-                ...expense,
-                categoryName: category?.name,
-                categoryIcon: category?.icon,
-                categoryColor: category?.color,
-            };
-        });
+        return expenses.map((expense: Expense) => ({
+            ...expense,
+            categoryName: expense.category.name,
+            categoryIcon: expense.category.icon,
+            categoryColor: expense.category.color,
+        }));
     }
 
     async getByMonth(userId: string, year: number, month: number): Promise<ExpenseWithCategory[]> {
@@ -202,27 +197,24 @@ export class ExpenseService {
         const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`;
 
         const expenses = await this.db.query(Expense)
-            .filter({ userId, date: { $gte: startDate, $lt: endDate } })
+            .joinWith('category')
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ date: { $gte: startDate, $lt: endDate } })
             .orderBy('date', 'desc')
             .find();
 
-        const categories = await this.getCategories(userId);
-        const categoryMap = new Map(categories.map(c => [c.id, c]));
-
-        return expenses.map(expense => {
-            const category = categoryMap.get(expense.categoryId);
-            return {
-                ...expense,
-                categoryName: category?.name,
-                categoryIcon: category?.icon,
-                categoryColor: category?.color,
-            };
-        });
+        return expenses.map((expense: Expense) => ({
+            ...expense,
+            categoryName: expense.category.name,
+            categoryIcon: expense.category.icon,
+            categoryColor: expense.category.color,
+        }));
     }
 
     async getById(expenseId: string, userId: string): Promise<Expense | undefined> {
         return this.db.query(Expense)
-            .filter({ id: expenseId, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id: expenseId })
             .findOneOrUndefined();
     }
 
@@ -232,7 +224,7 @@ export class ExpenseService {
 
         if (dto.amount !== undefined) expense.amount = dto.amount;
         if (dto.description !== undefined) expense.description = dto.description;
-        if (dto.categoryId !== undefined) expense.categoryId = dto.categoryId;
+        if (dto.categoryId !== undefined) expense.category = this.db.getReference(ExpenseCategory, dto.categoryId);
         if (dto.date !== undefined) expense.date = dto.date;
         if (dto.isRecurring !== undefined) expense.isRecurring = dto.isRecurring;
         if (dto.recurringInterval !== undefined) expense.recurringInterval = dto.recurringInterval;
@@ -260,8 +252,9 @@ export class ExpenseService {
         // Group by category
         const categoryTotals = new Map<string, number>();
         for (const expense of expenses) {
-            const current = categoryTotals.get(expense.categoryId) || 0;
-            categoryTotals.set(expense.categoryId, current + expense.amount);
+            const categoryId = expense.category.id;
+            const current = categoryTotals.get(categoryId) || 0;
+            categoryTotals.set(categoryId, current + expense.amount);
         }
 
         const byCategory = categories.map(cat => ({

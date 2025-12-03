@@ -43,12 +43,12 @@ export class StartupListener {
 
             // Check if demo data exists
             const demoHabits = await this.database.query(Habit)
-                .filter({ userId: AuthService.DEMO_USER_ID })
+                .useInnerJoinWith('user').filter({ id: AuthService.DEMO_USER_ID }).end()
                 .count();
 
             if (demoHabits === 0) {
                 this.logger.log('Seeding demo data...');
-                await this.adminService.seedDemoData(AuthService.DEMO_USER_ID);
+                await this.adminService.seedDemoData(demoUser);
                 this.logger.log('Demo data seeded successfully.');
             } else {
                 this.logger.log('Demo data already exists, skipping seed.');

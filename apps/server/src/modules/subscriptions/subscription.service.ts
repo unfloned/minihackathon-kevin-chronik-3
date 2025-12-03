@@ -1,7 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
 import { GamificationService } from '../gamification/gamification.service';
-import { Subscription, SubscriptionBillingCycle, SubscriptionStatus } from '@ycmm/core';
+import { Subscription, SubscriptionBillingCycle, SubscriptionStatus, User } from '@ycmm/core';
 
 export interface CreateSubscriptionDto {
     name: string;
@@ -104,8 +103,7 @@ export class SubscriptionService {
 
     async create(userId: string, dto: CreateSubscriptionDto): Promise<Subscription> {
         const subscription = new Subscription();
-        subscription.id = uuidv4();
-        subscription.userId = userId;
+        subscription.user = this.db.getReference(User, userId);
         subscription.name = dto.name;
         subscription.description = dto.description;
         subscription.amount = dto.amount;
@@ -134,7 +132,7 @@ export class SubscriptionService {
         await this.gamificationService.checkAndUnlockAchievement(userId, 'first_subscription');
 
         // Check for subscriptions_5 achievement
-        const subCount = await this.db.query(Subscription).filter({ userId }).count();
+        const subCount = await this.db.query(Subscription).useInnerJoinWith('user').filter({ id: userId }).end().count();
         if (subCount >= 5) {
             await this.gamificationService.checkAndUnlockAchievement(userId, 'subscriptions_5');
         }
@@ -144,21 +142,23 @@ export class SubscriptionService {
 
     async getAll(userId: string): Promise<Subscription[]> {
         return this.db.query(Subscription)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('name', 'asc')
             .find();
     }
 
     async getActive(userId: string): Promise<Subscription[]> {
         return this.db.query(Subscription)
-            .filter({ userId, status: 'active' })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ status: 'active' })
             .orderBy('nextBillingDate', 'asc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<Subscription | undefined> {
         return this.db.query(Subscription)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 

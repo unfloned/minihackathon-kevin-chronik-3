@@ -1,6 +1,6 @@
-import { List, ListItem, ListType, ListItemPriority } from '@ycmm/core';
+import { List, ListItem, ListType, ListItemPriority, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 export interface CreateListDto {
     name: string;
@@ -50,7 +50,7 @@ function generateSlug(name: string): string {
         .replace(/[ß]/g, 'ss')
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-|-$/g, '')
-        + '-' + uuidv4().substring(0, 8);
+        + '-' + crypto.randomUUID().substring(0, 8);
 }
 
 export class ListService {
@@ -58,35 +58,40 @@ export class ListService {
 
     async getAll(userId: string): Promise<List[]> {
         return this.database.query(List)
-            .filter({ userId, isArchived: false, isTemplate: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: false, isTemplate: false })
             .orderBy('createdAt', 'desc')
             .find();
     }
 
     async getArchived(userId: string): Promise<List[]> {
         return this.database.query(List)
-            .filter({ userId, isArchived: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: true })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getTemplates(userId: string): Promise<List[]> {
         return this.database.query(List)
-            .filter({ userId, isTemplate: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isTemplate: true })
             .orderBy('name', 'asc')
             .find();
     }
 
     async getByType(userId: string, type: ListType): Promise<List[]> {
         return this.database.query(List)
-            .filter({ userId, type, isArchived: false, isTemplate: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ type, isArchived: false, isTemplate: false })
             .orderBy('createdAt', 'desc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<List | undefined> {
         return this.database.query(List)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
@@ -98,8 +103,7 @@ export class ListService {
 
     async create(userId: string, dto: CreateListDto): Promise<List> {
         const list = new List();
-        list.id = uuidv4();
-        list.userId = userId;
+        list.user = this.database.getReference(User, userId);
         list.name = dto.name;
         list.description = dto.description || '';
         list.type = dto.type;
@@ -124,8 +128,7 @@ export class ListService {
         if (!template) return null;
 
         const list = new List();
-        list.id = uuidv4();
-        list.userId = userId;
+        list.user = this.database.getReference(User, userId);
         list.name = name;
         list.description = template.description;
         list.type = template.type;
@@ -133,7 +136,7 @@ export class ListService {
         list.color = template.color;
         list.items = template.items.map(item => ({
             ...item,
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             completed: false,
         }));
         list.publicSlug = generateSlug(name);
@@ -196,7 +199,7 @@ export class ListService {
         if (!list) return null;
 
         const newItem: ListItem = {
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             text: dto.text,
             completed: false,
             quantity: dto.quantity,

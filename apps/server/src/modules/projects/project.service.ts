@@ -1,6 +1,6 @@
-import { Project, ProjectTask, Milestone, ProjectType, ProjectStatus, TaskPriority } from '@ycmm/core';
+import { Project, ProjectTask, Milestone, ProjectType, ProjectStatus, TaskPriority, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 export interface CreateProjectDto {
     name: string;
@@ -70,42 +70,46 @@ export class ProjectService {
 
     async getAll(userId: string): Promise<Project[]> {
         return this.database.query(Project)
-            .filter({ userId, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: false })
             .orderBy('createdAt', 'desc')
             .find();
     }
 
     async getArchived(userId: string): Promise<Project[]> {
         return this.database.query(Project)
-            .filter({ userId, isArchived: true })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: true })
             .orderBy('updatedAt', 'desc')
             .find();
     }
 
     async getByStatus(userId: string, status: ProjectStatus): Promise<Project[]> {
         return this.database.query(Project)
-            .filter({ userId, status, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ status, isArchived: false })
             .orderBy('createdAt', 'desc')
             .find();
     }
 
     async getByType(userId: string, type: ProjectType): Promise<Project[]> {
         return this.database.query(Project)
-            .filter({ userId, type, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ type, isArchived: false })
             .orderBy('createdAt', 'desc')
             .find();
     }
 
     async getById(id: string, userId: string): Promise<Project | undefined> {
         return this.database.query(Project)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async create(userId: string, dto: CreateProjectDto): Promise<Project> {
         const project = new Project();
-        project.id = uuidv4();
-        project.userId = userId;
+        project.user = this.database.getReference(User, userId);
         project.name = dto.name;
         project.description = dto.description || '';
         project.type = dto.type;
@@ -184,7 +188,7 @@ export class ProjectService {
         if (!project) return null;
 
         const newTask: ProjectTask = {
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             title: dto.title,
             description: dto.description,
             completed: false,
@@ -262,7 +266,7 @@ export class ProjectService {
         if (!project) return null;
 
         const newMilestone: Milestone = {
-            id: uuidv4(),
+            id: crypto.randomUUID(),
             title: dto.title,
             description: dto.description,
             targetDate: dto.targetDate,
@@ -338,7 +342,8 @@ export class ProjectService {
         goals: number;
     }> {
         const all = await this.database.query(Project)
-            .filter({ userId, isArchived: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isArchived: false })
             .find();
 
         return {

@@ -1,6 +1,6 @@
-import { InventoryItem, ItemLocation, ItemWarranty, ItemLent } from '@ycmm/core';
+import { InventoryItem, ItemLocation, ItemWarranty, ItemLent, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
-import { v4 as uuidv4 } from 'uuid';
+import crypto from 'crypto';
 
 export interface CreateInventoryItemDto {
     name: string;
@@ -40,35 +40,36 @@ export class InventoryItemService {
 
     async getAll(userId: string): Promise<InventoryItem[]> {
         return this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('name', 'asc')
             .find();
     }
 
     async getByCategory(userId: string, category: string): Promise<InventoryItem[]> {
         return this.database.query(InventoryItem)
-            .filter({ userId, category })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ category })
             .orderBy('name', 'asc')
             .find();
     }
 
     async getByLocation(userId: string, area: string): Promise<InventoryItem[]> {
         const items = await this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
         return items.filter(item => item.location.area === area);
     }
 
     async getLentItems(userId: string): Promise<InventoryItem[]> {
         const items = await this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
         return items.filter(item => item.isLent !== undefined);
     }
 
     async search(userId: string, query: string): Promise<InventoryItem[]> {
         const items = await this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const q = query.toLowerCase();
@@ -84,14 +85,14 @@ export class InventoryItemService {
 
     async getById(id: string, userId: string): Promise<InventoryItem | undefined> {
         return this.database.query(InventoryItem)
-            .filter({ id, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id })
             .findOneOrUndefined();
     }
 
     async create(userId: string, dto: CreateInventoryItemDto): Promise<InventoryItem> {
         const item = new InventoryItem();
-        item.id = uuidv4();
-        item.userId = userId;
+        item.user = this.database.getReference(User, userId);
         item.name = dto.name;
         item.description = dto.description || '';
         item.category = dto.category || '';
@@ -103,7 +104,7 @@ export class InventoryItemService {
         item.currentValue = dto.currentValue;
         item.serialNumber = dto.serialNumber || '';
         item.warranty = dto.warranty;
-        item.qrCode = uuidv4(); // Generate unique QR code identifier
+        item.qrCode = crypto.randomUUID(); // Generate unique QR code identifier
         item.createdAt = new Date();
         item.updatedAt = new Date();
 
@@ -169,7 +170,7 @@ export class InventoryItemService {
 
     async getCategories(userId: string): Promise<string[]> {
         const items = await this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const categories = new Set<string>();
@@ -181,7 +182,7 @@ export class InventoryItemService {
 
     async getLocations(userId: string): Promise<{ area: string; containers: string[] }[]> {
         const items = await this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const locationMap = new Map<string, Set<string>>();
@@ -212,7 +213,7 @@ export class InventoryItemService {
         locations: number;
     }> {
         const items = await this.database.query(InventoryItem)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
 
         const categories = new Set<string>();

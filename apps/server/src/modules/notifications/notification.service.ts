@@ -1,6 +1,5 @@
-import { v4 as uuidv4 } from 'uuid';
 import { AppDatabase } from '../../app/database';
-import { Notification, type NotificationType } from '@ycmm/core';
+import { Notification, type NotificationType, User } from '@ycmm/core';
 
 export interface NotificationPublic {
     id: string;
@@ -23,8 +22,7 @@ export class NotificationService {
         link?: string
     ): Promise<Notification> {
         const notification = new Notification();
-        notification.id = uuidv4();
-        notification.userId = userId;
+        notification.user = this.db.getReference(User, userId);
         notification.type = type;
         notification.title = title;
         notification.message = message;
@@ -38,7 +36,7 @@ export class NotificationService {
 
     async getForUser(userId: string, limit = 20): Promise<NotificationPublic[]> {
         const notifications = await this.db.query(Notification)
-            .filter({ userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('createdAt', 'desc')
             .limit(limit)
             .find();
@@ -48,13 +46,15 @@ export class NotificationService {
 
     async getUnreadCount(userId: string): Promise<number> {
         return this.db.query(Notification)
-            .filter({ userId, isRead: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isRead: false })
             .count();
     }
 
     async markAsRead(notificationId: string, userId: string): Promise<boolean> {
         const notification = await this.db.query(Notification)
-            .filter({ id: notificationId, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id: notificationId })
             .findOneOrUndefined();
 
         if (!notification) {
@@ -68,7 +68,8 @@ export class NotificationService {
 
     async markAllAsRead(userId: string): Promise<number> {
         const unread = await this.db.query(Notification)
-            .filter({ userId, isRead: false })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ isRead: false })
             .find();
 
         for (const notification of unread) {
@@ -81,7 +82,8 @@ export class NotificationService {
 
     async delete(notificationId: string, userId: string): Promise<boolean> {
         const notification = await this.db.query(Notification)
-            .filter({ id: notificationId, userId })
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ id: notificationId })
             .findOneOrUndefined();
 
         if (!notification) {
