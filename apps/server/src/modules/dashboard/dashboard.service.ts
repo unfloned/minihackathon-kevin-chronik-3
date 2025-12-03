@@ -101,9 +101,9 @@ export class DashboardService {
         );
 
         const categories = currentMonthStats.byCategory.map(cat => ({
-            name: cat.name,
+            name: cat.categoryName,
             total: cat.amount,
-            color: cat.color,
+            color: cat.categoryColor,
         }));
 
         return { categories, monthlyTrend };

@@ -45,7 +45,7 @@ export interface ExpenseWithCategory extends Expense {
 
 export interface MonthlyStats {
     total: number;
-    byCategory: { categoryId: string; name: string; icon: string; color: string; amount: number; budget?: number }[];
+    byCategory: { categoryId: string; categoryName: string; categoryIcon: string; categoryColor: string; amount: number; count: number; budget?: number }[];
     dailyTotals: { date: string; amount: number }[];
     comparedToLastMonth: number; // Percentage change
 }
@@ -250,21 +250,28 @@ export class ExpenseService {
         const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
         // Group by category
-        const categoryTotals = new Map<string, number>();
+        const categoryTotals = new Map<string, { amount: number; count: number }>();
         for (const expense of expenses) {
             const categoryId = expense.category.id;
-            const current = categoryTotals.get(categoryId) || 0;
-            categoryTotals.set(categoryId, current + expense.amount);
+            const current = categoryTotals.get(categoryId) || { amount: 0, count: 0 };
+            categoryTotals.set(categoryId, {
+                amount: current.amount + expense.amount,
+                count: current.count + 1
+            });
         }
 
-        const byCategory = categories.map(cat => ({
-            categoryId: cat.id,
-            name: cat.name,
-            icon: cat.icon,
-            color: cat.color,
-            amount: categoryTotals.get(cat.id) || 0,
-            budget: cat.budget,
-        })).filter(c => c.amount > 0);
+        const byCategory = categories.map(cat => {
+            const stats = categoryTotals.get(cat.id) || { amount: 0, count: 0 };
+            return {
+                categoryId: cat.id,
+                categoryName: cat.name,
+                categoryIcon: cat.icon,
+                categoryColor: cat.color,
+                amount: stats.amount,
+                count: stats.count,
+                budget: cat.budget,
+            };
+        }).filter(c => c.amount > 0);
 
         // Daily totals
         const dailyMap = new Map<string, number>();
