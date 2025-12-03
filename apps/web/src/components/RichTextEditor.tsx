@@ -34,7 +34,7 @@ export function NoteRichTextEditor({ content, onChange, placeholder }: RichTextE
     });
 
     return (
-        <RichTextEditor editor={editor} styles={{ root: { minHeight: 300 } }}>
+        <RichTextEditor editor={editor} styles={{ content: { minHeight: 300 } }}>
             <RichTextEditor.Toolbar sticky stickyOffset={60}>
                 <RichTextEditor.ControlsGroup>
                     <RichTextEditor.Bold />

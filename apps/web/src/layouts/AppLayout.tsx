@@ -217,7 +217,7 @@ export default function AppLayout() {
                 </Group>
             </AppShell.Header>
 
-            <AppShell.Navbar p="xs">
+            <AppShell.Navbar p="xs" style={{ overflowY: 'auto' }}>
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}

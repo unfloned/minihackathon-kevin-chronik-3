@@ -41,29 +41,12 @@ import {
 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useRequest, useConfetti } from '../../../hooks';
-import type { AchievementPublic } from '@ycmm/core';
+import type { AchievementPublic, GamificationStats } from '@ycmm/core';
 
-interface Achievement {
-    id: string;
-    key: string;
-    name: string;
-    description: string;
-    icon: string;
-    category: string;
-    xpReward: number;
-    requirement: number;
-    isHidden: boolean;
-}
-
-interface GamificationStats {
-    level: number;
-    xp: number;
-    xpProgress: {
-        current: number;
-        required: number;
-        percentage: number;
-    };
-    achievementsUnlocked: number;
+// Achievement interface extends AchievementPublic with additional fields for display
+interface Achievement extends AchievementPublic {
+    requirement?: number;
+    isHidden?: boolean;
 }
 
 const iconMap: Record<string, React.ElementType> = {

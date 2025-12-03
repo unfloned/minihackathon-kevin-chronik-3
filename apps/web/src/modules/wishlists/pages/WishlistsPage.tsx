@@ -43,57 +43,17 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
 import PageLayout, { StatsGrid } from '../../../components/PageLayout';
+import type {
+    WishlistPriority,
+    WishlistCategory,
+    PriceInfo,
+    WishlistItemWithDetails,
+    WishlistStats,
+    CreateWishlistItemDto,
+} from '@ycmm/core';
 
-import type { WishlistPriority, WishlistCategory, PriceInfo } from '@ycmm/core';
-
-interface WishlistItem {
-    id: string;
-    userId: string;
-    name: string;
-    description: string;
-    imageUrl: string;
-    productUrl: string;
-    category: WishlistCategory;
-    tags: string[];
-    priority: WishlistPriority;
-    isPurchased: boolean;
-    purchasedAt?: string;
-    price?: PriceInfo;
-    targetPrice?: number;
-    isGiftIdea: boolean;
-    giftFor?: string;
-    occasion?: string;
-    notes: string;
-    store: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface WishlistStats {
-    totalItems: number;
-    totalWishlists: number;
-    purchased: number;
-    totalValue: number;
-    byCategory: { category: WishlistCategory; count: number }[];
-    byPriority: { priority: WishlistPriority; count: number }[];
-    giftIdeas: number;
-}
-
-interface CreateWishlistItemDto {
-    name: string;
-    description?: string;
-    imageUrl?: string;
-    productUrl?: string;
-    category?: WishlistCategory;
-    priority?: WishlistPriority;
-    price?: PriceInfo;
-    targetPrice?: number;
-    isGiftIdea?: boolean;
-    giftFor?: string;
-    occasion?: string;
-    notes?: string;
-    store?: string;
-}
+// Alias for component usage
+type WishlistItem = WishlistItemWithDetails;
 
 const categoryOptions: { value: WishlistCategory; label: string; icon: typeof IconDevices }[] = [
     { value: 'tech', label: 'Technik', icon: IconDevices },

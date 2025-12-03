@@ -18,18 +18,10 @@ import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useRequest, useMutation } from '../../../hooks';
 import { NoteRichTextEditor } from '../../../components/RichTextEditor';
+import type { NoteSimple } from '@ycmm/core';
 
-interface Note {
-    id: string;
-    title: string;
-    content: string;
-    tags: string[];
-    color: string;
-    isPinned: boolean;
-    isArchived: boolean;
-    createdAt: string;
-    updatedAt: string;
-}
+// Alias for component usage
+type Note = NoteSimple;
 
 interface NoteForm {
     title: string;

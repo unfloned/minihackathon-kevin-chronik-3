@@ -44,58 +44,17 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import type {
+    MediaType,
+    MediaStatus,
+    MediaItemWithDetails,
+    MediaStats,
+    CreateMediaItemDto,
+} from '@ycmm/core';
 
-import type { MediaType, MediaStatus, MediaProgress, SeriesSeason, ExternalIds } from '@ycmm/core';
-
-interface MediaItem {
-    id: string;
-    userId: string;
-    type: MediaType;
-    title: string;
-    originalTitle: string;
-    year?: number;
-    creator: string;
-    coverUrl: string;
-    description: string;
-    status: MediaStatus;
-    startedAt?: string;
-    finishedAt?: string;
-    progress?: MediaProgress;
-    seasons?: SeriesSeason[];
-    rating?: number;
-    review: string;
-    genre: string[];
-    tags: string[];
-    source: string;
-    externalIds?: ExternalIds;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface MediaStats {
-    total: number;
-    byType: { type: MediaType; count: number }[];
-    byStatus: { status: MediaStatus; count: number }[];
-    completedThisYear: number;
-    averageRating: number | null;
-}
-
-interface CreateMediaDto {
-    type: MediaType;
-    title: string;
-    originalTitle?: string;
-    year?: number;
-    creator?: string;
-    coverUrl?: string;
-    description?: string;
-    status?: MediaStatus;
-    rating?: number;
-    review?: string;
-    genre?: string[];
-    tags?: string[];
-    source?: string;
-    progress?: MediaProgress;
-}
+// Alias for component usage
+type MediaItem = MediaItemWithDetails;
+type CreateMediaDto = CreateMediaItemDto;
 
 const mediaTypes: { value: MediaType; label: string; icon: typeof IconMovie }[] = [
     { value: 'movie', label: 'Film', icon: IconMovie },

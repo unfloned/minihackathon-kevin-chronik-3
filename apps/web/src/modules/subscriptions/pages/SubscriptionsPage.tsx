@@ -34,29 +34,10 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import type { SubscriptionSimple, SubscriptionStats, SubscriptionBillingCycle, SubscriptionStatus } from '@ycmm/core';
 
-type SubscriptionBillingCycle = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
-type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
-
-interface Subscription {
-    id: string;
-    name: string;
-    description: string;
-    amount: number;
-    billingCycle: SubscriptionBillingCycle;
-    billingDay: number;
-    category: string;
-    website: string;
-    status: SubscriptionStatus;
-    nextBillingDate?: string;
-    createdAt: string;
-}
-
-interface SubscriptionStats {
-    monthlyCost: number;
-    yearlyCost: number;
-    count: number;
-}
+// Alias for component usage
+type Subscription = SubscriptionSimple;
 
 interface CreateSubscriptionForm {
     name: string;

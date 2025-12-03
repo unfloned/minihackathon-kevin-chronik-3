@@ -42,36 +42,10 @@ import {
 import { notifications } from '@mantine/notifications';
 import { useRequest, useMutation } from '../../../hooks';
 import PageLayout from '../../../components/PageLayout';
+import type { ProjectSimple, ProjectType, ProjectStatus } from '@ycmm/core';
 
-type ProjectType = 'project' | 'goal';
-type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled';
-
-interface ProjectTask {
-    id: string;
-    title: string;
-    completed: boolean;
-}
-
-interface Milestone {
-    id: string;
-    title: string;
-    completed: boolean;
-}
-
-interface Project {
-    id: string;
-    name: string;
-    description: string;
-    type: ProjectType;
-    status: ProjectStatus;
-    progress: number;
-    targetDate?: string;
-    tasks: ProjectTask[];
-    milestones: Milestone[];
-    color: string;
-    isArchived: boolean;
-    createdAt: string;
-}
+// Alias for component usage
+type Project = ProjectSimple;
 
 interface CreateProjectForm {
     name: string;
@@ -365,7 +339,7 @@ export default function ProjectsPage() {
                                     radius="md"
                                     withBorder
                                     style={{ cursor: 'pointer', position: 'relative' }}
-                                    onClick={() => navigate(`/projects/${project.id}`)}
+                                    onClick={() => navigate(`/app/projects/${project.id}`)}
                                 >
                                     <Stack gap="sm">
                                         <Group justify="space-between" wrap="nowrap">

@@ -38,27 +38,10 @@ import {
 } from '@tabler/icons-react';
 import { useRequest } from '../../../hooks';
 import { useMutation } from '../../../hooks';
+import type { ListSimple, ListItem, ListType } from '@ycmm/core';
 
-type ListType = 'shopping' | 'todo' | 'packing' | 'checklist' | 'custom';
-
-interface ListItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  quantity?: number;
-  priority: 'low' | 'medium' | 'high';
-}
-
-interface List {
-  id: string;
-  name: string;
-  description: string;
-  type: ListType;
-  color: string;
-  items: ListItem[];
-  isArchived: boolean;
-  createdAt: string;
-}
+// Alias for component usage
+type List = ListSimple;
 
 const listTypeOptions = [
   { value: 'shopping', label: 'Einkaufsliste' },
@@ -516,9 +499,11 @@ function ListsPage() {
                                   {item.quantity}x
                                 </Badge>
                               )}
-                              <Badge size="sm" color={priorityColors[item.priority]} variant="dot">
-                                {priorityLabels[item.priority]}
-                              </Badge>
+                              {item.priority && (
+                                <Badge size="sm" color={priorityColors[item.priority]} variant="dot">
+                                  {priorityLabels[item.priority]}
+                                </Badge>
+                              )}
                             </Group>
                             <ActionIcon
                               color="red"

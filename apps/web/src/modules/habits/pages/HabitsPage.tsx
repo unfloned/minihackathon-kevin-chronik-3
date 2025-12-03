@@ -37,46 +37,20 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation, useConfetti } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import type { HabitStats, HabitWithStatus, HabitType, HabitFrequency } from '@ycmm/core';
 
-interface Habit {
-    id: string;
-    name: string;
-    description?: string;
-    icon: string;
-    color: string;
-    type: 'boolean' | 'quantity' | 'duration';
-    targetValue?: number;
-    unit?: string;
-    frequency: 'daily' | 'weekly' | 'custom';
-    currentStreak: number;
-    longestStreak: number;
-    totalCompletions: number;
-    completedToday?: boolean;
-    todayValue?: number;
-    // Timer fields from server
-    timerStartedAt?: string;
-    timerRunning?: boolean;
-}
-
-interface HabitStats {
-    totalHabits: number;
-    activeHabits: number;
-    completedToday: number;
-    totalToday: number;
-    currentStreak: number;
-    longestStreak: number;
-    weeklyCompletion: number[];
-}
+// Alias for component usage
+type Habit = HabitWithStatus;
 
 interface CreateHabitForm {
     name: string;
     description: string;
     icon: string;
     color: string;
-    type: 'boolean' | 'quantity' | 'duration';
+    type: HabitType;
     targetValue: number;
     unit: string;
-    frequency: 'daily' | 'weekly' | 'custom';
+    frequency: HabitFrequency;
 }
 
 // Duration unit options

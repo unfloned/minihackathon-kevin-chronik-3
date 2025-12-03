@@ -33,35 +33,11 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import type { ExpenseWithCategory, ExpenseStats, ExpenseCategorySimple } from '@ycmm/core';
 
-interface Expense {
-    id: string;
-    amount: number;
-    description: string;
-    categoryId: string;
-    category?: { id: string; name: string; color: string; icon: string };
-    date: string;
-    createdAt: string;
-}
-
-interface ExpenseCategory {
-    id: string;
-    name: string;
-    color: string;
-    icon: string;
-}
-
-interface ExpenseStats {
-    total: number;
-    byCategory: {
-        categoryId: string;
-        categoryName: string;
-        categoryColor: string;
-        categoryIcon: string;
-        amount: number;
-        count: number;
-    }[];
-}
+// Alias for component usage
+type Expense = ExpenseWithCategory;
+type ExpenseCategory = ExpenseCategorySimple;
 
 interface ExpenseFormData {
     amount: number | string;
@@ -422,13 +398,13 @@ export default function ExpensesPage() {
                                         <Table.Td>{formatDate(expense.date)}</Table.Td>
                                         <Table.Td>{expense.description}</Table.Td>
                                         <Table.Td>
-                                            {expense.category ? (
+                                            {expense.categoryName ? (
                                                 <Badge
-                                                    color={expense.category.color}
+                                                    color={expense.categoryColor}
                                                     variant="light"
-                                                    leftSection={<span>{expense.category.icon}</span>}
+                                                    leftSection={<span>{expense.categoryIcon}</span>}
                                                 >
-                                                    {expense.category.name}
+                                                    {expense.categoryName}
                                                 </Badge>
                                             ) : (
                                                 <Text size="sm" c="dimmed">

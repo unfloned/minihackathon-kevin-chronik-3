@@ -31,14 +31,7 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
 import { useAuth } from '../../../contexts/AuthContext';
-import type { UserPublic } from '@ycmm/core';
-
-interface AdminStats {
-    totalUsers: number;
-    demoUsers: number;
-    adminUsers: number;
-    regularUsers: number;
-}
+import type { UserPublic, AdminStats } from '@ycmm/core';
 
 export default function AdminPage() {
     const { user } = useAuth();

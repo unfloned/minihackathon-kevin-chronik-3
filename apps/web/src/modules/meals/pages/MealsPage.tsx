@@ -21,6 +21,8 @@ import {
     ThemeIcon,
     Divider,
     Checkbox,
+    CloseButton,
+    Box,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { DatePickerInput } from '@mantine/dates';
@@ -44,78 +46,21 @@ import {
     IconCookie,
 } from '@tabler/icons-react';
 import { useRequest, useMutation } from '../../../hooks';
+import type {
+    MealType,
+    Ingredient,
+    MealWithDetails,
+    MealPlanWithDetails,
+    MealStats,
+    ShoppingListItem,
+    CreateMealDto,
+    CreateMealPlanDto,
+} from '@ycmm/core';
 
-import type { MealType, Ingredient, NutritionInfo } from '@ycmm/core';
-
-interface Meal {
-    id: string;
-    userId: string;
-    name: string;
-    description: string;
-    imageUrl: string;
-    ingredients: Ingredient[];
-    instructions: string;
-    prepTime?: number;
-    cookTime?: number;
-    servings?: number;
-    mealType: MealType[];
-    cuisine: string;
-    tags: string[];
-    nutrition?: NutritionInfo;
-    isFavorite: boolean;
-    lastMade?: string;
-    timesCooked: number;
-    recipeUrl: string;
-    source: string;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface MealPlan {
-    id: string;
-    date: string;
-    mealType: MealType;
-    mealId?: string;
-    customMealName: string;
-    notes: string;
-}
-
-interface MealStats {
-    totalMeals: number;
-    totalCooked: number;
-    favorites: number;
-    byCuisine: { cuisine: string; count: number }[];
-    recentlyCooked: Meal[];
-}
-
-interface ShoppingItem {
-    ingredient: string;
-    amount: string;
-    meals: string[];
-}
-
-interface CreateMealDto {
-    name: string;
-    description?: string;
-    imageUrl?: string;
-    ingredients?: Ingredient[];
-    instructions?: string;
-    prepTime?: number;
-    cookTime?: number;
-    servings?: number;
-    mealType?: MealType[];
-    cuisine?: string;
-    recipeUrl?: string;
-    source?: string;
-}
-
-interface CreateMealPlanDto {
-    date: string;
-    mealType: MealType;
-    mealId?: string;
-    customMealName?: string;
-    notes?: string;
-}
+// Alias for component usage
+type Meal = MealWithDetails;
+type MealPlan = MealPlanWithDetails;
+type ShoppingItem = ShoppingListItem;
 
 const mealTypeOptions: { value: MealType; label: string; icon: typeof IconCoffee }[] = [
     { value: 'breakfast', label: 'Frühstück', icon: IconCoffee },
@@ -215,7 +160,7 @@ export default function MealsPage() {
             name: '',
             description: '',
             imageUrl: '',
-            ingredients: '' as string, // Will be parsed
+            ingredients: [] as Ingredient[],
             instructions: '',
             prepTime: undefined as number | undefined,
             cookTime: undefined as number | undefined,
@@ -226,6 +171,44 @@ export default function MealsPage() {
             source: '',
         },
     });
+
+    const unitOptions = [
+        { value: '', label: '-' },
+        { value: 'g', label: 'g' },
+        { value: 'kg', label: 'kg' },
+        { value: 'ml', label: 'ml' },
+        { value: 'l', label: 'l' },
+        { value: 'TL', label: 'TL' },
+        { value: 'EL', label: 'EL' },
+        { value: 'Stück', label: 'Stück' },
+        { value: 'Tasse', label: 'Tasse' },
+        { value: 'Prise', label: 'Prise' },
+        { value: 'Bund', label: 'Bund' },
+        { value: 'Zehen', label: 'Zehen' },
+        { value: 'Scheiben', label: 'Scheiben' },
+        { value: 'Packung', label: 'Packung' },
+        { value: 'Dose', label: 'Dose' },
+    ];
+
+    const addIngredient = () => {
+        form.setFieldValue('ingredients', [
+            ...form.values.ingredients,
+            { name: '', amount: '', unit: '' },
+        ]);
+    };
+
+    const removeIngredient = (index: number) => {
+        form.setFieldValue(
+            'ingredients',
+            form.values.ingredients.filter((_, i) => i !== index)
+        );
+    };
+
+    const updateIngredient = (index: number, field: keyof Ingredient, value: string) => {
+        const updated = [...form.values.ingredients];
+        updated[index] = { ...updated[index], [field]: value };
+        form.setFieldValue('ingredients', updated);
+    };
 
     const planForm = useForm({
         initialValues: {
@@ -259,9 +242,7 @@ export default function MealsPage() {
             name: meal.name,
             description: meal.description || '',
             imageUrl: meal.imageUrl || '',
-            ingredients: meal.ingredients
-                ? meal.ingredients.map(ing => `${ing.amount || ''} ${ing.unit || ''} ${ing.name}`.trim()).join('\n')
-                : '',
+            ingredients: meal.ingredients || [],
             instructions: meal.instructions || '',
             prepTime: meal.prepTime,
             cookTime: meal.cookTime,
@@ -275,34 +256,14 @@ export default function MealsPage() {
     };
 
     const handleSubmitMeal = async (values: typeof form.values) => {
-        // Parse ingredients from text format
-        const ingredientLines = values.ingredients.split('\n').filter(line => line.trim());
-        const parsedIngredients: Ingredient[] = ingredientLines.map(line => {
-            const parts = line.trim().split(' ');
-            const amount = parseFloat(parts[0]) || undefined;
-            let unit = '';
-            let name = line;
-
-            if (amount) {
-                parts.shift(); // remove amount
-                if (parts.length > 0 && ['g', 'kg', 'ml', 'l', 'TL', 'EL', 'Stück', 'Tasse', 'Prise'].includes(parts[0])) {
-                    unit = parts.shift() || '';
-                }
-                name = parts.join(' ');
-            }
-
-            return {
-                name,
-                amount: amount?.toString() || '',
-                unit,
-            };
-        });
+        // Filter out empty ingredients
+        const validIngredients = values.ingredients.filter(ing => ing.name.trim());
 
         const mealData: CreateMealDto = {
             name: values.name,
             description: values.description || undefined,
             imageUrl: values.imageUrl || undefined,
-            ingredients: parsedIngredients.length > 0 ? parsedIngredients : undefined,
+            ingredients: validIngredients.length > 0 ? validIngredients : undefined,
             instructions: values.instructions || undefined,
             prepTime: values.prepTime,
             cookTime: values.cookTime,
@@ -652,7 +613,7 @@ export default function MealsPage() {
                                                 <Stack gap="xs">
                                                     {mealTypeOptions.map(mealTypeOpt => {
                                                         const plan = plans.find(p => p.mealType === mealTypeOpt.value);
-                                                        const meal = plan ? getMealForPlan(plan.mealId) : null;
+                                                        const meal = plan?.meal || (plan ? getMealForPlan(plan.meal?.id) : null);
 
                                                         return (
                                                             <Paper
@@ -781,12 +742,60 @@ export default function MealsPage() {
                             {...form.getInputProps('imageUrl')}
                         />
 
-                        <Textarea
-                            label="Zutaten"
-                            placeholder="Eine Zutat pro Zeile, z.B.&#10;500 g Hackfleisch&#10;2 Zwiebeln&#10;400 ml Tomaten"
-                            rows={6}
-                            {...form.getInputProps('ingredients')}
-                        />
+                        <Box>
+                            <Group justify="space-between" mb="xs">
+                                <Text size="sm" fw={500}>Zutaten</Text>
+                                <Button
+                                    size="xs"
+                                    variant="light"
+                                    leftSection={<IconPlus size={14} />}
+                                    onClick={addIngredient}
+                                >
+                                    Zutat hinzufügen
+                                </Button>
+                            </Group>
+                            <Stack gap="xs">
+                                {form.values.ingredients.length === 0 ? (
+                                    <Paper p="md" withBorder bg="gray.0">
+                                        <Text size="sm" c="dimmed" ta="center">
+                                            Noch keine Zutaten. Klicke auf "Zutat hinzufügen".
+                                        </Text>
+                                    </Paper>
+                                ) : (
+                                    form.values.ingredients.map((ingredient, index) => (
+                                        <Group key={index} gap="xs" align="flex-end">
+                                            <TextInput
+                                                placeholder="Menge"
+                                                value={ingredient.amount || ''}
+                                                onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
+                                                style={{ width: 70 }}
+                                                size="sm"
+                                            />
+                                            <Select
+                                                placeholder="Einheit"
+                                                data={unitOptions}
+                                                value={ingredient.unit || ''}
+                                                onChange={(val) => updateIngredient(index, 'unit', val || '')}
+                                                style={{ width: 100 }}
+                                                size="sm"
+                                                clearable
+                                            />
+                                            <TextInput
+                                                placeholder="Zutat (z.B. Hackfleisch)"
+                                                value={ingredient.name}
+                                                onChange={(e) => updateIngredient(index, 'name', e.target.value)}
+                                                style={{ flex: 1 }}
+                                                size="sm"
+                                            />
+                                            <CloseButton
+                                                size="sm"
+                                                onClick={() => removeIngredient(index)}
+                                            />
+                                        </Group>
+                                    ))
+                                )}
+                            </Stack>
+                        </Box>
 
                         <Textarea
                             label="Anleitung"

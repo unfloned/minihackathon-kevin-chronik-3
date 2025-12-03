@@ -36,32 +36,16 @@ import {
 } from '@tabler/icons-react';
 import { useRequest } from '../../../hooks';
 import { useMutation } from '../../../hooks';
+import type { DeadlineSimple, DeadlineStats, DeadlinePriority } from '@ycmm/core';
 
-interface Deadline {
-  id: string;
-  title: string;
-  description: string;
-  dueDate: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  category: string;
-  isCompleted: boolean;
-  completedAt?: string;
-  createdAt: string;
-}
-
-interface DeadlineStats {
-  total: number;
-  upcoming: number;
-  overdue: number;
-  completed: number;
-  completedThisMonth: number;
-}
+// Alias for component usage
+type Deadline = DeadlineSimple;
 
 interface DeadlineFormData {
   title: string;
   description: string;
   dueDate: Date | null;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  priority: DeadlinePriority;
   category: string;
 }
 
