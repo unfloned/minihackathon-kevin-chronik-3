@@ -1,56 +1,65 @@
-// Entities (Server-only - use Interfaces for Frontend)
-export { User } from './entities/user.entity';
-export type { UserPublic } from './entities/user.entity';
-export { RefreshToken } from './entities/refresh-token.entity';
-export { PasswordResetToken } from './entities/password-reset-token.entity';
-export { Achievement } from './entities/achievement.entity';
-export type { AchievementCategory, AchievementType } from './entities/achievement.entity';
-export { UserAchievement } from './entities/user-achievement.entity';
-export { Notification } from './entities/notification.entity';
-export type { NotificationType } from './entities/notification.entity';
-export { Habit } from './entities/habit.entity';
-export type { HabitType, HabitFrequency } from './entities/habit.entity';
-export { HabitLog } from './entities/habit-log.entity';
-export { ExpenseCategory } from './entities/expense-category.entity';
-export { Expense } from './entities/expense.entity';
-export { Deadline } from './entities/deadline.entity';
-export type { DeadlinePriority, DeadlineStatus } from './entities/deadline.entity';
-export { Subscription } from './entities/subscription.entity';
-export type { SubscriptionBillingCycle, SubscriptionStatus } from './entities/subscription.entity';
-export { Note } from './entities/note.entity';
-export { List } from './entities/list.entity';
-export type { ListItem, ListType, ListItemPriority } from './entities/list.entity';
-export { Project } from './entities/project.entity';
-export type { ProjectTask, Milestone, ProjectType, ProjectStatus, TaskPriority } from './entities/project.entity';
-export { InventoryItem } from './entities/inventory-item.entity';
-export type { ItemLocation, ItemWarranty, ItemLent } from './entities/inventory-item.entity';
-export { Application } from './entities/application.entity';
-export type { ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview } from './entities/application.entity';
-export { MediaItem } from './entities/media-item.entity';
-export type { MediaType, MediaStatus, MediaProgress, SeriesSeason, ExternalIds } from './entities/media-item.entity';
-export { Meal, MealPlan } from './entities/meal.entity';
-export type { MealType, Ingredient, NutritionInfo } from './entities/meal.entity';
-export { WishlistItem, Wishlist } from './entities/wishlist.entity';
-export type { WishlistPriority, WishlistCategory, PriceInfo } from './entities/wishlist.entity';
+// ===== Entities =====
+export { User } from './entities/user.entity.js';
+export type { UserPublic } from './entities/user.entity.js';
 
-// Frontend-compatible Interfaces
-export type {
-    IUser,
-    IUserPublic,
-    IHabit,
-    IHabitLog,
-    IExpense,
-    IExpenseCategory,
-    IDeadline,
-    ISubscription,
-    INotification,
-    IAchievement,
-    IUserAchievement,
-} from './interfaces';
+export { RefreshToken } from './entities/refresh-token.entity.js';
+export type { RefreshTokenFrontend } from './entities/refresh-token.entity.js';
 
-import type { UserPublic } from './entities/user.entity';
+export { PasswordResetToken } from './entities/password-reset-token.entity.js';
+export type { PasswordResetTokenFrontend } from './entities/password-reset-token.entity.js';
 
-// Version Info
+export { Achievement } from './entities/achievement.entity.js';
+export type { AchievementCategory, AchievementType, AchievementFrontend } from './entities/achievement.entity.js';
+
+export { UserAchievement } from './entities/user-achievement.entity.js';
+export type { UserAchievementFrontend } from './entities/user-achievement.entity.js';
+
+export { Notification } from './entities/notification.entity.js';
+export type { NotificationType, NotificationFrontend } from './entities/notification.entity.js';
+
+export { Habit } from './entities/habit.entity.js';
+export type { HabitType, HabitFrequency, HabitFrontend } from './entities/habit.entity.js';
+
+export { HabitLog } from './entities/habit-log.entity.js';
+export type { HabitLogFrontend } from './entities/habit-log.entity.js';
+
+export { ExpenseCategory } from './entities/expense-category.entity.js';
+export type { ExpenseCategoryFrontend } from './entities/expense-category.entity.js';
+
+export { Expense } from './entities/expense.entity.js';
+export type { ExpenseFrontend } from './entities/expense.entity.js';
+
+export { Deadline } from './entities/deadline.entity.js';
+export type { DeadlinePriority, DeadlineStatus, DeadlineFrontend } from './entities/deadline.entity.js';
+
+export { Subscription } from './entities/subscription.entity.js';
+export type { SubscriptionBillingCycle, SubscriptionStatus, SubscriptionFrontend } from './entities/subscription.entity.js';
+
+export { Note } from './entities/note.entity.js';
+export type { NoteFrontend } from './entities/note.entity.js';
+
+export { List } from './entities/list.entity.js';
+export type { ListItem, ListType, ListItemPriority, ListFrontend } from './entities/list.entity.js';
+
+export { Project } from './entities/project.entity.js';
+export type { ProjectTask, Milestone, ProjectType, ProjectStatus, TaskPriority, ProjectFrontend } from './entities/project.entity.js';
+
+export { InventoryItem } from './entities/inventory-item.entity.js';
+export type { ItemLocation, ItemWarranty, ItemLent, InventoryItemFrontend } from './entities/inventory-item.entity.js';
+
+export { Application } from './entities/application.entity.js';
+export type { ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview, ApplicationFrontend } from './entities/application.entity.js';
+
+export { MediaItem } from './entities/media-item.entity.js';
+export type { MediaType, MediaStatus, MediaProgress, SeriesSeason, ExternalIds, MediaItemFrontend } from './entities/media-item.entity.js';
+
+export { Meal, MealPlan } from './entities/meal.entity.js';
+export type { MealType, Ingredient, NutritionInfo, MealFrontend, MealPlanFrontend } from './entities/meal.entity.js';
+
+export { WishlistItem, Wishlist } from './entities/wishlist.entity.js';
+export type { WishlistPriority, WishlistCategory, PriceInfo, WishlistItemFrontend, WishlistFrontend } from './entities/wishlist.entity.js';
+
+// ===== Version Info =====
 export interface VersionInfo {
     version: string;
     name: string;
@@ -65,7 +74,7 @@ export interface ChangelogEntry {
     changes: string[];
 }
 
-// API Response Types
+// ===== API Response Types =====
 export interface PaginatedResponse<T> {
     items: T[];
     total: number;
@@ -74,7 +83,9 @@ export interface PaginatedResponse<T> {
     totalPages: number;
 }
 
-// Auth Types
+// ===== Auth Types =====
+import type { UserPublic } from './entities/user.entity.js';
+
 export interface SessionResponse {
     authenticated: boolean;
     user?: UserPublic;
@@ -90,7 +101,7 @@ export interface NotificationPublic {
     createdAt: Date;
 }
 
-// XP Constants
+// ===== XP Constants =====
 export const XP_ACTIONS = {
     HABIT_COMPLETED: 10,
     HABIT_STREAK_7: 50,
@@ -107,21 +118,8 @@ export const XP_ACTIONS = {
 } as const;
 
 export const LEVEL_XP_REQUIREMENTS = [
-    0,      // Level 1
-    100,    // Level 2
-    250,    // Level 3
-    500,    // Level 4
-    1000,   // Level 5
-    1750,   // Level 6
-    2750,   // Level 7
-    4000,   // Level 8
-    5500,   // Level 9
-    7500,   // Level 10
-    10000,  // Level 11
-    13000,  // Level 12
-    16500,  // Level 13
-    20500,  // Level 14
-    25000,  // Level 15
+    0, 100, 250, 500, 1000, 1750, 2750, 4000, 5500, 7500,
+    10000, 13000, 16500, 20500, 25000,
 ] as const;
 
 export function calculateLevel(xp: number): number {
@@ -149,7 +147,7 @@ export function xpProgressInLevel(xp: number, level: number): { current: number;
     return { current, required, percentage };
 }
 
-// Dashboard Types
+// ===== Dashboard Types =====
 export interface ExpenseChartData {
     categories: { name: string; total: number; color: string }[];
     monthlyTrend: { month: string; amount: number }[];
@@ -204,3 +202,470 @@ export interface XpAwardResult {
     leveledUp: boolean;
     previousLevel: number;
 }
+
+// ===== Module Stats Types =====
+
+// Import types for stats interfaces
+import type { HabitType, HabitFrequency } from './entities/habit.entity.js';
+import type { DeadlinePriority } from './entities/deadline.entity.js';
+import type { SubscriptionBillingCycle, SubscriptionStatus } from './entities/subscription.entity.js';
+import type { MediaType, MediaStatus, MediaProgress } from './entities/media-item.entity.js';
+import type { MealType, Ingredient, NutritionInfo } from './entities/meal.entity.js';
+import type { WishlistPriority, WishlistCategory, PriceInfo } from './entities/wishlist.entity.js';
+
+export interface HabitStats {
+    totalHabits: number;
+    activeHabits: number;
+    completedToday: number;
+    totalToday: number;
+    currentStreak: number;
+    longestStreak: number;
+    weeklyCompletion: number[];
+}
+
+export interface HabitWithStatus {
+    id: string;
+    name: string;
+    description?: string;
+    icon: string;
+    color: string;
+    type: HabitType;
+    targetValue?: number;
+    unit?: string;
+    frequency: HabitFrequency;
+    currentStreak: number;
+    longestStreak: number;
+    totalCompletions: number;
+    completedToday?: boolean;
+    todayValue?: number;
+    timerStartedAt?: string;
+    timerRunning?: boolean;
+    isArchived?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
+}
+
+export interface ExpenseWithCategory {
+    id: string;
+    amount: number;
+    description: string;
+    categoryId: string;
+    date: string;
+    isRecurring: boolean;
+    recurringInterval?: 'monthly' | 'yearly';
+    createdAt: string;
+    updatedAt?: string;
+    // Flattened category fields from server
+    categoryName?: string;
+    categoryIcon?: string;
+    categoryColor?: string;
+}
+
+export interface ExpenseStats {
+    total: number;
+    byCategory: {
+        categoryId: string;
+        categoryName: string;
+        categoryIcon: string;
+        categoryColor: string;
+        amount: number;
+        count: number;
+        budget?: number;
+    }[];
+    dailyTotals: { date: string; amount: number }[];
+    comparedToLastMonth: number;
+}
+
+export interface DeadlineStats {
+    total: number;
+    upcoming: number;
+    overdue: number;
+    completed: number;
+    completedThisMonth: number;
+}
+
+export interface SubscriptionStats {
+    monthlyCost: number;
+    yearlyCost: number;
+    count: number;
+}
+
+export interface MediaItemWithDetails {
+    id: string;
+    type: MediaType;
+    title: string;
+    originalTitle: string;
+    year?: number;
+    creator: string;
+    coverUrl: string;
+    description: string;
+    status: MediaStatus;
+    startedAt?: string;
+    finishedAt?: string;
+    progress?: MediaProgress;
+    rating?: number;
+    review: string;
+    genre: string[];
+    tags: string[];
+    source: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MediaStats {
+    total: number;
+    byType: { type: MediaType; count: number }[];
+    byStatus: { status: MediaStatus; count: number }[];
+    completedThisYear: number;
+    averageRating: number | null;
+}
+
+export interface MealWithDetails {
+    id: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    ingredients: Ingredient[];
+    instructions: string;
+    prepTime?: number;
+    cookTime?: number;
+    servings?: number;
+    mealType: MealType[];
+    cuisine: string;
+    tags: string[];
+    nutrition?: NutritionInfo;
+    isFavorite: boolean;
+    timesCooked: number;
+    lastMade?: string;
+    recipeUrl: string;
+    source: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface MealPlanWithDetails {
+    id: string;
+    date: string;
+    mealType: MealType;
+    meal?: MealWithDetails;
+    customMealName: string;
+    notes: string;
+    createdAt: string;
+}
+
+export interface MealStats {
+    totalMeals: number;
+    totalCooked: number;
+    favorites: number;
+    byCuisine: { cuisine: string; count: number }[];
+    recentlyCooked: MealWithDetails[];
+}
+
+export interface ShoppingListItem {
+    ingredient: string;
+    amount: string;
+    meals: string[];
+}
+
+export interface WishlistItemWithDetails {
+    id: string;
+    name: string;
+    description: string;
+    imageUrl: string;
+    productUrl: string;
+    category: WishlistCategory;
+    tags: string[];
+    priority: WishlistPriority;
+    isPurchased: boolean;
+    purchasedAt?: string;
+    price?: PriceInfo;
+    targetPrice?: number;
+    isGiftIdea: boolean;
+    giftFor?: string;
+    occasion?: string;
+    notes: string;
+    store: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface WishlistStats {
+    totalItems: number;
+    totalWishlists: number;
+    purchased: number;
+    totalValue: number;
+    byCategory: { category: WishlistCategory; count: number }[];
+    byPriority: { priority: WishlistPriority; count: number }[];
+    giftIdeas: number;
+}
+
+export interface GamificationStats {
+    level: number;
+    xp: number;
+    xpProgress: {
+        current: number;
+        required: number;
+        percentage: number;
+    };
+    achievementsUnlocked: number;
+}
+
+export interface AdminStats {
+    totalUsers: number;
+    demoUsers: number;
+    adminUsers: number;
+    regularUsers: number;
+}
+
+// ===== DTO Types (for creating/updating) =====
+
+export interface CreateHabitDto {
+    name: string;
+    description?: string;
+    icon?: string;
+    color?: string;
+    type?: HabitType;
+    targetValue?: number;
+    unit?: string;
+    frequency?: HabitFrequency;
+}
+
+export interface UpdateHabitDto extends Partial<CreateHabitDto> {
+    isArchived?: boolean;
+}
+
+export interface CreateExpenseDto {
+    amount: number;
+    description: string;
+    categoryId: string;
+    date: string;
+    isRecurring?: boolean;
+    recurringInterval?: 'monthly' | 'yearly';
+}
+
+export interface UpdateExpenseDto extends Partial<CreateExpenseDto> {}
+
+export interface CreateExpenseCategoryDto {
+    name: string;
+    icon?: string;
+    color?: string;
+    budget?: number;
+}
+
+export interface CreateDeadlineDto {
+    title: string;
+    description?: string;
+    dueDate: string;
+    priority?: DeadlinePriority;
+    category?: string;
+}
+
+export interface UpdateDeadlineDto extends Partial<CreateDeadlineDto> {
+    isCompleted?: boolean;
+}
+
+export interface CreateSubscriptionDto {
+    name: string;
+    description?: string;
+    amount: number;
+    billingCycle: SubscriptionBillingCycle;
+    billingDay?: number;
+    category?: string;
+    website?: string;
+    status?: SubscriptionStatus;
+}
+
+export interface UpdateSubscriptionDto extends Partial<CreateSubscriptionDto> {}
+
+export interface CreateMediaItemDto {
+    type: MediaType;
+    title: string;
+    originalTitle?: string;
+    year?: number;
+    creator?: string;
+    coverUrl?: string;
+    description?: string;
+    status?: MediaStatus;
+    rating?: number;
+    review?: string;
+    genre?: string[];
+    tags?: string[];
+    source?: string;
+    progress?: MediaProgress;
+}
+
+export interface UpdateMediaItemDto extends Partial<CreateMediaItemDto> {}
+
+export interface CreateMealDto {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    ingredients?: Ingredient[];
+    instructions?: string;
+    prepTime?: number;
+    cookTime?: number;
+    servings?: number;
+    mealType?: MealType[];
+    cuisine?: string;
+    tags?: string[];
+    nutrition?: NutritionInfo;
+    recipeUrl?: string;
+    source?: string;
+}
+
+export interface UpdateMealDto extends Partial<CreateMealDto> {
+    isFavorite?: boolean;
+}
+
+export interface CreateMealPlanDto {
+    date: string;
+    mealType: MealType;
+    mealId?: string;
+    customMealName?: string;
+    notes?: string;
+}
+
+export interface UpdateMealPlanDto extends Partial<CreateMealPlanDto> {}
+
+export interface CreateWishlistItemDto {
+    name: string;
+    description?: string;
+    imageUrl?: string;
+    productUrl?: string;
+    category?: WishlistCategory;
+    priority?: WishlistPriority;
+    price?: PriceInfo;
+    targetPrice?: number;
+    isGiftIdea?: boolean;
+    giftFor?: string;
+    occasion?: string;
+    notes?: string;
+    store?: string;
+}
+
+// ===== Simple Frontend Response Types =====
+// These are for API responses where Reference types are resolved
+
+export interface ExpenseCategorySimple {
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+    budget?: number;
+    isDefault?: boolean;
+}
+
+export interface SubscriptionSimple {
+    id: string;
+    name: string;
+    description: string;
+    amount: number;
+    billingCycle: SubscriptionBillingCycle;
+    billingDay: number;
+    category: string;
+    website: string;
+    status: SubscriptionStatus;
+    nextBillingDate?: string;
+    createdAt: string;
+}
+
+export interface DeadlineSimple {
+    id: string;
+    title: string;
+    description: string;
+    dueDate: string;
+    priority: DeadlinePriority;
+    category: string;
+    isCompleted: boolean;
+    completedAt?: string;
+    createdAt: string;
+}
+
+export interface NoteSimple {
+    id: string;
+    title: string;
+    content: string;
+    tags: string[];
+    isPinned: boolean;
+    isArchived: boolean;
+    color: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface ListSimple {
+    id: string;
+    name: string;
+    description: string;
+    type: ListType;
+    color: string;
+    icon: string;
+    items: ListItem[];
+    isArchived: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+import type { ListType, ListItem } from './entities/list.entity.js';
+
+export interface ProjectSimple {
+    id: string;
+    name: string;
+    description: string;
+    type: ProjectType;
+    status: ProjectStatus;
+    color: string;
+    progress: number;
+    startDate?: string;
+    endDate?: string;
+    targetDate?: string;
+    tasks: ProjectTask[];
+    milestones: Milestone[];
+    isArchived: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+import type { ProjectType, ProjectStatus, ProjectTask, Milestone } from './entities/project.entity.js';
+
+export interface InventoryItemSimple {
+    id: string;
+    name: string;
+    description: string;
+    category: string;
+    quantity: number;
+    imageUrl: string;
+    purchaseDate?: string;
+    purchasePrice?: number;
+    location?: ItemLocation;
+    warranty?: ItemWarranty;
+    lent?: ItemLent;
+    notes: string;
+    tags: string[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+import type { ItemLocation, ItemWarranty, ItemLent } from './entities/inventory-item.entity.js';
+
+export interface ApplicationSimple {
+    id: string;
+    company: string;
+    position: string;
+    description: string;
+    jobUrl: string;
+    location: string;
+    remote: RemoteType;
+    salary?: SalaryRange;
+    status: ApplicationStatus;
+    appliedAt: string;
+    statusHistory: StatusChange[];
+    interviews: Interview[];
+    notes: string;
+    contacts: string;
+    priority: number;
+    createdAt: string;
+    updatedAt: string;
+}
+
+import type { ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview } from './entities/application.entity.js';

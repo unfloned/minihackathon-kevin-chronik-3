@@ -1,8 +1,8 @@
-import { entity, PrimaryKey, Unique, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Unique, uuid, UUID } from '@deepkit/type';
 
 @entity.name('users')
 export class User {
-    id: string & PrimaryKey = '';
+    id: UUID & PrimaryKey = uuid();
     email: string & Unique = '';
     password: string = '';
     displayName: string = '';
@@ -15,13 +15,4 @@ export class User {
     updatedAt: Date = new Date();
 }
 
-export interface UserPublic {
-    id: string;
-    email: string;
-    displayName: string;
-    isDemo: boolean;
-    isAdmin: boolean;
-    level: number;
-    xp: number;
-    createdAt: Date;
-}
+export type UserPublic = Readonly<Omit<User, 'password'>>;

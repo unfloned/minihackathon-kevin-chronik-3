@@ -1,4 +1,4 @@
-import { entity, PrimaryKey, Index, Reference } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID } from '@deepkit/type';
 import { User } from './user.entity.js';
 
 export type HabitType = 'boolean' | 'quantity' | 'duration';
@@ -6,9 +6,8 @@ export type HabitFrequency = 'daily' | 'weekly' | 'custom';
 
 @entity.name('habits')
 export class Habit {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
-    user?: User & Reference;
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
 
     name: string = '';
     description?: string;
@@ -16,13 +15,13 @@ export class Habit {
     color: string = '#228be6';
 
     type: HabitType = 'boolean';
-    targetValue?: number; // For quantity/duration types
-    unit?: string; // e.g., "glasses", "minutes", "pages"
+    targetValue?: number;
+    unit?: string;
 
     frequency: HabitFrequency = 'daily';
-    customDays?: string; // JSON array of days [0-6] for custom frequency
+    customDays?: string;
 
-    reminderTime?: string; // HH:mm format
+    reminderTime?: string;
     isArchived: boolean = false;
 
     currentStreak: number = 0;
@@ -32,3 +31,5 @@ export class Habit {
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type HabitFrontend = Readonly<Habit>;

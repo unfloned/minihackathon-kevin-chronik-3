@@ -1,4 +1,4 @@
-import { entity, PrimaryKey, Unique } from '@deepkit/type';
+import { entity, PrimaryKey, Unique, uuid, UUID } from '@deepkit/type';
 
 export type AchievementCategory =
     | 'general'
@@ -22,7 +22,7 @@ export type AchievementType = 'one_time' | 'repeatable' | 'daily' | 'weekly' | '
 
 @entity.name('achievements')
 export class Achievement {
-    id: string & PrimaryKey = '';
+    id: UUID & PrimaryKey = uuid();
     key: string & Unique = '';
     name: string = '';
     description: string = '';
@@ -33,6 +33,8 @@ export class Achievement {
     isHidden: boolean = false;
     type: AchievementType = 'one_time';
     resetPeriod?: 'daily' | 'weekly' | 'monthly';
-    tier: number = 1; // 1-5, higher = harder
+    tier: number = 1;
     createdAt: Date = new Date();
 }
+
+export type AchievementFrontend = Readonly<Achievement>;

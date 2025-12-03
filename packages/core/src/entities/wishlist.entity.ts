@@ -1,4 +1,5 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID, Index } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export type WishlistPriority = 'low' | 'medium' | 'high' | 'must_have';
 
@@ -20,55 +21,51 @@ export interface PriceInfo {
 
 @entity.name('wishlist_items')
 export class WishlistItem {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
 
-    // Basic Info
     name: string = '';
     description: string = '';
     imageUrl: string = '';
     productUrl: string = '';
 
-    // Categorization
     category: WishlistCategory = 'other';
     tags: string[] = [];
 
-    // Priority & Status
     priority: WishlistPriority = 'medium';
     isPurchased: boolean = false;
     purchasedAt?: Date;
 
-    // Price tracking
     price?: PriceInfo;
-    targetPrice?: number; // Alert when price drops to this
+    targetPrice?: number;
 
-    // Gift options
     isGiftIdea: boolean = false;
-    giftFor?: string; // Name of person this is a gift for
-    occasion?: string; // Birthday, Christmas, etc.
+    giftFor?: string;
+    occasion?: string;
 
-    // Notes
     notes: string = '';
-    store: string = ''; // Where to buy
+    store: string = '';
 
-    // Meta
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
 
-// Public Wishlist for sharing
+export type WishlistItemFrontend = Readonly<WishlistItem>;
+
 @entity.name('wishlists')
 export class Wishlist {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
 
     name: string = '';
     description: string = '';
     isPublic: boolean = false;
     publicSlug: string & Index = '';
 
-    itemIds: string[] = []; // References to WishlistItems
+    itemIds: string[] = [];
 
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type WishlistFrontend = Readonly<Wishlist>;

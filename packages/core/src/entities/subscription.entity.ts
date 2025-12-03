@@ -1,12 +1,13 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export type SubscriptionBillingCycle = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
 
 @entity.name('subscriptions')
 export class Subscription {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
 
     name: string = '';
     description?: string;
@@ -15,23 +16,23 @@ export class Subscription {
     currency: string = 'EUR';
     billingCycle: SubscriptionBillingCycle = 'monthly';
 
-    // Billing date (day of month for monthly, or full date for yearly)
     billingDay: number = 1;
-    nextBillingDate: string = ''; // YYYY-MM-DD format
+    nextBillingDate: string = '';
 
-    category?: string; // e.g., 'entertainment', 'productivity', 'utilities'
+    category?: string;
     color: string = '#228be6';
     icon?: string;
     website?: string;
 
     status: SubscriptionStatus = 'active';
 
-    // Reminder settings
     reminderEnabled: boolean = false;
     reminderDaysBefore: number = 3;
 
-    startDate: string = ''; // When the subscription started
+    startDate: string = '';
     cancelledAt?: Date;
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type SubscriptionFrontend = Readonly<Subscription>;

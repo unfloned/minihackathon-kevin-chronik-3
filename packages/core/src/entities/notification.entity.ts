@@ -1,13 +1,12 @@
-import { entity, PrimaryKey, Index, Reference } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID } from '@deepkit/type';
 import { User } from './user.entity.js';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'achievement' | 'reminder';
 
 @entity.name('notifications')
 export class Notification {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
-    user?: User & Reference;
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
     type: NotificationType = 'info';
     title: string = '';
     message: string = '';
@@ -15,3 +14,5 @@ export class Notification {
     isRead: boolean = false;
     createdAt: Date = new Date();
 }
+
+export type NotificationFrontend = Readonly<Notification>;

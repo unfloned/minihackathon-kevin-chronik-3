@@ -1,4 +1,5 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export type ApplicationStatus =
     | 'draft'
@@ -29,7 +30,7 @@ export interface Interview {
     id: string;
     type: 'phone' | 'video' | 'onsite' | 'technical' | 'hr';
     scheduledAt: Date;
-    duration?: number; // Minutes
+    duration?: number;
     location?: string;
     interviewers?: string[];
     notes?: string;
@@ -39,15 +40,13 @@ export interface Interview {
 
 @entity.name('applications')
 export class Application {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
 
-    // Company
     companyName: string = '';
     companyWebsite: string = '';
     companyLogo: string = '';
 
-    // Position
     jobTitle: string = '';
     jobUrl: string = '';
     jobDescription: string = '';
@@ -55,24 +54,21 @@ export class Application {
     location: string = '';
     remote: RemoteType = 'onsite';
 
-    // Status
     status: ApplicationStatus = 'draft';
     statusHistory: StatusChange[] = [];
 
-    // Contact
     contactName: string = '';
     contactEmail: string = '';
     contactPhone: string = '';
 
-    // Notes
     notes: string = '';
 
-    // Interviews
     interviews: Interview[] = [];
 
-    // Meta
     appliedAt?: Date;
-    source: string = ''; // LinkedIn, Indeed, Direct
+    source: string = '';
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type ApplicationFrontend = Readonly<Application>;

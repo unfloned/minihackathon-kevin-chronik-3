@@ -1,4 +1,5 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID, Index } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export type ListType = 'shopping' | 'todo' | 'packing' | 'checklist' | 'custom';
 export type ListItemPriority = 'low' | 'medium' | 'high';
@@ -17,27 +18,26 @@ export interface ListItem {
 
 @entity.name('lists')
 export class List {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
+
     name: string = '';
     description: string = '';
     type: ListType = 'custom';
     icon: string = '';
     color: string = '#228be6';
 
-    // Items stored as JSON
     items: ListItem[] = [];
 
-    // Sharing
     isPublic: boolean = false;
-    publicSlug: string = '';
+    publicSlug: string & Index = '';
 
-    // Template
     isTemplate: boolean = false;
     templateCategory: string = '';
 
-    // Meta
     isArchived: boolean = false;
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type ListFrontend = Readonly<List>;

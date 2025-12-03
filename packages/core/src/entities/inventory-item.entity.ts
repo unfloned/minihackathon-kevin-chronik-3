@@ -1,9 +1,10 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export interface ItemLocation {
-    area: string;           // "Wohnzimmer", "Garage", "Keller"
-    container?: string;     // "Regal 1", "Karton A"
-    details?: string;       // "Oberstes Fach, links"
+    area: string;
+    container?: string;
+    details?: string;
 }
 
 export interface ItemWarranty {
@@ -19,22 +20,19 @@ export interface ItemLent {
 
 @entity.name('inventory_items')
 export class InventoryItem {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
+
     name: string = '';
     description: string = '';
 
-    // Photos (URLs)
     photos: string[] = [];
 
-    // Categorization
     category: string = '';
     tags: string[] = [];
 
-    // Location
     location: ItemLocation = { area: '' };
 
-    // Optional details
     quantity: number = 1;
     purchaseDate?: Date;
     purchasePrice?: number;
@@ -42,13 +40,12 @@ export class InventoryItem {
     serialNumber: string = '';
     warranty?: ItemWarranty;
 
-    // QR Code
     qrCode: string = '';
 
-    // Lending
     isLent?: ItemLent;
 
-    // Meta
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type InventoryItemFrontend = Readonly<InventoryItem>;

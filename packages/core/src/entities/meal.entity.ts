@@ -1,4 +1,5 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID, Index } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -17,53 +18,50 @@ export interface NutritionInfo {
 
 @entity.name('meals')
 export class Meal {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
 
-    // Basic Info
     name: string = '';
     description: string = '';
     imageUrl: string = '';
 
-    // Recipe
     ingredients: Ingredient[] = [];
     instructions: string = '';
-    prepTime?: number; // minutes
-    cookTime?: number; // minutes
+    prepTime?: number;
+    cookTime?: number;
     servings?: number;
 
-    // Categorization
     mealType: MealType[] = [];
     cuisine: string = '';
     tags: string[] = [];
 
-    // Nutrition
     nutrition?: NutritionInfo;
 
-    // Planning
     isFavorite: boolean = false;
     lastMade?: Date;
     timesCooked: number = 0;
 
-    // Source
     recipeUrl: string = '';
-    source: string = ''; // Cookbook name, website, etc.
+    source: string = '';
 
-    // Meta
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
 
+export type MealFrontend = Readonly<Meal>;
+
 @entity.name('meal_plans')
 export class MealPlan {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
+    meal?: Meal & Reference;
 
     date: Date & Index = new Date();
     mealType: MealType = 'dinner';
-    mealId?: string; // Reference to a saved meal
-    customMealName: string = ''; // Or a custom meal name
+    customMealName: string = '';
     notes: string = '';
 
     createdAt: Date = new Date();
 }
+
+export type MealPlanFrontend = Readonly<MealPlan>;

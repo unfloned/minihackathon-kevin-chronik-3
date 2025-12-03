@@ -1,4 +1,5 @@
-import { entity, PrimaryKey, Index } from '@deepkit/type';
+import { entity, PrimaryKey, Reference, uuid, UUID } from '@deepkit/type';
+import { User } from './user.entity.js';
 
 export type MediaType = 'book' | 'movie' | 'series' | 'game' | 'podcast' | 'anime';
 
@@ -12,7 +13,7 @@ export type MediaStatus =
 export interface MediaProgress {
     current: number;
     total: number;
-    unit: string; // "Seiten", "Episoden", "Stunden"
+    unit: string;
 }
 
 export interface SeriesSeason {
@@ -30,42 +31,37 @@ export interface ExternalIds {
 
 @entity.name('media_items')
 export class MediaItem {
-    id: string & PrimaryKey = '';
-    userId: string & Index = '';
+    id: UUID & PrimaryKey = uuid();
+    user!: User & Reference;
+
     type: MediaType = 'movie';
 
-    // Basic Info
     title: string = '';
     originalTitle: string = '';
     year?: number;
-    creator: string = ''; // Author, Director, Studio
+    creator: string = '';
     coverUrl: string = '';
     description: string = '';
 
-    // Status
     status: MediaStatus = 'wishlist';
     startedAt?: Date;
     finishedAt?: Date;
 
-    // Progress
     progress?: MediaProgress;
 
-    // For series
     seasons?: SeriesSeason[];
 
-    // Rating
-    rating?: number; // 1-10
+    rating?: number;
     review: string = '';
 
-    // Categorization
     genre: string[] = [];
     tags: string[] = [];
-    source: string = ''; // Netflix, Kindle, Steam
+    source: string = '';
 
-    // External IDs
     externalIds?: ExternalIds;
 
-    // Meta
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }
+
+export type MediaItemFrontend = Readonly<MediaItem>;
