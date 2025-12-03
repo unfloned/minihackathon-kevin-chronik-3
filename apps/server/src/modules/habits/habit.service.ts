@@ -33,6 +33,9 @@ export interface UpdateHabitDto {
 export interface HabitWithTodayStatus extends Habit {
     completedToday: boolean;
     todayValue: number;
+    // Timer info for duration habits
+    timerStartedAt?: string; // ISO string for JSON serialization
+    timerRunning: boolean;
 }
 
 export interface HabitStats {
@@ -153,10 +156,14 @@ export class HabitService {
             .filter(habit => this.isHabitDueToday(habit, dayOfWeek))
             .map(habit => {
                 const log = logMap.get(habit.id);
+                // Timer is running if timerStartedAt exists but timerEndedAt doesn't
+                const timerRunning = !!(log?.timerStartedAt && !log?.timerEndedAt);
                 return {
                     ...habit,
                     completedToday: log?.completed || false,
                     todayValue: log?.value || 0,
+                    timerStartedAt: log?.timerStartedAt?.toISOString(),
+                    timerRunning,
                 };
             });
     }
@@ -221,6 +228,107 @@ export class HabitService {
             streakUpdated = await this.updateStreak(habit);
 
             // Check habit completion achievements
+            habit.totalCompletions++;
+            await this.db.persist(habit);
+
+            if (habit.totalCompletions === 10) {
+                await this.gamificationService.checkAndUnlockAchievement(userId, 'habits_10');
+            } else if (habit.totalCompletions === 100) {
+                await this.gamificationService.checkAndUnlockAchievement(userId, 'habits_100');
+            }
+        }
+
+        return { log, xpAwarded, streakUpdated };
+    }
+
+    // Timer methods for duration habits
+    async startTimer(userId: string, habitId: string): Promise<HabitLog | null> {
+        const habit = await this.getById(habitId, userId);
+        if (!habit || habit.type !== 'duration') return null;
+
+        const today = this.getToday();
+
+        // Check for existing log
+        let log = await this.db.query(HabitLog)
+            .filter({ habitId, userId, date: today })
+            .findOneOrUndefined();
+
+        if (log) {
+            // If timer already running, return existing log
+            if (log.timerStartedAt && !log.timerEndedAt) {
+                return log;
+            }
+            // Start new timer session
+            log.timerStartedAt = new Date();
+            log.timerEndedAt = undefined;
+        } else {
+            // Create new log with timer started
+            log = new HabitLog();
+            log.id = uuidv4();
+            log.userId = userId;
+            log.habitId = habitId;
+            log.date = today;
+            log.value = 0;
+            log.completed = false;
+            log.timerStartedAt = new Date();
+            log.createdAt = new Date();
+        }
+
+        await this.db.persist(log);
+        return log;
+    }
+
+    async stopTimer(userId: string, habitId: string): Promise<{ log: HabitLog; xpAwarded: number; streakUpdated: boolean } | null> {
+        const habit = await this.getById(habitId, userId);
+        if (!habit || habit.type !== 'duration') return null;
+
+        const today = this.getToday();
+
+        const log = await this.db.query(HabitLog)
+            .filter({ habitId, userId, date: today })
+            .findOneOrUndefined();
+
+        if (!log || !log.timerStartedAt) return null;
+
+        const now = new Date();
+        log.timerEndedAt = now;
+
+        // Calculate elapsed time and convert to the habit's unit
+        const elapsedMs = now.getTime() - log.timerStartedAt.getTime();
+        const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+        // Convert to target unit
+        let valueInUnit: number;
+        switch (habit.unit) {
+            case 'seconds':
+                valueInUnit = elapsedSeconds;
+                break;
+            case 'hours':
+                valueInUnit = Math.floor(elapsedSeconds / 3600);
+                break;
+            case 'minutes':
+            default:
+                valueInUnit = Math.floor(elapsedSeconds / 60);
+                break;
+        }
+
+        // Add to existing value (in case timer was started/stopped multiple times)
+        log.value = (log.value || 0) + valueInUnit;
+
+        const isNewCompletion = !log.completed;
+        log.completed = this.isCompleted(habit, log.value);
+
+        await this.db.persist(log);
+
+        let xpAwarded = 0;
+        let streakUpdated = false;
+
+        // Award XP and update streak only for new completions
+        if (log.completed && isNewCompletion) {
+            const xpResult = await this.gamificationService.awardXp(userId, 10, 'habit_completed');
+            xpAwarded = xpResult.xpAwarded;
+            streakUpdated = await this.updateStreak(habit);
+
             habit.totalCompletions++;
             await this.db.persist(habit);
 

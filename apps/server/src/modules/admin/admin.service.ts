@@ -144,7 +144,9 @@ export class AdminService {
                 description: '30 Minuten lesen vor dem Schlafen',
                 icon: '📚',
                 color: '#F59E0B',
-                type: 'boolean',
+                type: 'duration',
+                targetValue: 30,
+                unit: 'minutes',
                 frequency: 'daily',
                 currentStreak: 3,
                 longestStreak: 18,
@@ -334,7 +336,7 @@ export class AdminService {
                     { id: '5', title: 'Testing & Bugfixing', completed: false, priority: 'medium', order: 4 },
                 ],
                 milestones: [
-                    { id: '1', title: 'MVP fertig', targetDate: nextMonth, completed: false },
+                    { id: '1', title: 'MVP fertig', targetDate: nextMonth.toISOString(), completed: false },
                 ],
             }),
             this.createProject(userId, {

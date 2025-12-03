@@ -15,5 +15,9 @@ export class HabitLog {
     completed: boolean = false;
     note?: string;
 
+    // Timer fields for duration habits
+    timerStartedAt?: Date; // When the timer was started
+    timerEndedAt?: Date; // When the timer was stopped (null = timer still running)
+
     createdAt: Date = new Date();
 }

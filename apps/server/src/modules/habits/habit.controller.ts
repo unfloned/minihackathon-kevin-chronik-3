@@ -58,6 +58,31 @@ export class HabitController {
         };
     }
 
+    @(http.POST('/:id/timer/start').group('auth-required'))
+    async startTimer(id: string, user: User) {
+        const log = await this.habitService.startTimer(user.id, id);
+        if (!log) {
+            throw new HttpNotFoundError('Habit nicht gefunden oder kein Dauer-Habit');
+        }
+        return {
+            log,
+            timerStartedAt: log.timerStartedAt?.toISOString(),
+        };
+    }
+
+    @(http.POST('/:id/timer/stop').group('auth-required'))
+    async stopTimer(id: string, user: User) {
+        const result = await this.habitService.stopTimer(user.id, id);
+        if (!result) {
+            throw new HttpNotFoundError('Habit nicht gefunden oder kein Timer aktiv');
+        }
+        return {
+            log: result.log,
+            xpAwarded: result.xpAwarded,
+            streakUpdated: result.streakUpdated,
+        };
+    }
+
     @(http.PATCH('/:id').group('auth-required'))
     async updateHabit(id: string, body: HttpBody<UpdateHabitDto>, user: User) {
         const habit = await this.habitService.update(id, user.id, body);
