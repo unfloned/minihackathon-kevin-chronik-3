@@ -392,19 +392,19 @@ export class AdminService {
         const notes: Note[] = [
             this.createNote(user, {
                 title: 'Meeting Notizen',
-                content: '# Team Meeting 15.11.\n\n## Agenda\n- Sprint Review\n- Neue Features besprechen\n- Roadmap Q1 2025\n\n## Action Items\n- [ ] Design Review mit Lisa\n- [ ] API Dokumentation updaten\n- [x] Deployment Pipeline fixen',
+                content: '<h1>Team Meeting 15.11.</h1><h2>Agenda</h2><ul><li><p>Sprint Review</p></li><li><p>Neue Features besprechen</p></li><li><p>Roadmap Q1 2025</p></li></ul><h2>Action Items</h2><ul data-type="taskList"><li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>Design Review mit Lisa</p></div></li><li data-type="taskItem" data-checked="false"><label><input type="checkbox"><span></span></label><div><p>API Dokumentation updaten</p></div></li><li data-type="taskItem" data-checked="true"><label><input type="checkbox" checked="checked"><span></span></label><div><p>Deployment Pipeline fixen</p></div></li></ul>',
                 color: '#3B82F6',
                 isPinned: true,
             }),
             this.createNote(user, {
                 title: 'Bucket List 2025',
-                content: '# Bucket List\n\n1. 🏔️ Alpen wandern\n2. 🎸 Gitarre lernen\n3. 🇯🇵 Japan besuchen\n4. 📖 20 Bücher lesen\n5. 🏃 Halbmarathon laufen',
+                content: '<h1>Bucket List</h1><ol><li><p>🏔️ Alpen wandern</p></li><li><p>🎸 Gitarre lernen</p></li><li><p>🇯🇵 Japan besuchen</p></li><li><p>📖 20 Bücher lesen</p></li><li><p>🏃 Halbmarathon laufen</p></li></ol>',
                 color: '#22C55E',
                 isPinned: false,
             }),
             this.createNote(user, {
                 title: 'Rezept: Pasta Carbonara',
-                content: '# Pasta Carbonara\n\n## Zutaten\n- 400g Spaghetti\n- 200g Guanciale\n- 4 Eigelb\n- 100g Pecorino\n- Schwarzer Pfeffer\n\n## Zubereitung\n1. Pasta kochen\n2. Guanciale knusprig braten\n3. Eigelb mit Käse mischen\n4. Alles vermengen (Herd aus!)',
+                content: '<h1>Pasta Carbonara</h1><h2>Zutaten</h2><ul><li><p>400g Spaghetti</p></li><li><p>200g Guanciale</p></li><li><p>4 Eigelb</p></li><li><p>100g Pecorino</p></li><li><p>Schwarzer Pfeffer</p></li></ul><h2>Zubereitung</h2><ol><li><p>Pasta kochen</p></li><li><p>Guanciale knusprig braten</p></li><li><p>Eigelb mit Käse mischen</p></li><li><p>Alles vermengen (Herd aus!)</p></li></ol>',
                 color: '#F59E0B',
                 isPinned: false,
             }),
