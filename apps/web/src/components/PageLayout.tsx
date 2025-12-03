@@ -7,10 +7,12 @@ import {
     Stack,
     Button,
     Paper,
+    Card,
     TextInput,
     SimpleGrid,
+    ThemeIcon,
 } from '@mantine/core';
-import { IconSearch, IconPlus } from '@tabler/icons-react';
+import { IconSearch, IconPlus, IconHash } from '@tabler/icons-react';
 
 export interface PageHeaderProps {
     title: string;
@@ -83,14 +85,21 @@ export function SearchBar({
 export interface StatCardProps {
     value: string | number;
     label: string;
+    icon?: React.ComponentType<{ size?: number | string }>;
+    color?: string;
 }
 
-export function StatCard({ value, label }: StatCardProps) {
+export function StatCard({ value, label, icon: Icon, color = 'blue' }: StatCardProps) {
     return (
-        <Paper withBorder p="md" ta="center">
+        <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Group justify="space-between" mb="md">
+                <Text size="sm" c="dimmed" fw={500}>{label}</Text>
+                <ThemeIcon color={color} variant="light" size="lg" radius="md">
+                    {Icon ? <Icon size={20} /> : <IconHash size={20} />}
+                </ThemeIcon>
+            </Group>
             <Text size="xl" fw={700}>{value}</Text>
-            <Text size="xs" c="dimmed">{label}</Text>
-        </Paper>
+        </Card>
     );
 }
 
