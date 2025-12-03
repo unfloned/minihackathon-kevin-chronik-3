@@ -9,7 +9,7 @@ export interface ProjectTask {
     title: string;
     description?: string;
     completed: boolean;
-    dueDate?: Date;
+    dueDate?: string; // ISO date string (JSON doesn't preserve Date objects)
     priority: TaskPriority;
     order: number;
 }
@@ -18,9 +18,9 @@ export interface Milestone {
     id: string;
     title: string;
     description?: string;
-    targetDate: Date;
+    targetDate?: string; // ISO date string (JSON doesn't preserve Date objects)
     completed: boolean;
-    completedAt?: Date;
+    completedAt?: string; // ISO date string
 }
 
 @entity.name('projects')

@@ -28,7 +28,7 @@ export interface UpdateProjectDto {
 export interface AddTaskDto {
     title: string;
     description?: string;
-    dueDate?: Date;
+    dueDate?: string; // ISO date string
     priority?: TaskPriority;
 }
 
@@ -36,7 +36,7 @@ export interface UpdateTaskDto {
     title?: string;
     description?: string;
     completed?: boolean;
-    dueDate?: Date;
+    dueDate?: string; // ISO date string
     priority?: TaskPriority;
     order?: number;
 }
@@ -44,13 +44,13 @@ export interface UpdateTaskDto {
 export interface AddMilestoneDto {
     title: string;
     description?: string;
-    targetDate: Date;
+    targetDate?: string; // ISO date string
 }
 
 export interface UpdateMilestoneDto {
     title?: string;
     description?: string;
-    targetDate?: Date;
+    targetDate?: string; // ISO date string
     completed?: boolean;
 }
 
@@ -289,7 +289,7 @@ export class ProjectService {
         if (dto.targetDate !== undefined) milestone.targetDate = dto.targetDate;
         if (dto.completed !== undefined) {
             milestone.completed = dto.completed;
-            milestone.completedAt = dto.completed ? new Date() : undefined;
+            milestone.completedAt = dto.completed ? new Date().toISOString() : undefined;
         }
 
         project.progress = this.calculateProgress(project);
@@ -322,7 +322,7 @@ export class ProjectService {
         if (!milestone) return null;
 
         milestone.completed = !milestone.completed;
-        milestone.completedAt = milestone.completed ? new Date() : undefined;
+        milestone.completedAt = milestone.completed ? new Date().toISOString() : undefined;
         project.progress = this.calculateProgress(project);
         project.updatedAt = new Date();
 
