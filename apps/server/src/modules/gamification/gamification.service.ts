@@ -384,4 +384,94 @@ export class GamificationService {
     getXpProgress(xp: number, level: number) {
         return xpProgressInLevel(xp, level);
     }
+
+    // Public Profile / Achievement Showcase
+    async getPublicProfile(slug: string): Promise<{
+        displayName: string;
+        level: number;
+        xp: number;
+        xpProgress: ReturnType<typeof xpProgressInLevel>;
+        achievements: AchievementPublic[];
+        stats: {
+            totalAchievements: number;
+            totalXpFromAchievements: number;
+            rareAchievements: number;
+            legendaryAchievements: number;
+        };
+    } | null> {
+        const user = await this.db.query(User)
+            .filter({ profileSlug: slug, profilePublic: true })
+            .findOneOrUndefined();
+
+        if (!user) return null;
+
+        const achievements = await this.getUserAchievements(user.id);
+        const xpProgress = this.getXpProgress(user.xp, user.level);
+
+        // Calculate stats
+        const totalXpFromAchievements = achievements.reduce((sum, a) => sum + a.xpReward, 0);
+        const rareAchievements = achievements.filter(a => (a.tier ?? 1) >= 4).length;
+        const legendaryAchievements = achievements.filter(a => (a.tier ?? 1) >= 5 || a.category === 'legendary').length;
+
+        return {
+            displayName: user.displayName,
+            level: user.level,
+            xp: user.xp,
+            xpProgress,
+            achievements,
+            stats: {
+                totalAchievements: achievements.length,
+                totalXpFromAchievements,
+                rareAchievements,
+                legendaryAchievements,
+            },
+        };
+    }
+
+    async toggleProfileSharing(userId: string, isPublic: boolean): Promise<{
+        isPublic: boolean;
+        shareUrl: string | null;
+        profileSlug: string;
+    }> {
+        const user = await this.db.query(User)
+            .filter({ id: userId })
+            .findOne();
+
+        user.profilePublic = isPublic;
+
+        // Generate slug if enabling and doesn't have one
+        if (isPublic && !user.profileSlug) {
+            const baseSlug = user.displayName
+                .toLowerCase()
+                .replace(/[^a-z0-9]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '');
+            user.profileSlug = `${baseSlug}-${Math.random().toString(36).slice(2, 10)}`;
+        }
+
+        user.updatedAt = new Date();
+        await this.db.persist(user);
+
+        return {
+            isPublic: user.profilePublic,
+            shareUrl: user.profilePublic ? `/profile/${user.profileSlug}` : null,
+            profileSlug: user.profileSlug,
+        };
+    }
+
+    async getProfileSharingStatus(userId: string): Promise<{
+        isPublic: boolean;
+        shareUrl: string | null;
+        profileSlug: string;
+    }> {
+        const user = await this.db.query(User)
+            .filter({ id: userId })
+            .findOne();
+
+        return {
+            isPublic: user.profilePublic,
+            shareUrl: user.profilePublic ? `/profile/${user.profileSlug}` : null,
+            profileSlug: user.profileSlug,
+        };
+    }
 }

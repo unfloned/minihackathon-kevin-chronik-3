@@ -201,6 +201,8 @@ export class AuthService {
             level: user.level,
             xp: user.xp,
             locale: user.locale,
+            profilePublic: user.profilePublic,
+            profileSlug: user.profileSlug,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };
