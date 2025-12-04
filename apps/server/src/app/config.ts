@@ -2,11 +2,9 @@ import 'dotenv/config';
 
 export class AppConfig {
     environment: 'production' | 'development' = (process.env.NODE_ENV as 'production' | 'development') || 'development';
-    port: number = parseInt(process.env.PORT || '8080');
-    host: string = process.env.HOST || '0.0.0.0';
 
-    // Database
-    databasePath: string = process.env.DATABASE_PATH || './data/ycmm.db';
+    // Database (sqlite://, postgres://, mysql://)
+    databaseUrl: string = process.env.DATABASE_URL || 'sqlite://./data/ycmm.db';
 
     // JWT
     jwtSecret: string = process.env.JWT_SECRET || 'dev-only-insecure-jwt-secret';

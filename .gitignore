@@ -33,6 +33,7 @@ uploads/
 
 # Cache
 .cache/
+.vite/
 
 # Debug/Runtime
 apps/server/var/

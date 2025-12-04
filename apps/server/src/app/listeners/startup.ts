@@ -22,7 +22,6 @@ export class StartupListener {
     async onAppExecute() {
         this.logger.log(`Starting YCMM API Server...`);
         this.logger.log(`Environment: ${this.config.environment}`);
-        this.logger.log(`Port: ${this.config.port}`);
 
         // Run migrations
         await this.database.migrate();

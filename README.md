@@ -51,7 +51,9 @@ Wir alle kennen es: Abos hier, Notizen da, Deadlines vergessen, der Überblick �
 | **Mantine** | UI Component Library |
 | **Vite** | Build Tool & Dev Server |
 | **Deepkit** | Backend Framework mit ORM |
-| **SQLite** | Datenbank |
+| **SQLite/PostgreSQL/MySQL** | Datenbank (via DATABASE_URL) |
+
+> **Hinweis:** Bei MySQL wird nur Version **8.0** unterstützt.
 
 ---
 
@@ -79,7 +81,20 @@ pnpm dev
 
 Die App läuft dann unter:
 - Frontend: `http://localhost:5173`
-- Backend: `http://localhost:3000`
+- Backend: `http://localhost:8080`
+
+### Umgebungsvariablen
+
+```bash
+# Datenbank (Standard: SQLite)
+DATABASE_URL=sqlite://./data/ycmm.db
+
+# Alternativ: PostgreSQL
+# DATABASE_URL=postgres://user:password@localhost:5432/ycmm
+
+# Alternativ: MySQL 8.0
+# DATABASE_URL=mysql://user:password@localhost:3306/ycmm
+```
 
 ---
 
