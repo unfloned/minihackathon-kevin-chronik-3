@@ -13,11 +13,15 @@ import {
     ColorInput,
     Skeleton,
     ActionIcon,
+    Paper,
+    ThemeIcon,
 } from '@mantine/core';
-import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconArrowLeft, IconDeviceFloppy, IconMicrophone } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation } from '../../../hooks';
 import { NoteRichTextEditor } from '../../../components/RichTextEditor';
+import { VoiceRecorder, VoiceInputButton } from '../../../components/VoiceRecorder';
 import type { NoteSimple } from '@ycmm/core';
 
 // Alias for component usage
@@ -38,11 +42,13 @@ const defaultForm: NoteForm = {
 };
 
 export default function NoteEditPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const isEditing = id && id !== 'new';
 
     const [form, setForm] = useState<NoteForm>(defaultForm);
+    const [showVoicePanel, setShowVoicePanel] = useState(false);
 
     const { data: note, isLoading } = useRequest<Note>(
         isEditing ? `/notes/${id}` : ''
@@ -72,8 +78,8 @@ export default function NoteEditPage() {
     const handleSave = async () => {
         if (!form.title.trim()) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Bitte gib einen Titel ein',
+                title: t('common.error'),
+                message: t('notes.enterTitle'),
                 color: 'red',
             });
             return;
@@ -82,21 +88,34 @@ export default function NoteEditPage() {
         if (isEditing) {
             await updateNote({ id: id!, data: form });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Notiz aktualisiert',
+                title: t('common.success'),
+                message: t('notes.noteUpdated'),
                 color: 'green',
             });
         } else {
             const result = await createNote(form);
             if (result) {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Notiz erstellt',
+                    title: t('common.success'),
+                    message: t('notes.noteCreated'),
                     color: 'green',
                 });
             }
         }
         navigate('/app/notes');
+    };
+
+    const handleVoiceTranscript = (transcript: string) => {
+        // Append voice transcript to content
+        const newContent = form.content
+            ? `${form.content}<p>${transcript}</p>`
+            : `<p>${transcript}</p>`;
+        setForm({ ...form, content: newContent });
+        setShowVoicePanel(false);
+    };
+
+    const handleTitleVoice = (text: string) => {
+        setForm({ ...form, title: form.title ? `${form.title} ${text}` : text });
     };
 
     const handleBack = () => {
@@ -126,10 +145,10 @@ export default function NoteEditPage() {
                         </ActionIcon>
                         <div>
                             <Title order={2}>
-                                {isEditing ? 'Notiz bearbeiten' : 'Neue Notiz'}
+                                {isEditing ? t('notes.editNote') : t('notes.newNote')}
                             </Title>
                             <Text c="dimmed" size="sm">
-                                {isEditing ? 'Änderungen an deiner Notiz vornehmen' : 'Erstelle eine neue Notiz'}
+                                {isEditing ? t('notes.editDescription') : t('notes.createDescription')}
                             </Text>
                         </div>
                     </Group>
@@ -138,43 +157,86 @@ export default function NoteEditPage() {
                         onClick={handleSave}
                         loading={creating || updating}
                     >
-                        Speichern
+                        {t('common.save')}
                     </Button>
                 </Group>
+
+                {/* Voice Note Panel */}
+                {!isEditing && (
+                    <Paper withBorder p="md" radius="md" bg="var(--mantine-color-blue-light)">
+                        <Group justify="space-between" align="center">
+                            <Group gap="sm">
+                                <ThemeIcon size="lg" variant="light" color="blue" radius="xl">
+                                    <IconMicrophone size={20} />
+                                </ThemeIcon>
+                                <div>
+                                    <Text fw={500}>{t('voice.voiceNote')}</Text>
+                                    <Text size="xs" c="dimmed">{t('voice.voiceNoteHint')}</Text>
+                                </div>
+                            </Group>
+                            {!showVoicePanel && (
+                                <Button
+                                    variant="filled"
+                                    color="blue"
+                                    leftSection={<IconMicrophone size={16} />}
+                                    onClick={() => setShowVoicePanel(true)}
+                                >
+                                    {t('voice.startRecording')}
+                                </Button>
+                            )}
+                        </Group>
+                        {showVoicePanel && (
+                            <Stack mt="md">
+                                <VoiceRecorder
+                                    onTranscriptComplete={handleVoiceTranscript}
+                                    onCancel={() => setShowVoicePanel(false)}
+                                    placeholder={t('voice.speakNote')}
+                                    autoStart
+                                />
+                            </Stack>
+                        )}
+                    </Paper>
+                )}
 
                 {/* Form */}
                 <Card withBorder>
                     <Stack gap="md">
-                        <TextInput
-                            label="Titel"
-                            placeholder="Titel der Notiz"
-                            value={form.title}
-                            onChange={(e) => setForm({ ...form, title: e.currentTarget.value })}
-                            required
-                            size="md"
-                        />
+                        <Group gap="xs" align="flex-end">
+                            <TextInput
+                                label={t('common.title')}
+                                placeholder={t('notes.titlePlaceholder')}
+                                value={form.title}
+                                onChange={(e) => setForm({ ...form, title: e.currentTarget.value })}
+                                required
+                                size="md"
+                                style={{ flex: 1 }}
+                            />
+                            <VoiceInputButton onTranscript={handleTitleVoice} size="lg" />
+                        </Group>
 
                         <div>
-                            <Text size="sm" fw={500} mb={4}>
-                                Inhalt
-                            </Text>
+                            <Group justify="space-between" mb={4}>
+                                <Text size="sm" fw={500}>
+                                    {t('common.content')}
+                                </Text>
+                            </Group>
                             <NoteRichTextEditor
                                 content={form.content}
                                 onChange={(content) => setForm({ ...form, content })}
-                                placeholder="Schreibe deine Notiz..."
+                                placeholder={t('notes.contentPlaceholder')}
                             />
                         </div>
 
                         <Group grow>
                             <TagsInput
-                                label="Tags"
-                                placeholder="Tags eingeben und Enter drücken"
+                                label={t('common.tags')}
+                                placeholder={t('notes.tagsPlaceholder')}
                                 value={form.tags}
                                 onChange={(tags) => setForm({ ...form, tags })}
                             />
 
                             <ColorInput
-                                label="Farbe"
+                                label={t('common.color')}
                                 value={form.color}
                                 onChange={(color) => setForm({ ...form, color })}
                                 swatches={[
