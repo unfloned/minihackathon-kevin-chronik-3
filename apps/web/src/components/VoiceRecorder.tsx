@@ -246,9 +246,6 @@ export function VoiceRecorder({
         }
     }, [isListening, transcript, interimTranscript, showPanel]);
 
-    const fullTranscript = transcript + (interimTranscript ? ` ${interimTranscript}` : '');
-    const processedPreview = fullTranscript ? processVoiceCommands(fullTranscript) : '';
-
     return (
         <Stack gap="xs">
             {/* Main mic button when panel is closed */}
@@ -303,9 +300,14 @@ export function VoiceRecorder({
                                     bg="var(--mantine-color-dark-7)"
                                     mih={80}
                                 >
-                                    {processedPreview ? (
+                                    {(transcript || interimTranscript) ? (
                                         <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-                                            {processedPreview}
+                                            {transcript && processVoiceCommands(transcript)}
+                                            {interimTranscript && (
+                                                <Text span c="dimmed" inherit>
+                                                    {transcript ? ' ' : ''}{interimTranscript}
+                                                </Text>
+                                            )}
                                         </Text>
                                     ) : (
                                         <Text size="sm" c="dimmed" fs="italic">
