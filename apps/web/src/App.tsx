@@ -18,7 +18,7 @@ import { SubscriptionsPage } from './modules/subscriptions';
 import { SettingsPage } from './modules/settings';
 import { AchievementsPage } from './modules/gamification';
 import { NotesPage, NoteDetailPage, NoteEditPage } from './modules/notes';
-import { ListsPage } from './modules/lists';
+import { ListsPage, ListDetailPage } from './modules/lists';
 import { ProjectsPage, ProjectDetailPage } from './modules/projects';
 import { InventoryPage } from './modules/inventory';
 import { ApplicationsPage } from './modules/applications';
@@ -62,6 +62,7 @@ export default function App() {
                 <Route path="notes/:id" element={<NoteDetailPage />} />
                 <Route path="notes/:id/edit" element={<NoteEditPage />} />
                 <Route path="lists" element={<ListsPage />} />
+                <Route path="lists/:id" element={<ListDetailPage />} />
                 <Route path="projects" element={<ProjectsPage />} />
                 <Route path="projects/:id" element={<ProjectDetailPage />} />
                 <Route path="inventory" element={<InventoryPage />} />

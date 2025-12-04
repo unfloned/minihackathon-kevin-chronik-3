@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Container,
     Card,
@@ -11,14 +12,11 @@ import {
     Textarea,
     Select,
     ColorInput,
-    Checkbox,
     SegmentedControl,
     ActionIcon,
     Badge,
-    NumberInput,
     Menu,
     Paper,
-    Divider,
     Skeleton,
     SimpleGrid,
     Progress,
@@ -48,7 +46,7 @@ import {
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
-import type { ListSimple, ListItem, ListType } from '@ycmm/core';
+import type { ListSimple, ListType } from '@ycmm/core';
 
 // Alias for component usage
 type List = ListSimple;
@@ -70,16 +68,14 @@ const listTypeIcons: Record<string, typeof IconList> = {
 };
 
 function ListsPage() {
+    const navigate = useNavigate();
     const [view, setView] = useState<'active' | 'archived'>('active');
-    const [selectedList, setSelectedList] = useState<List | null>(null);
     const [editingList, setEditingList] = useState<List | null>(null);
-    const [newItem, setNewItem] = useState({ text: '', quantity: 1, priority: 'medium' as 'low' | 'medium' | 'high' });
     const [globalViewMode, setViewMode] = useViewMode();
     const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
 
     const [createModalOpened, { open: openCreateModal, close: closeCreateModal }] = useDisclosure(false);
     const [editModalOpened, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
-    const [itemModalOpened, { open: openItemModal, close: closeItemModal }] = useDisclosure(false);
 
     const [newListData, setNewListData] = useState({
         name: '',
@@ -166,7 +162,6 @@ function ListsPage() {
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
-                setSelectedList(null);
                 refetchActive();
                 refetchArchived();
             },
@@ -192,7 +187,6 @@ function ListsPage() {
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
-                setSelectedList(null);
                 refetchActive();
             },
             onError: (error: string) => {
@@ -217,7 +211,6 @@ function ListsPage() {
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
-                setSelectedList(null);
                 refetchArchived();
                 refetchActive();
             },
@@ -225,77 +218,6 @@ function ListsPage() {
                 notifications.show({
                     title: 'Fehler',
                     message: error || 'Liste konnte nicht wiederhergestellt werden',
-                    color: 'red',
-                    icon: <IconAlertCircle size={16} />,
-                });
-            },
-        }
-    );
-
-    const { mutate: addItem, isLoading: addingItem } = useMutation<ListItem, any>(
-        (vars) => `/lists/${vars.listId}/items`,
-        {
-            method: 'POST',
-            onSuccess: () => {
-                notifications.show({
-                    title: 'Erfolg',
-                    message: 'Eintrag erfolgreich hinzugefügt',
-                    color: 'green',
-                    icon: <IconCheck size={16} />,
-                });
-                setNewItem({ text: '', quantity: 1, priority: 'medium' });
-                closeItemModal();
-                refetchActive();
-                refetchArchived();
-            },
-            onError: (error: string) => {
-                notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Eintrag konnte nicht hinzugefügt werden',
-                    color: 'red',
-                    icon: <IconAlertCircle size={16} />,
-                });
-            },
-        }
-    );
-
-    const { mutate: toggleItem } = useMutation<void, { listId: string; itemId: string }>(
-        (vars) => `/lists/${vars.listId}/items/${vars.itemId}/toggle`,
-        {
-            method: 'POST',
-            onSuccess: () => {
-                refetchActive();
-                refetchArchived();
-            },
-            onError: (error: string) => {
-                notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Status konnte nicht geändert werden',
-                    color: 'red',
-                    icon: <IconAlertCircle size={16} />,
-                });
-            },
-        }
-    );
-
-    const { mutate: deleteItem } = useMutation<void, { listId: string; itemId: string }>(
-        (vars) => `/lists/${vars.listId}/items/${vars.itemId}`,
-        {
-            method: 'DELETE',
-            onSuccess: () => {
-                notifications.show({
-                    title: 'Erfolg',
-                    message: 'Eintrag erfolgreich gelöscht',
-                    color: 'green',
-                    icon: <IconCheck size={16} />,
-                });
-                refetchActive();
-                refetchArchived();
-            },
-            onError: (error: string) => {
-                notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Eintrag konnte nicht gelöscht werden',
                     color: 'red',
                     icon: <IconAlertCircle size={16} />,
                 });
@@ -332,32 +254,9 @@ function ListsPage() {
         unarchiveList({ id: listId });
     };
 
-    const handleAddItem = () => {
-        if (!selectedList || !newItem.text.trim()) return;
-        addItem({
-            listId: selectedList.id,
-            text: newItem.text,
-            quantity: newItem.quantity,
-            priority: newItem.priority,
-        });
-    };
-
-    const handleToggleItem = (listId: string, itemId: string) => {
-        toggleItem({ listId, itemId });
-    };
-
-    const handleDeleteItem = (listId: string, itemId: string) => {
-        deleteItem({ listId, itemId });
-    };
-
     const openEditListModal = (list: List) => {
         setEditingList({ ...list });
         openEditModal();
-    };
-
-    const openAddItemModal = (list: List) => {
-        setSelectedList(list);
-        openItemModal();
     };
 
     const lists = view === 'active' ? activeLists : archivedLists;
@@ -380,7 +279,15 @@ function ListsPage() {
         const completedCount = list.items.filter(i => i.completed).length;
 
         return (
-            <Card key={list.id} shadow="sm" padding="lg" radius="md" withBorder>
+            <Card
+                key={list.id}
+                shadow="sm"
+                padding="lg"
+                radius="md"
+                withBorder
+                style={{ cursor: 'pointer' }}
+                onClick={() => navigate(`/app/lists/${list.id}`)}
+            >
                 <Stack gap="md">
                     <Group justify="space-between">
                         <Group gap="sm">
@@ -396,34 +303,37 @@ function ListsPage() {
                         </Group>
                         <Menu shadow="md" width={200}>
                             <Menu.Target>
-                                <ActionIcon variant="subtle" color="gray">
+                                <ActionIcon variant="subtle" color="gray" onClick={(e) => e.stopPropagation()}>
                                     <IconDotsVertical size={16} />
                                 </ActionIcon>
                             </Menu.Target>
                             <Menu.Dropdown>
                                 <Menu.Item
                                     leftSection={<IconEdit size={14} />}
-                                    onClick={() => openEditListModal(list)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        openEditListModal(list);
+                                    }}
                                 >
                                     Bearbeiten
-                                </Menu.Item>
-                                <Menu.Item
-                                    leftSection={<IconPlus size={14} />}
-                                    onClick={() => openAddItemModal(list)}
-                                >
-                                    Eintrag hinzufügen
                                 </Menu.Item>
                                 {!list.isArchived ? (
                                     <Menu.Item
                                         leftSection={<IconArchive size={14} />}
-                                        onClick={() => handleArchiveList(list.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleArchiveList(list.id);
+                                        }}
                                     >
                                         Archivieren
                                     </Menu.Item>
                                 ) : (
                                     <Menu.Item
                                         leftSection={<IconArchiveOff size={14} />}
-                                        onClick={() => handleUnarchiveList(list.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleUnarchiveList(list.id);
+                                        }}
                                     >
                                         Wiederherstellen
                                     </Menu.Item>
@@ -432,7 +342,10 @@ function ListsPage() {
                                 <Menu.Item
                                     color="red"
                                     leftSection={<IconTrash size={14} />}
-                                    onClick={() => handleDeleteList(list.id)}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteList(list.id);
+                                    }}
                                 >
                                     Löschen
                                 </Menu.Item>
@@ -453,67 +366,11 @@ function ListsPage() {
                         <Progress value={progress} color={list.color} size="sm" radius="xl" />
                     )}
 
-                    {list.items.length > 0 && (
-                        <>
-                            <Divider />
-                            <Stack gap="xs">
-                                {list.items.slice(0, 5).map((item) => (
-                                    <Group key={item.id} justify="space-between" wrap="nowrap">
-                                        <Group gap="sm" style={{ flex: 1 }}>
-                                            <Checkbox
-                                                checked={item.completed}
-                                                onChange={() => handleToggleItem(list.id, item.id)}
-                                                color={list.color}
-                                            />
-                                            <Text
-                                                size="sm"
-                                                style={{
-                                                    textDecoration: item.completed ? 'line-through' : 'none',
-                                                    opacity: item.completed ? 0.6 : 1,
-                                                }}
-                                            >
-                                                {item.text}
-                                            </Text>
-                                            {item.quantity && item.quantity > 1 && (
-                                                <Badge size="xs" variant="light">{item.quantity}x</Badge>
-                                            )}
-                                        </Group>
-                                        <ActionIcon
-                                            color="red"
-                                            variant="subtle"
-                                            size="sm"
-                                            onClick={() => handleDeleteItem(list.id, item.id)}
-                                        >
-                                            <IconTrash size={14} />
-                                        </ActionIcon>
-                                    </Group>
-                                ))}
-                                {list.items.length > 5 && (
-                                    <Text size="xs" c="dimmed" ta="center">
-                                        + {list.items.length - 5} weitere Einträge
-                                    </Text>
-                                )}
-                            </Stack>
-                        </>
-                    )}
-
                     {list.items.length === 0 && (
-                        <Paper p="md" withBorder radius="md" bg="gray.0">
-                            <Text size="sm" c="dimmed" ta="center">
-                                Keine Einträge - Klicke auf + um einen hinzuzufügen
-                            </Text>
-                        </Paper>
+                        <Text size="sm" c="dimmed" ta="center">
+                            Keine Einträge
+                        </Text>
                     )}
-
-                    <Button
-                        variant="light"
-                        color={list.color}
-                        size="xs"
-                        leftSection={<IconPlus size={14} />}
-                        onClick={() => openAddItemModal(list)}
-                    >
-                        Eintrag hinzufügen
-                    </Button>
                 </Stack>
             </Card>
         );
@@ -539,7 +396,11 @@ function ListsPage() {
                         const completedCount = list.items.filter(i => i.completed).length;
 
                         return (
-                            <Table.Tr key={list.id}>
+                            <Table.Tr
+                                key={list.id}
+                                style={{ cursor: 'pointer' }}
+                                onClick={() => navigate(`/app/lists/${list.id}`)}
+                            >
                                 <Table.Td>
                                     <Group gap="sm">
                                         <ThemeIcon size="sm" radius="md" color={list.color} variant="light">
@@ -571,53 +432,56 @@ function ListsPage() {
                                     <Text size="sm">{new Date(list.createdAt).toLocaleDateString('de-DE')}</Text>
                                 </Table.Td>
                                 <Table.Td>
-                                    <Group gap="xs">
-                                        <ActionIcon
-                                            variant="subtle"
-                                            color="blue"
-                                            onClick={() => openAddItemModal(list)}
-                                        >
-                                            <IconPlus size={16} />
-                                        </ActionIcon>
-                                        <Menu shadow="md" width={200}>
-                                            <Menu.Target>
-                                                <ActionIcon variant="subtle" color="gray">
-                                                    <IconDotsVertical size={16} />
-                                                </ActionIcon>
-                                            </Menu.Target>
-                                            <Menu.Dropdown>
+                                    <Menu shadow="md" width={200}>
+                                        <Menu.Target>
+                                            <ActionIcon variant="subtle" color="gray" onClick={(e) => e.stopPropagation()}>
+                                                <IconDotsVertical size={16} />
+                                            </ActionIcon>
+                                        </Menu.Target>
+                                        <Menu.Dropdown>
+                                            <Menu.Item
+                                                leftSection={<IconEdit size={14} />}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    openEditListModal(list);
+                                                }}
+                                            >
+                                                Bearbeiten
+                                            </Menu.Item>
+                                            {!list.isArchived ? (
                                                 <Menu.Item
-                                                    leftSection={<IconEdit size={14} />}
-                                                    onClick={() => openEditListModal(list)}
+                                                    leftSection={<IconArchive size={14} />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleArchiveList(list.id);
+                                                    }}
                                                 >
-                                                    Bearbeiten
+                                                    Archivieren
                                                 </Menu.Item>
-                                                {!list.isArchived ? (
-                                                    <Menu.Item
-                                                        leftSection={<IconArchive size={14} />}
-                                                        onClick={() => handleArchiveList(list.id)}
-                                                    >
-                                                        Archivieren
-                                                    </Menu.Item>
-                                                ) : (
-                                                    <Menu.Item
-                                                        leftSection={<IconArchiveOff size={14} />}
-                                                        onClick={() => handleUnarchiveList(list.id)}
-                                                    >
-                                                        Wiederherstellen
-                                                    </Menu.Item>
-                                                )}
-                                                <Menu.Divider />
+                                            ) : (
                                                 <Menu.Item
-                                                    color="red"
-                                                    leftSection={<IconTrash size={14} />}
-                                                    onClick={() => handleDeleteList(list.id)}
+                                                    leftSection={<IconArchiveOff size={14} />}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleUnarchiveList(list.id);
+                                                    }}
                                                 >
-                                                    Löschen
+                                                    Wiederherstellen
                                                 </Menu.Item>
-                                            </Menu.Dropdown>
-                                        </Menu>
-                                    </Group>
+                                            )}
+                                            <Menu.Divider />
+                                            <Menu.Item
+                                                color="red"
+                                                leftSection={<IconTrash size={14} />}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDeleteList(list.id);
+                                                }}
+                                            >
+                                                Löschen
+                                            </Menu.Item>
+                                        </Menu.Dropdown>
+                                    </Menu>
                                 </Table.Td>
                             </Table.Tr>
                         );
@@ -824,49 +688,6 @@ function ListsPage() {
                         </Group>
                     </Stack>
                 )}
-            </Modal>
-
-            {/* Add Item Modal */}
-            <Modal opened={itemModalOpened} onClose={closeItemModal} title="Eintrag hinzufügen" size="md">
-                <Stack gap="md">
-                    <TextInput
-                        label="Text"
-                        placeholder="Eintrag beschreiben"
-                        required
-                        value={newItem.text}
-                        onChange={(e) => setNewItem({ ...newItem, text: e.currentTarget.value })}
-                    />
-                    <NumberInput
-                        label="Menge"
-                        placeholder="Anzahl"
-                        min={1}
-                        value={newItem.quantity}
-                        onChange={(value) => setNewItem({ ...newItem, quantity: Number(value) || 1 })}
-                    />
-                    <Select
-                        label="Priorität"
-                        placeholder="Priorität auswählen"
-                        value={newItem.priority}
-                        onChange={(value) => setNewItem({ ...newItem, priority: value as 'low' | 'medium' | 'high' })}
-                        data={[
-                            { value: 'low', label: 'Niedrig' },
-                            { value: 'medium', label: 'Mittel' },
-                            { value: 'high', label: 'Hoch' },
-                        ]}
-                    />
-                    <Group justify="flex-end" mt="md">
-                        <Button variant="subtle" onClick={closeItemModal}>
-                            Abbrechen
-                        </Button>
-                        <Button
-                            onClick={handleAddItem}
-                            loading={addingItem}
-                            disabled={!newItem.text.trim()}
-                        >
-                            Hinzufügen
-                        </Button>
-                    </Group>
-                </Stack>
             </Modal>
         </Container>
     );
