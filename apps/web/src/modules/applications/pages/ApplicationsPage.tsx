@@ -43,6 +43,7 @@ import {
     IconGift,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
@@ -132,18 +133,6 @@ const defaultForm: CreateApplicationForm = {
     source: '',
 };
 
-const statusLabels: Record<ApplicationStatus, string> = {
-    draft: 'Entwurf',
-    applied: 'Beworben',
-    in_review: 'In Prüfung',
-    interview_scheduled: 'Interview geplant',
-    interviewed: 'Interview absolviert',
-    offer_received: 'Angebot erhalten',
-    accepted: 'Angenommen',
-    rejected: 'Abgelehnt',
-    withdrawn: 'Zurückgezogen',
-};
-
 const statusColors: Record<ApplicationStatus, string> = {
     draft: 'gray',
     applied: 'blue',
@@ -156,32 +145,39 @@ const statusColors: Record<ApplicationStatus, string> = {
     withdrawn: 'orange',
 };
 
-const remoteLabels: Record<RemoteType, string> = {
-    onsite: 'Vor Ort',
-    hybrid: 'Hybrid',
-    remote: 'Remote',
-};
-
-const sourceOptions = [
-    { value: 'linkedin', label: 'LinkedIn' },
-    { value: 'indeed', label: 'Indeed' },
-    { value: 'xing', label: 'XING' },
-    { value: 'stepstone', label: 'StepStone' },
-    { value: 'direct', label: 'Direkt' },
-    { value: 'referral', label: 'Empfehlung' },
-    { value: 'other', label: 'Sonstige' },
-];
-
-const kanbanColumns: { status: ApplicationStatus; label: string }[] = [
-    { status: 'draft', label: 'Entwürfe' },
-    { status: 'applied', label: 'Beworben' },
-    { status: 'interview_scheduled', label: 'Interview geplant' },
-    { status: 'interviewed', label: 'Interview absolviert' },
-    { status: 'offer_received', label: 'Angebote' },
-    { status: 'rejected', label: 'Abgelehnt' },
-];
-
 export default function ApplicationsPage() {
+    const { t } = useTranslation();
+
+    const statusLabels: Record<ApplicationStatus, string> = {
+        draft: t('applications.status.draft'),
+        applied: t('applications.status.applied'),
+        in_review: t('applications.status.screening'),
+        interview_scheduled: t('applications.status.interview'),
+        interviewed: t('applications.status.interviewed'),
+        offer_received: t('applications.status.offer'),
+        accepted: t('applications.status.accepted'),
+        rejected: t('applications.status.rejected'),
+        withdrawn: t('applications.status.withdrawn'),
+    };
+
+    const sourceOptions = [
+        { value: 'linkedin', label: 'LinkedIn' },
+        { value: 'indeed', label: 'Indeed' },
+        { value: 'xing', label: 'XING' },
+        { value: 'stepstone', label: 'StepStone' },
+        { value: 'direct', label: 'Direkt' },
+        { value: 'referral', label: 'Empfehlung' },
+        { value: 'other', label: 'Sonstige' },
+    ];
+
+    const kanbanColumns: { status: ApplicationStatus; label: string }[] = [
+        { status: 'draft', label: t('applications.status.draft') },
+        { status: 'applied', label: t('applications.status.applied') },
+        { status: 'interview_scheduled', label: t('applications.status.interview') },
+        { status: 'interviewed', label: t('applications.status.interviewed') },
+        { status: 'offer_received', label: t('applications.status.offer') },
+        { status: 'rejected', label: t('applications.status.rejected') },
+    ];
     const [opened, { open, close }] = useDisclosure(false);
     const [detailOpened, { open: openDetail, close: closeDetail }] = useDisclosure(false);
     const [editingApp, setEditingApp] = useState<Application | null>(null);
@@ -268,15 +264,15 @@ export default function ApplicationsPage() {
             if (editingApp) {
                 await updateApp({ id: editingApp.id, data: payload });
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Bewerbung aktualisiert',
+                    title: t('common.success'),
+                    message: t('applications.applicationUpdated'),
                     color: 'green',
                 });
             } else {
                 await createApp(payload);
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Bewerbung erstellt',
+                    title: t('common.success'),
+                    message: t('applications.applicationCreated'),
                     color: 'green',
                 });
             }
@@ -284,8 +280,8 @@ export default function ApplicationsPage() {
             close();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Ein Fehler ist aufgetreten',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
@@ -295,16 +291,16 @@ export default function ApplicationsPage() {
         try {
             await deleteApp({ id });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Bewerbung gelöscht',
+                title: t('common.success'),
+                message: t('applications.applicationDeleted'),
                 color: 'green',
             });
             refetch();
             closeDetail();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Fehler beim Löschen',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
@@ -314,15 +310,15 @@ export default function ApplicationsPage() {
         try {
             await updateStatus({ id: appId, status: newStatus });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Status aktualisiert',
+                title: t('common.success'),
+                message: t('applications.applicationUpdated'),
                 color: 'green',
             });
             refetch();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Fehler beim Aktualisieren des Status',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
@@ -348,10 +344,10 @@ export default function ApplicationsPage() {
             return `${salary.min.toLocaleString()} - ${salary.max.toLocaleString()} ${salary.currency}`;
         }
         if (salary.min) {
-            return `ab ${salary.min.toLocaleString()} ${salary.currency}`;
+            return `${t('common.from', { defaultValue: 'ab' })} ${salary.min.toLocaleString()} ${salary.currency}`;
         }
         if (salary.max) {
-            return `bis ${salary.max.toLocaleString()} ${salary.currency}`;
+            return `${t('common.to', { defaultValue: 'bis' })} ${salary.max.toLocaleString()} ${salary.currency}`;
         }
         return null;
     };
@@ -387,7 +383,7 @@ export default function ApplicationsPage() {
                                     handleOpenEdit(app);
                                 }}
                             >
-                                Bearbeiten
+                                {t('common.edit')}
                             </Menu.Item>
                             <Menu.Item
                                 leftSection={<IconTrash size={14} />}
@@ -397,10 +393,10 @@ export default function ApplicationsPage() {
                                     handleDelete(app.id);
                                 }}
                             >
-                                Löschen
+                                {t('common.delete')}
                             </Menu.Item>
                             <Menu.Divider />
-                            <Menu.Label>Status ändern</Menu.Label>
+                            <Menu.Label>{t('common.status')}</Menu.Label>
                             {Object.entries(statusLabels).map(([status, label]) => (
                                 <Menu.Item
                                     key={status}
@@ -421,7 +417,7 @@ export default function ApplicationsPage() {
                         {statusLabels[app.status]}
                     </Badge>
                     <Badge variant="light" size="sm">
-                        {remoteLabels[app.remote]}
+                        {app.remote === 'onsite' ? t('applications.interviewType.onsite') : app.remote === 'hybrid' ? 'Hybrid' : 'Remote'}
                     </Badge>
                 </Group>
 
@@ -440,7 +436,7 @@ export default function ApplicationsPage() {
 
                 {app.interviews.length > 0 && (
                     <Text size="xs" c="blue">
-                        {app.interviews.length} Interview(s)
+                        {app.interviews.length} {t('applications.interviews')}
                     </Text>
                 )}
             </Stack>
@@ -463,7 +459,7 @@ export default function ApplicationsPage() {
                                     {apps.map((app) => renderApplicationCard(app))}
                                     {apps.length === 0 && (
                                         <Text size="xs" c="dimmed" ta="center" py="xl">
-                                            Keine Bewerbungen
+                                            {t('applications.emptyState')}
                                         </Text>
                                     )}
                                 </Stack>
@@ -480,7 +476,7 @@ export default function ApplicationsPage() {
             {filteredApplications.map((app) => renderApplicationCard(app))}
             {filteredApplications.length === 0 && (
                 <Text c="dimmed" ta="center" py="xl">
-                    Keine Bewerbungen gefunden
+                    {t('common.noResults')}
                 </Text>
             )}
         </SimpleGrid>
@@ -491,14 +487,14 @@ export default function ApplicationsPage() {
             <Table striped highlightOnHover>
                 <Table.Thead>
                     <Table.Tr>
-                        <Table.Th>Firma</Table.Th>
-                        <Table.Th>Position</Table.Th>
-                        <Table.Th>Status</Table.Th>
-                        <Table.Th>Standort</Table.Th>
+                        <Table.Th>{t('applications.company')}</Table.Th>
+                        <Table.Th>{t('applications.position')}</Table.Th>
+                        <Table.Th>{t('common.status')}</Table.Th>
+                        <Table.Th>{t('applications.location')}</Table.Th>
                         <Table.Th>Remote</Table.Th>
-                        <Table.Th>Gehalt</Table.Th>
-                        <Table.Th>Beworben am</Table.Th>
-                        <Table.Th>Aktionen</Table.Th>
+                        <Table.Th>{t('applications.salary')}</Table.Th>
+                        <Table.Th>{t('applications.appliedOn')}</Table.Th>
+                        <Table.Th>{t('common.actions')}</Table.Th>
                     </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -529,7 +525,7 @@ export default function ApplicationsPage() {
                             </Table.Td>
                             <Table.Td>
                                 <Badge variant="light" size="sm">
-                                    {remoteLabels[app.remote]}
+                                    {app.remote === 'onsite' ? t('applications.interviewType.onsite') : app.remote === 'hybrid' ? 'Hybrid' : 'Remote'}
                                 </Badge>
                             </Table.Td>
                             <Table.Td>
@@ -555,7 +551,7 @@ export default function ApplicationsPage() {
                                                 handleOpenEdit(app);
                                             }}
                                         >
-                                            Bearbeiten
+                                            {t('common.edit')}
                                         </Menu.Item>
                                         <Menu.Item
                                             leftSection={<IconTrash size={14} />}
@@ -565,7 +561,7 @@ export default function ApplicationsPage() {
                                                 handleDelete(app.id);
                                             }}
                                         >
-                                            Löschen
+                                            {t('common.delete')}
                                         </Menu.Item>
                                     </Menu.Dropdown>
                                 </Menu>
@@ -576,7 +572,7 @@ export default function ApplicationsPage() {
             </Table>
             {filteredApplications.length === 0 && (
                 <Text c="dimmed" ta="center" py="xl">
-                    Keine Bewerbungen gefunden
+                    {t('common.noResults')}
                 </Text>
             )}
         </Paper>
@@ -587,8 +583,8 @@ export default function ApplicationsPage() {
             <Container size="xl" py="xl">
                 <Stack gap="md">
                     <Group justify="space-between">
-                        <PageTitle title="Bewerbungen" subtitle="Verwalte deine Bewerbungen" />
-                        <Button onClick={handleOpenCreate}>Neue Bewerbung</Button>
+                        <PageTitle title={t('applications.title')} subtitle={t('applications.subtitle')} />
+                        <Button onClick={handleOpenCreate}>{t('applications.newApplication')}</Button>
                     </Group>
                     <Skeleton height={100} />
                     <Skeleton height={400} />
@@ -602,8 +598,8 @@ export default function ApplicationsPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <PageTitle title="Bewerbungen" subtitle="Verwalte deine Bewerbungen" />
-                    <Button onClick={handleOpenCreate}>Neue Bewerbung</Button>
+                    <PageTitle title={t('applications.title')} subtitle={t('applications.subtitle')} />
+                    <Button onClick={handleOpenCreate}>{t('applications.newApplication')}</Button>
                 </Group>
 
                 {/* Stats */}
@@ -611,28 +607,28 @@ export default function ApplicationsPage() {
                     <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
                         <CardStatistic
                             type="icon"
-                            title="Gesamt"
+                            title={t('applications.stats.total')}
                             value={stats.total}
                             icon={IconBriefcase}
                             color="blue"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Rücklaufquote"
+                            title={t('dashboard.stats.responseRate', { defaultValue: 'Rücklaufquote' })}
                             value={`${Math.round(stats.responseRate)}%`}
                             icon={IconMessageCircle}
                             color="cyan"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Interview-Quote"
+                            title={t('dashboard.stats.interviewRate', { defaultValue: 'Interview-Quote' })}
                             value={`${Math.round(stats.interviewRate)}%`}
                             icon={IconCalendarEvent}
                             color="violet"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Angebots-Quote"
+                            title={t('dashboard.stats.offerRate', { defaultValue: 'Angebots-Quote' })}
                             value={`${Math.round(stats.offerRate)}%`}
                             icon={IconGift}
                             color="green"
@@ -644,7 +640,7 @@ export default function ApplicationsPage() {
                 <Paper shadow="sm" withBorder p="md" radius="md">
                     <Group>
                         <TextInput
-                            placeholder="Suche nach Firma, Position oder Ort..."
+                            placeholder={t('common.search')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.currentTarget.value)}
                             style={{ flex: 1 }}
@@ -670,55 +666,55 @@ export default function ApplicationsPage() {
             <Modal
                 opened={opened}
                 onClose={close}
-                title={editingApp ? 'Bewerbung bearbeiten' : 'Neue Bewerbung'}
+                title={editingApp ? t('applications.editApplication') : t('applications.newApplication')}
                 size="lg"
             >
                 <Stack gap="md">
                     <TextInput
-                        label="Firma"
-                        placeholder="Firma"
+                        label={t('applications.company')}
+                        placeholder={t('applications.company')}
                         required
                         value={form.companyName}
                         onChange={(e) => setForm({ ...form, companyName: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Position"
-                        placeholder="Position"
+                        label={t('applications.position')}
+                        placeholder={t('applications.position')}
                         required
                         value={form.jobTitle}
                         onChange={(e) => setForm({ ...form, jobTitle: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Firmen-Website"
+                        label={t('common.website', { defaultValue: 'Firmen-Website' })}
                         placeholder="https://..."
                         value={form.companyWebsite}
                         onChange={(e) => setForm({ ...form, companyWebsite: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Stellenanzeige URL"
+                        label={t('common.url', { defaultValue: 'Stellenanzeige URL' })}
                         placeholder="https://..."
                         value={form.jobUrl}
                         onChange={(e) => setForm({ ...form, jobUrl: e.currentTarget.value })}
                     />
                     <Textarea
-                        label="Stellenbeschreibung"
-                        placeholder="Beschreibung der Stelle..."
+                        label={t('common.description')}
+                        placeholder={t('common.description')}
                         minRows={3}
                         value={form.jobDescription}
                         onChange={(e) => setForm({ ...form, jobDescription: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Standort"
-                        placeholder="Stadt, Land"
+                        label={t('applications.location')}
+                        placeholder={t('applications.location')}
                         required
                         value={form.location}
                         onChange={(e) => setForm({ ...form, location: e.currentTarget.value })}
                     />
                     <Select
-                        label="Remote-Typ"
-                        placeholder="Wählen..."
+                        label="Remote"
+                        placeholder={t('common.select', { defaultValue: 'Wählen...' })}
                         data={[
-                            { value: 'onsite', label: 'Vor Ort' },
+                            { value: 'onsite', label: t('applications.interviewType.onsite') },
                             { value: 'hybrid', label: 'Hybrid' },
                             { value: 'remote', label: 'Remote' },
                         ]}
@@ -727,53 +723,53 @@ export default function ApplicationsPage() {
                     />
                     <Group grow>
                         <NumberInput
-                            label="Gehalt Min"
-                            placeholder="z.B. 50000"
+                            label={t('applications.salary') + ' Min'}
+                            placeholder="50000"
                             min={0}
                             value={form.salaryMin}
                             onChange={(value) => setForm({ ...form, salaryMin: value as number })}
                         />
                         <NumberInput
-                            label="Gehalt Max"
-                            placeholder="z.B. 70000"
+                            label={t('applications.salary') + ' Max'}
+                            placeholder="70000"
                             min={0}
                             value={form.salaryMax}
                             onChange={(value) => setForm({ ...form, salaryMax: value as number })}
                         />
                     </Group>
                     <TextInput
-                        label="Kontaktperson"
-                        placeholder="Name"
+                        label={t('applications.contactPerson')}
+                        placeholder={t('common.name')}
                         value={form.contactName}
                         onChange={(e) => setForm({ ...form, contactName: e.currentTarget.value })}
                     />
                     <TextInput
-                        label="Kontakt E-Mail"
+                        label={t('auth.email')}
                         placeholder="email@example.com"
                         type="email"
                         value={form.contactEmail}
                         onChange={(e) => setForm({ ...form, contactEmail: e.currentTarget.value })}
                     />
                     <Select
-                        label="Quelle"
-                        placeholder="Wo gefunden?"
+                        label={t('applications.source')}
+                        placeholder={t('applications.source')}
                         data={sourceOptions}
                         value={form.source}
                         onChange={(value) => setForm({ ...form, source: value || '' })}
                     />
                     <Textarea
-                        label="Notizen"
-                        placeholder="Zusätzliche Notizen..."
+                        label={t('common.notes')}
+                        placeholder={t('common.notes')}
                         minRows={3}
                         value={form.notes}
                         onChange={(e) => setForm({ ...form, notes: e.currentTarget.value })}
                     />
                     <Group justify="flex-end">
                         <Button variant="subtle" onClick={close}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button onClick={handleSubmit} loading={creating}>
-                            {editingApp ? 'Aktualisieren' : 'Erstellen'}
+                            {editingApp ? t('common.save') : t('common.create')}
                         </Button>
                     </Group>
                 </Stack>
@@ -783,7 +779,7 @@ export default function ApplicationsPage() {
             <Modal
                 opened={detailOpened}
                 onClose={closeDetail}
-                title="Bewerbungsdetails"
+                title={t('applications.title')}
                 size="lg"
             >
                 {selectedApp && (
@@ -806,21 +802,21 @@ export default function ApplicationsPage() {
 
                         <Group grow>
                             <Stack gap={4}>
-                                <Text size="xs" c="dimmed">Status</Text>
+                                <Text size="xs" c="dimmed">{t('common.status')}</Text>
                                 <Badge color={statusColors[selectedApp.status]}>
                                     {statusLabels[selectedApp.status]}
                                 </Badge>
                             </Stack>
                             <Stack gap={4}>
-                                <Text size="xs" c="dimmed">Remote-Typ</Text>
-                                <Badge variant="light">{remoteLabels[selectedApp.remote]}</Badge>
+                                <Text size="xs" c="dimmed">Remote</Text>
+                                <Badge variant="light">{selectedApp.remote === 'onsite' ? t('applications.interviewType.onsite') : selectedApp.remote === 'hybrid' ? 'Hybrid' : 'Remote'}</Badge>
                             </Stack>
                         </Group>
 
                         <Stack gap={4}>
                             <Group gap={4}>
                                 <IconMapPin size={16} />
-                                <Text size="sm" fw={500}>Standort</Text>
+                                <Text size="sm" fw={500}>{t('applications.location')}</Text>
                             </Group>
                             <Text size="sm" pl="lg">{selectedApp.location}</Text>
                         </Stack>
@@ -829,7 +825,7 @@ export default function ApplicationsPage() {
                             <Stack gap={4}>
                                 <Group gap={4}>
                                     <IconCurrencyEuro size={16} />
-                                    <Text size="sm" fw={500}>Gehalt</Text>
+                                    <Text size="sm" fw={500}>{t('applications.salary')}</Text>
                                 </Group>
                                 <Text size="sm" pl="lg">{formatSalary(selectedApp.salary)}</Text>
                             </Stack>
@@ -839,7 +835,7 @@ export default function ApplicationsPage() {
                             <Stack gap={4}>
                                 <Group gap={4}>
                                     <IconExternalLink size={16} />
-                                    <Text size="sm" fw={500}>Website</Text>
+                                    <Text size="sm" fw={500}>{t('common.website', { defaultValue: 'Website' })}</Text>
                                 </Group>
                                 <Text
                                     size="sm"
@@ -859,7 +855,7 @@ export default function ApplicationsPage() {
                             <Stack gap={4}>
                                 <Group gap={4}>
                                     <IconBriefcase size={16} />
-                                    <Text size="sm" fw={500}>Stellenanzeige</Text>
+                                    <Text size="sm" fw={500}>{t('applications.jobTitle')}</Text>
                                 </Group>
                                 <Text
                                     size="sm"
@@ -870,14 +866,14 @@ export default function ApplicationsPage() {
                                     c="blue"
                                     style={{ textDecoration: 'none' }}
                                 >
-                                    Link zur Anzeige
+                                    {t('common.link', { defaultValue: 'Link' })}
                                 </Text>
                             </Stack>
                         )}
 
                         {selectedApp.jobDescription && (
                             <Stack gap={4}>
-                                <Text size="sm" fw={500}>Stellenbeschreibung</Text>
+                                <Text size="sm" fw={500}>{t('common.description')}</Text>
                                 <Text size="sm" c="dimmed">{selectedApp.jobDescription}</Text>
                             </Stack>
                         )}
@@ -886,7 +882,7 @@ export default function ApplicationsPage() {
                             <Stack gap={4}>
                                 <Group gap={4}>
                                     <IconUser size={16} />
-                                    <Text size="sm" fw={500}>Kontaktperson</Text>
+                                    <Text size="sm" fw={500}>{t('applications.contactPerson')}</Text>
                                 </Group>
                                 <Text size="sm" pl="lg">{selectedApp.contactName}</Text>
                                 {selectedApp.contactEmail && (
@@ -897,7 +893,7 @@ export default function ApplicationsPage() {
 
                         {selectedApp.source && (
                             <Stack gap={4}>
-                                <Text size="sm" fw={500}>Quelle</Text>
+                                <Text size="sm" fw={500}>{t('applications.source')}</Text>
                                 <Text size="sm" c="dimmed">
                                     {sourceOptions.find(opt => opt.value === selectedApp.source)?.label || selectedApp.source}
                                 </Text>
@@ -906,7 +902,7 @@ export default function ApplicationsPage() {
 
                         {selectedApp.notes && (
                             <Stack gap={4}>
-                                <Text size="sm" fw={500}>Notizen</Text>
+                                <Text size="sm" fw={500}>{t('common.notes')}</Text>
                                 <Text size="sm" c="dimmed">{selectedApp.notes}</Text>
                             </Stack>
                         )}
@@ -915,16 +911,16 @@ export default function ApplicationsPage() {
                             <>
                                 <Divider />
                                 <Stack gap="xs">
-                                    <Text size="sm" fw={500}>Interviews ({selectedApp.interviews.length})</Text>
+                                    <Text size="sm" fw={500}>{t('applications.interviews')} ({selectedApp.interviews.length})</Text>
                                     {selectedApp.interviews.map((interview) => (
                                         <Paper key={interview.id} withBorder p="sm">
                                             <Group justify="space-between">
                                                 <div>
                                                     <Text size="sm" fw={500}>
-                                                        {interview.type === 'phone' && 'Telefon'}
-                                                        {interview.type === 'video' && 'Video'}
-                                                        {interview.type === 'onsite' && 'Vor Ort'}
-                                                        {interview.type === 'technical' && 'Technisch'}
+                                                        {interview.type === 'phone' && t('applications.interviewType.phone')}
+                                                        {interview.type === 'video' && t('applications.interviewType.video')}
+                                                        {interview.type === 'onsite' && t('applications.interviewType.onsite')}
+                                                        {interview.type === 'technical' && t('applications.interviewType.technical')}
                                                         {interview.type === 'hr' && 'HR'}
                                                     </Text>
                                                     <Text size="xs" c="dimmed">
@@ -932,7 +928,7 @@ export default function ApplicationsPage() {
                                                     </Text>
                                                 </div>
                                                 <Badge color={interview.completed ? 'green' : 'blue'}>
-                                                    {interview.completed ? 'Abgeschlossen' : 'Geplant'}
+                                                    {interview.completed ? t('common.completed') : t('common.planned', { defaultValue: 'Geplant' })}
                                                 </Badge>
                                             </Group>
                                             {interview.notes && (
@@ -953,11 +949,11 @@ export default function ApplicationsPage() {
                                 leftSection={<IconTrash size={16} />}
                                 onClick={() => handleDelete(selectedApp.id)}
                             >
-                                Löschen
+                                {t('common.delete')}
                             </Button>
                             <Group>
                                 <Button variant="default" onClick={closeDetail}>
-                                    Schließen
+                                    {t('common.close')}
                                 </Button>
                                 <Button
                                     leftSection={<IconEdit size={16} />}
@@ -966,7 +962,7 @@ export default function ApplicationsPage() {
                                         handleOpenEdit(selectedApp);
                                     }}
                                 >
-                                    Bearbeiten
+                                    {t('common.edit')}
                                 </Button>
                             </Group>
                         </Group>

@@ -41,6 +41,7 @@ import {
     IconShield,
     IconPlus,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { useQuickCreate } from '../contexts/QuickCreateContext';
 import { LanguageSelector } from '../components/LanguageSelector';
@@ -48,20 +49,20 @@ import { NotificationDropdown } from '../components/NotificationDropdown';
 import { PageTransition } from '../components/PageTransition';
 
 const navItems = [
-    { icon: IconLayoutDashboard, label: 'Dashboard', path: '/app', tourId: 'nav-dashboard' },
-    { icon: IconTrophy, label: 'Achievements', path: '/app/achievements', tourId: 'nav-achievements' },
-    { icon: IconBriefcase, label: 'Bewerbungen', path: '/app/applications', tourId: 'nav-applications' },
-    { icon: IconCheck, label: 'Habits', path: '/app/habits', tourId: 'nav-habits' },
-    { icon: IconCoin, label: 'Ausgaben', path: '/app/expenses', tourId: 'nav-expenses' },
-    { icon: IconCalendar, label: 'Fristen', path: '/app/deadlines', tourId: 'nav-deadlines' },
-    { icon: IconCreditCard, label: 'Abos', path: '/app/subscriptions', tourId: 'nav-subscriptions' },
-    { icon: IconDeviceTv, label: 'Medien', path: '/app/media', tourId: 'nav-media' },
-    { icon: IconBox, label: 'Inventar', path: '/app/inventory', tourId: 'nav-inventory' },
-    { icon: IconNote, label: 'Notizen', path: '/app/notes', tourId: 'nav-notes' },
-    { icon: IconList, label: 'Listen', path: '/app/lists', tourId: 'nav-lists' },
-    { icon: IconTarget, label: 'Projekte', path: '/app/projects', tourId: 'nav-projects' },
-    { icon: IconToolsKitchen2, label: 'Meals', path: '/app/meals', tourId: 'nav-meals' },
-    { icon: IconGift, label: 'Wunschlisten', path: '/app/wishlists', tourId: 'nav-wishlists' },
+    { icon: IconLayoutDashboard, labelKey: 'nav.dashboard', path: '/app', tourId: 'nav-dashboard' },
+    { icon: IconTrophy, labelKey: 'nav.achievements', path: '/app/achievements', tourId: 'nav-achievements' },
+    { icon: IconBriefcase, labelKey: 'nav.applications', path: '/app/applications', tourId: 'nav-applications' },
+    { icon: IconCheck, labelKey: 'nav.habits', path: '/app/habits', tourId: 'nav-habits' },
+    { icon: IconCoin, labelKey: 'nav.expenses', path: '/app/expenses', tourId: 'nav-expenses' },
+    { icon: IconCalendar, labelKey: 'nav.deadlines', path: '/app/deadlines', tourId: 'nav-deadlines' },
+    { icon: IconCreditCard, labelKey: 'nav.subscriptions', path: '/app/subscriptions', tourId: 'nav-subscriptions' },
+    { icon: IconDeviceTv, labelKey: 'nav.media', path: '/app/media', tourId: 'nav-media' },
+    { icon: IconBox, labelKey: 'nav.inventory', path: '/app/inventory', tourId: 'nav-inventory' },
+    { icon: IconNote, labelKey: 'nav.notes', path: '/app/notes', tourId: 'nav-notes' },
+    { icon: IconList, labelKey: 'nav.lists', path: '/app/lists', tourId: 'nav-lists' },
+    { icon: IconTarget, labelKey: 'nav.projects', path: '/app/projects', tourId: 'nav-projects' },
+    { icon: IconToolsKitchen2, labelKey: 'nav.meals', path: '/app/meals', tourId: 'nav-meals' },
+    { icon: IconGift, labelKey: 'nav.wishlists', path: '/app/wishlists', tourId: 'nav-wishlists' },
 ];
 
 export default function AppLayout() {
@@ -72,6 +73,7 @@ export default function AppLayout() {
     const location = useLocation();
     const os = useOs();
     const isMac = os === 'macos';
+    const { t } = useTranslation();
 
     const handleLogout = async () => {
         await logout();
@@ -119,9 +121,9 @@ export default function AppLayout() {
                         >
                             <Group gap="xs">
                                 <IconSearch size={16} style={{ opacity: 0.6 }} />
-                                <Text size="sm" c="dimmed">Suchen...</Text>
+                                <Text size="sm" c="dimmed">{t('nav.search')}</Text>
                                 <Group gap={4}>
-                                    <Kbd size="xs">{isMac ? '⌘' : 'Strg'}</Kbd>
+                                    <Kbd size="xs">{isMac ? '⌘' : 'Ctrl'}</Kbd>
                                     <Kbd size="xs">K</Kbd>
                                 </Group>
                             </Group>
@@ -139,9 +141,9 @@ export default function AppLayout() {
                         >
                             <Group gap="xs">
                                 <IconPlus size={16} style={{ opacity: 0.6 }} />
-                                <Text size="sm" c="dimmed">Neu...</Text>
+                                <Text size="sm" c="dimmed">{t('nav.quickCreate')}</Text>
                                 <Group gap={4}>
-                                    <Kbd size="xs">{isMac ? '⌘' : 'Strg'}</Kbd>
+                                    <Kbd size="xs">{isMac ? '⌘' : 'Ctrl'}</Kbd>
                                     <Kbd size="xs">J</Kbd>
                                 </Group>
                             </Group>
@@ -195,13 +197,13 @@ export default function AppLayout() {
                             </Menu.Target>
 
                             <Menu.Dropdown>
-                                <Menu.Label>Account</Menu.Label>
+                                <Menu.Label>{t('settings.account')}</Menu.Label>
                                 <Menu.Item
                                     leftSection={<IconSettings size={16} />}
                                     component={Link}
                                     to="/app/settings"
                                 >
-                                    Einstellungen
+                                    {t('nav.settings')}
                                 </Menu.Item>
                                 <Menu.Divider />
                                 <Menu.Item
@@ -209,7 +211,7 @@ export default function AppLayout() {
                                     color="red"
                                     onClick={handleLogout}
                                 >
-                                    Abmelden
+                                    {t('auth.logout')}
                                 </Menu.Item>
                             </Menu.Dropdown>
                         </Menu>
@@ -223,7 +225,7 @@ export default function AppLayout() {
                         key={item.path}
                         component={Link}
                         to={item.path}
-                        label={item.label}
+                        label={t(item.labelKey)}
                         leftSection={<item.icon size={18} />}
                         active={location.pathname === item.path}
                         mb={4}
@@ -234,7 +236,7 @@ export default function AppLayout() {
                     <NavLink
                         component={Link}
                         to="/app/admin"
-                        label="Admin"
+                        label={t('nav.admin')}
                         leftSection={<IconShield size={18} />}
                         active={location.pathname === '/app/admin'}
                         mb={4}

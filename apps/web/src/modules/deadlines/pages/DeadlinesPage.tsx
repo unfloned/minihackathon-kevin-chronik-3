@@ -41,6 +41,7 @@ import {
 } from '@tabler/icons-react';
 import { useRequest } from '../../../hooks';
 import { useMutation } from '../../../hooks';
+import { useTranslation } from 'react-i18next';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
 import type { DeadlineSimple, DeadlineStats, DeadlinePriority } from '@ycmm/core';
@@ -63,14 +64,8 @@ const priorityColors: Record<Deadline['priority'], string> = {
   urgent: 'red',
 };
 
-const priorityLabels: Record<Deadline['priority'], string> = {
-  low: 'Niedrig',
-  medium: 'Mittel',
-  high: 'Hoch',
-  urgent: 'Dringend',
-};
-
 function DeadlinesPage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string | null>('upcoming');
   const [opened, { open, close }] = useDisclosure(false);
   const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
@@ -81,6 +76,13 @@ function DeadlinesPage() {
     priority: 'medium',
     category: '',
   });
+
+  const priorityLabels: Record<Deadline['priority'], string> = {
+    low: t('deadlines.priority.low'),
+    medium: t('deadlines.priority.medium'),
+    high: t('deadlines.priority.high'),
+    urgent: t('deadlines.priority.urgent'),
+  };
 
   // Data fetching - using STRING endpoint
   const { data: stats, isLoading: statsLoading } = useRequest<DeadlineStats>('/deadlines/stats');
@@ -98,8 +100,8 @@ function DeadlinesPage() {
       method: 'POST',
       onSuccess: () => {
         notifications.show({
-          title: 'Erfolg',
-          message: 'Frist wurde erfolgreich erstellt',
+          title: t('notifications.success'),
+          message: t('deadlines.deadlineCreated'),
           color: 'green',
         });
         refetchAll();
@@ -109,8 +111,8 @@ function DeadlinesPage() {
       },
       onError: () => {
         notifications.show({
-          title: 'Fehler',
-          message: 'Frist konnte nicht erstellt werden',
+          title: t('notifications.error'),
+          message: t('errors.generic'),
           color: 'red',
         });
       },
@@ -123,8 +125,8 @@ function DeadlinesPage() {
       method: 'PATCH',
       onSuccess: () => {
         notifications.show({
-          title: 'Erfolg',
-          message: 'Frist wurde erfolgreich aktualisiert',
+          title: t('notifications.success'),
+          message: t('deadlines.deadlineUpdated'),
           color: 'green',
         });
         refetchAll();
@@ -134,8 +136,8 @@ function DeadlinesPage() {
       },
       onError: () => {
         notifications.show({
-          title: 'Fehler',
-          message: 'Frist konnte nicht aktualisiert werden',
+          title: t('notifications.error'),
+          message: t('errors.generic'),
           color: 'red',
         });
       },
@@ -148,8 +150,8 @@ function DeadlinesPage() {
       method: 'POST',
       onSuccess: () => {
         notifications.show({
-          title: 'Erfolg',
-          message: 'Frist wurde als erledigt markiert',
+          title: t('notifications.success'),
+          message: t('deadlines.deadlineCompleted'),
           color: 'green',
         });
         refetchAll();
@@ -158,8 +160,8 @@ function DeadlinesPage() {
       },
       onError: () => {
         notifications.show({
-          title: 'Fehler',
-          message: 'Frist konnte nicht als erledigt markiert werden',
+          title: t('notifications.error'),
+          message: t('errors.generic'),
           color: 'red',
         });
       },
@@ -172,8 +174,8 @@ function DeadlinesPage() {
       method: 'DELETE',
       onSuccess: () => {
         notifications.show({
-          title: 'Erfolg',
-          message: 'Frist wurde erfolgreich gelöscht',
+          title: t('notifications.success'),
+          message: t('deadlines.deadlineDeleted'),
           color: 'green',
         });
         refetchAll();
@@ -182,8 +184,8 @@ function DeadlinesPage() {
       },
       onError: () => {
         notifications.show({
-          title: 'Fehler',
-          message: 'Frist konnte nicht gelöscht werden',
+          title: t('notifications.error'),
+          message: t('errors.generic'),
           color: 'red',
         });
       },
@@ -228,8 +230,8 @@ function DeadlinesPage() {
   const handleSubmit = async () => {
     if (!formData.title || !formData.dueDate) {
       notifications.show({
-        title: 'Fehler',
-        message: 'Bitte füllen Sie alle Pflichtfelder aus',
+        title: t('notifications.error'),
+        message: t('errors.validation'),
         color: 'red',
       });
       return;
@@ -258,7 +260,7 @@ function DeadlinesPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Möchten Sie diese Frist wirklich löschen?')) {
+    if (window.confirm(t('deadlines.deleteConfirm'))) {
       deleteDeadline({ id });
     }
   };
@@ -270,38 +272,38 @@ function DeadlinesPage() {
       <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg" mb="xl">
         <CardStatistic
           type="icon"
-          title="Gesamt"
+          title={t('deadlines.stats.total')}
           value={stats?.total || 0}
           icon={IconCalendar}
           color="gray"
-          subtitle="Fristen"
+          subtitle={t('nav.deadlines')}
           isLoading={statsLoading}
         />
         <CardStatistic
           type="icon"
-          title="Anstehend"
+          title={t('deadlines.stats.upcoming')}
           value={stats?.upcoming || 0}
           icon={IconClock}
           color="blue"
-          subtitle="Demnächst fällig"
+          subtitle={t('deadlines.dueSoon')}
           isLoading={statsLoading}
         />
         <CardStatistic
           type="icon"
-          title="Überfällig"
+          title={t('deadlines.stats.overdue')}
           value={stats?.overdue || 0}
           icon={IconAlertTriangle}
           color="red"
-          subtitle="Verpasst"
+          subtitle={t('deadlines.missed')}
           isLoading={statsLoading}
         />
         <CardStatistic
           type="icon"
-          title="Erledigt"
+          title={t('deadlines.stats.completed')}
           value={stats?.completed || 0}
           icon={IconCircleCheck}
           color="green"
-          subtitle="Abgeschlossen"
+          subtitle={t('common.completed')}
           isLoading={statsLoading}
         />
       </SimpleGrid>
@@ -329,12 +331,12 @@ function DeadlinesPage() {
             )}
             {isOverdue && (
               <Badge color="red" variant="filled">
-                Überfällig
+                {t('deadlines.status.overdue')}
               </Badge>
             )}
             {deadline.isCompleted && (
               <Badge color="green" variant="filled" leftSection={<IconCheck size={12} />}>
-                Erledigt
+                {t('deadlines.status.completed')}
               </Badge>
             )}
           </Group>
@@ -352,21 +354,21 @@ function DeadlinesPage() {
                   leftSection={<IconCheck size={16} />}
                   onClick={() => handleComplete(deadline.id)}
                 >
-                  Als erledigt markieren
+                  {t('deadlines.markComplete')}
                 </Menu.Item>
               )}
               <Menu.Item
                 leftSection={<IconEdit size={16} />}
                 onClick={() => handleOpenModal(deadline)}
               >
-                Bearbeiten
+                {t('common.edit')}
               </Menu.Item>
               <Menu.Item
                 leftSection={<IconTrash size={16} />}
                 color="red"
                 onClick={() => handleDelete(deadline.id)}
               >
-                Löschen
+                {t('common.delete')}
               </Menu.Item>
             </Menu.Dropdown>
           </Menu>
@@ -381,7 +383,7 @@ function DeadlinesPage() {
         <Group gap="xs">
           <IconCalendar size={16} style={{ opacity: 0.5 }} />
           <Text size="sm" c={isOverdue ? 'red' : 'dimmed'}>
-            Fällig am: {dueDate.toLocaleDateString('de-DE', {
+            {t('deadlines.dueOn')}: {dueDate.toLocaleDateString('de-DE', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -393,7 +395,7 @@ function DeadlinesPage() {
           <Group gap="xs" mt="xs">
             <IconCircleCheck size={16} style={{ opacity: 0.5 }} />
             <Text size="sm" c="green">
-              Erledigt am: {new Date(deadline.completedAt).toLocaleDateString('de-DE', {
+              {t('deadlines.completedOn')}: {new Date(deadline.completedAt).toLocaleDateString('de-DE', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
@@ -417,7 +419,7 @@ function DeadlinesPage() {
     if (!deadlines || deadlines.length === 0) {
       return (
         <Center p="xl">
-          <Text c="dimmed">Keine Fristen gefunden</Text>
+          <Text c="dimmed">{t('deadlines.emptyState')}</Text>
         </Center>
       );
     }
@@ -434,9 +436,9 @@ function DeadlinesPage() {
   return (
     <Container size="xl" py="xl">
       <Group justify="space-between" mb="xl">
-        <PageTitle title="Fristen" subtitle="Verwalte deine Fristen und Termine" />
+        <PageTitle title={t('deadlines.title')} subtitle={t('deadlines.subtitle')} />
         <Button leftSection={<IconPlus size={18} />} onClick={() => handleOpenModal()}>
-          Neue Frist
+          {t('deadlines.newDeadline')}
         </Button>
       </Group>
 
@@ -445,13 +447,13 @@ function DeadlinesPage() {
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List>
           <Tabs.Tab value="upcoming" leftSection={<IconClock size={16} />}>
-            Anstehend ({stats?.upcoming || 0})
+            {t('deadlines.stats.upcoming')} ({stats?.upcoming || 0})
           </Tabs.Tab>
           <Tabs.Tab value="overdue" leftSection={<IconAlertTriangle size={16} />}>
-            Überfällig ({stats?.overdue || 0})
+            {t('deadlines.stats.overdue')} ({stats?.overdue || 0})
           </Tabs.Tab>
           <Tabs.Tab value="completed" leftSection={<IconCircleCheck size={16} />}>
-            Erledigt ({stats?.completed || 0})
+            {t('deadlines.stats.completed')} ({stats?.completed || 0})
           </Tabs.Tab>
         </Tabs.List>
 
@@ -471,29 +473,29 @@ function DeadlinesPage() {
       <Modal
         opened={opened}
         onClose={handleCloseModal}
-        title={editingDeadline ? 'Frist bearbeiten' : 'Neue Frist'}
+        title={editingDeadline ? t('deadlines.editDeadline') : t('deadlines.newDeadline')}
         size="md"
       >
         <Stack gap="md">
           <TextInput
-            label="Titel"
-            placeholder="Titel der Frist"
+            label={t('common.name')}
+            placeholder={t('deadlines.titlePlaceholder')}
             required
             value={formData.title}
             onChange={(e) => setFormData({ ...formData, title: e.target.value })}
           />
 
           <Textarea
-            label="Beschreibung"
-            placeholder="Beschreibung der Frist"
+            label={t('common.description')}
+            placeholder={t('deadlines.descriptionPlaceholder')}
             minRows={3}
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
 
           <DateInput
-            label="Fällig am"
-            placeholder="Wählen Sie ein Datum"
+            label={t('deadlines.dueDate')}
+            placeholder={t('deadlines.selectDate')}
             required
             value={formData.dueDate}
             onChange={(date) => setFormData({ ...formData, dueDate: toDateOrNull(date) })}
@@ -501,34 +503,34 @@ function DeadlinesPage() {
           />
 
           <Select
-            label="Priorität"
+            label={t('common.priority')}
             required
             value={formData.priority}
             onChange={(value) => setFormData({ ...formData, priority: value as Deadline['priority'] })}
             data={[
-              { value: 'low', label: 'Niedrig' },
-              { value: 'medium', label: 'Mittel' },
-              { value: 'high', label: 'Hoch' },
-              { value: 'urgent', label: 'Dringend' },
+              { value: 'low', label: t('deadlines.priority.low') },
+              { value: 'medium', label: t('deadlines.priority.medium') },
+              { value: 'high', label: t('deadlines.priority.high') },
+              { value: 'urgent', label: t('deadlines.priority.urgent') },
             ]}
           />
 
           <TextInput
-            label="Kategorie"
-            placeholder="z.B. Arbeit, Privat, Studium"
+            label={t('common.category')}
+            placeholder={t('deadlines.categoryPlaceholder')}
             value={formData.category}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
           />
 
           <Group justify="flex-end" mt="md">
             <Button variant="subtle" onClick={handleCloseModal}>
-              Abbrechen
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleSubmit}
               loading={createLoading || updateLoading}
             >
-              {editingDeadline ? 'Aktualisieren' : 'Erstellen'}
+              {editingDeadline ? t('common.save') : t('common.create')}
             </Button>
           </Group>
         </Stack>

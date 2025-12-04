@@ -35,16 +35,14 @@ import {
     IconMicrophone,
     IconEdit,
     IconTrash,
-    IconPlayerPlay,
     IconCheck,
-    IconClock,
-    IconX,
     IconLayoutGrid,
     IconList,
     IconDotsVertical,
     IconStar,
     IconStarFilled,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
 import type {
@@ -59,22 +57,25 @@ import type {
 type MediaItem = MediaItemWithDetails;
 type CreateMediaDto = CreateMediaItemDto;
 
-const mediaTypes: { value: MediaType; label: string; icon: typeof IconMovie }[] = [
-    { value: 'movie', label: 'Film', icon: IconMovie },
-    { value: 'series', label: 'Serie', icon: IconDeviceTv },
-    { value: 'book', label: 'Buch', icon: IconBook },
-    { value: 'game', label: 'Spiel', icon: IconDeviceGamepad },
-    { value: 'podcast', label: 'Podcast', icon: IconMicrophone },
-    { value: 'anime', label: 'Anime', icon: IconDeviceTv },
-];
+const mediaTypeIcons: Record<MediaType, typeof IconMovie> = {
+    movie: IconMovie,
+    series: IconDeviceTv,
+    book: IconBook,
+    game: IconDeviceGamepad,
+    podcast: IconMicrophone,
+    anime: IconDeviceTv,
+};
 
-const statusOptions: { value: MediaStatus; label: string; color: string; icon: typeof IconClock }[] = [
-    { value: 'wishlist', label: 'Watchlist', color: 'blue', icon: IconClock },
-    { value: 'in_progress', label: 'In Bearbeitung', color: 'yellow', icon: IconPlayerPlay },
-    { value: 'completed', label: 'Abgeschlossen', color: 'green', icon: IconCheck },
-    { value: 'on_hold', label: 'Pausiert', color: 'orange', icon: IconClock },
-    { value: 'dropped', label: 'Abgebrochen', color: 'red', icon: IconX },
-];
+const mediaTypeKeys: MediaType[] = ['movie', 'series', 'book', 'game', 'podcast', 'anime'];
+const statusKeys: MediaStatus[] = ['wishlist', 'in_progress', 'completed', 'on_hold', 'dropped'];
+
+const statusColors: Record<MediaStatus, string> = {
+    wishlist: 'blue',
+    in_progress: 'yellow',
+    completed: 'green',
+    on_hold: 'orange',
+    dropped: 'red',
+};
 
 const genreOptions = [
     'Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime',
@@ -82,16 +83,8 @@ const genreOptions = [
     'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western',
 ];
 
-function getStatusBadge(status: MediaStatus) {
-    const config = statusOptions.find(s => s.value === status);
-    return (
-        <Badge color={config?.color || 'gray'} size="sm">
-            {config?.label || status}
-        </Badge>
-    );
-}
-
 export default function MediaPage() {
+    const { t } = useTranslation();
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
@@ -101,6 +94,27 @@ export default function MediaPage() {
     // Fallback to 'grid' if global viewMode is not supported by this page
     const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
 
+    // Dynamic labels from translations
+    const mediaTypes = mediaTypeKeys.map((key) => ({
+        value: key,
+        label: t(`media.types.${key}`),
+        icon: mediaTypeIcons[key],
+    }));
+
+    const statusOptions = statusKeys.map((key) => ({
+        value: key,
+        label: t(`media.status.${key === 'in_progress' ? 'inProgress' : key === 'on_hold' ? 'onHold' : key}`),
+        color: statusColors[key],
+    }));
+
+    const getStatusBadge = (status: MediaStatus) => {
+        const statusKey = status === 'in_progress' ? 'inProgress' : status === 'on_hold' ? 'onHold' : status;
+        return (
+            <Badge color={statusColors[status] || 'gray'} size="sm">
+                {t(`media.status.${statusKey}`)}
+            </Badge>
+        );
+    };
 
     const { data: items, isLoading, refetch } = useRequest<MediaItem[]>('/media');
     const { data: stats } = useRequest<MediaStats>('/media/stats');
@@ -189,8 +203,8 @@ export default function MediaPage() {
     const handleCreate = async () => {
         if (!form.values.title.trim()) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Bitte gib einen Titel ein',
+                title: t('common.error'),
+                message: t('media.enterTitle'),
                 color: 'red',
             });
             return;
@@ -223,8 +237,8 @@ export default function MediaPage() {
 
         await createItem(payload);
         notifications.show({
-            title: 'Erfolg',
-            message: 'Medium erfolgreich erstellt',
+            title: t('common.success'),
+            message: t('media.mediaCreated'),
             color: 'green',
         });
         handleClose();
@@ -261,8 +275,8 @@ export default function MediaPage() {
 
         await updateItem({ id: editingItem.id, ...payload });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Medium erfolgreich aktualisiert',
+            title: t('common.success'),
+            message: t('media.mediaUpdated'),
             color: 'green',
         });
         handleClose();
@@ -272,8 +286,8 @@ export default function MediaPage() {
     const handleDelete = async (id: string) => {
         await deleteItem({ id });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Medium erfolgreich gelöscht',
+            title: t('common.success'),
+            message: t('media.mediaDeleted'),
             color: 'green',
         });
         refetch();
@@ -338,7 +352,7 @@ export default function MediaPage() {
                                     leftSection={<IconEdit size={16} />}
                                     onClick={() => openEditModal(item)}
                                 >
-                                    Bearbeiten
+                                    {t('common.edit')}
                                 </Menu.Item>
                                 <Menu.Divider />
                                 <Menu.Item
@@ -346,7 +360,7 @@ export default function MediaPage() {
                                     color="red"
                                     onClick={() => handleDelete(item.id)}
                                 >
-                                    Löschen
+                                    {t('common.delete')}
                                 </Menu.Item>
                             </Menu.Dropdown>
                         </Menu>
@@ -374,7 +388,7 @@ export default function MediaPage() {
                         <div>
                             <Group justify="space-between" mb={4}>
                                 <Text size="xs" c="dimmed">
-                                    Fortschritt
+                                    {t('media.progress')}
                                 </Text>
                                 <Text size="xs" c="dimmed">
                                     {item.progress.current}/{item.progress.total} {item.progress.unit}
@@ -408,8 +422,8 @@ export default function MediaPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <PageTitle title="Medien" subtitle="Verwalte deine Filme, Serien, Bücher und mehr" />
-                    <Button onClick={openCreateModal}>Medium hinzufügen</Button>
+                    <PageTitle title={t('media.title')} subtitle={t('media.subtitle')} />
+                    <Button onClick={openCreateModal}>{t('media.addMedia')}</Button>
                 </Group>
 
                 {/* Stats */}
@@ -417,21 +431,21 @@ export default function MediaPage() {
                     <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
                         <CardStatistic
                             type="icon"
-                            title="Gesamt"
+                            title={t('media.stats.total')}
                             value={stats.total}
                             icon={IconLayoutGrid}
                             color="blue"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Abgeschlossen dieses Jahr"
+                            title={t('media.stats.completedThisYear')}
                             value={stats.completedThisYear}
                             icon={IconCheck}
                             color="green"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Durchschnittliche Bewertung"
+                            title={t('media.stats.averageRating')}
                             value={stats.averageRating ? stats.averageRating.toFixed(1) : '-'}
                             icon={IconStar}
                             color="yellow"
@@ -443,27 +457,27 @@ export default function MediaPage() {
             <Paper shadow="sm" withBorder p="md" radius="md" mb="lg">
                 <Group>
                     <TextInput
-                        placeholder="Suchen..."
+                        placeholder={t('media.search')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.currentTarget.value)}
                         style={{ flex: 1 }}
                     />
                     <Select
-                        placeholder="Typ"
+                        placeholder={t('common.type')}
                         value={typeFilter}
                         onChange={(value) => setTypeFilter(value || 'all')}
                         data={[
-                            { value: 'all', label: 'Alle Typen' },
-                            ...mediaTypes.map(t => ({ value: t.value, label: t.label })),
+                            { value: 'all', label: t('media.allTypes') },
+                            ...mediaTypes.map(mt => ({ value: mt.value, label: mt.label })),
                         ]}
                         style={{ width: 200 }}
                     />
                     <Select
-                        placeholder="Status"
+                        placeholder={t('common.status')}
                         value={statusFilter}
                         onChange={(value) => setStatusFilter(value || 'all')}
                         data={[
-                            { value: 'all', label: 'Alle Status' },
+                            { value: 'all', label: t('media.allStatus') },
                             ...statusOptions.map(s => ({ value: s.value, label: s.label })),
                         ]}
                         style={{ width: 200 }}
@@ -493,12 +507,12 @@ export default function MediaPage() {
                     </ThemeIcon>
                     <Text mt="md" c="dimmed">
                         {searchQuery || typeFilter !== 'all' || statusFilter !== 'all'
-                            ? 'Keine Medien gefunden'
-                            : 'Noch keine Medien vorhanden'}
+                            ? t('media.noMediaFound')
+                            : t('media.emptyState')}
                     </Text>
                     {!searchQuery && typeFilter === 'all' && statusFilter === 'all' && (
                         <Button mt="md" onClick={openCreateModal}>
-                            Erstes Medium hinzufügen
+                            {t('media.createFirst')}
                         </Button>
                     )}
                 </Paper>
@@ -513,13 +527,13 @@ export default function MediaPage() {
                     <Table striped highlightOnHover>
                         <Table.Thead>
                             <Table.Tr>
-                                <Table.Th>Titel</Table.Th>
-                                <Table.Th>Typ</Table.Th>
-                                <Table.Th>Jahr</Table.Th>
-                                <Table.Th>Status</Table.Th>
-                                <Table.Th>Bewertung</Table.Th>
-                                <Table.Th>Fortschritt</Table.Th>
-                                <Table.Th>Aktionen</Table.Th>
+                                <Table.Th>{t('media.table.title')}</Table.Th>
+                                <Table.Th>{t('media.table.type')}</Table.Th>
+                                <Table.Th>{t('media.table.year')}</Table.Th>
+                                <Table.Th>{t('media.table.status')}</Table.Th>
+                                <Table.Th>{t('media.table.rating')}</Table.Th>
+                                <Table.Th>{t('media.table.progress')}</Table.Th>
+                                <Table.Th>{t('media.table.actions')}</Table.Th>
                             </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -582,7 +596,7 @@ export default function MediaPage() {
                                                         leftSection={<IconEdit size={16} />}
                                                         onClick={() => openEditModal(item)}
                                                     >
-                                                        Bearbeiten
+                                                        {t('common.edit')}
                                                     </Menu.Item>
                                                     <Menu.Divider />
                                                     <Menu.Item
@@ -590,7 +604,7 @@ export default function MediaPage() {
                                                         color="red"
                                                         onClick={() => handleDelete(item.id)}
                                                     >
-                                                        Löschen
+                                                        {t('common.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
@@ -607,34 +621,34 @@ export default function MediaPage() {
             <Modal
                 opened={modalOpen}
                 onClose={handleClose}
-                title={editingItem ? 'Medium bearbeiten' : 'Neues Medium'}
+                title={editingItem ? t('media.editMedia') : t('media.newMedia')}
                 size="lg"
             >
                 <Stack>
                     <Select
-                        label="Typ"
-                        placeholder="Wähle einen Typ"
-                        data={mediaTypes.map(t => ({ value: t.value, label: t.label }))}
+                        label={t('common.type')}
+                        placeholder={t('media.selectType')}
+                        data={mediaTypes.map(mt => ({ value: mt.value, label: mt.label }))}
                         {...form.getInputProps('type')}
                         required
                     />
 
                     <TextInput
-                        label="Titel"
-                        placeholder="z.B. Inception"
+                        label={t('media.titleField')}
+                        placeholder={t('media.titlePlaceholder')}
                         {...form.getInputProps('title')}
                         required
                     />
 
                     <TextInput
-                        label="Originaltitel"
-                        placeholder="Optional"
+                        label={t('media.originalTitle')}
+                        placeholder={t('media.optional')}
                         {...form.getInputProps('originalTitle')}
                     />
 
                     <Group grow>
                         <NumberInput
-                            label="Jahr"
+                            label={t('media.year')}
                             placeholder="2010"
                             min={1900}
                             max={new Date().getFullYear() + 5}
@@ -642,36 +656,36 @@ export default function MediaPage() {
                         />
 
                         <TextInput
-                            label="Ersteller/Regisseur/Autor"
-                            placeholder="z.B. Christopher Nolan"
+                            label={t('media.creator')}
+                            placeholder={t('media.creatorPlaceholder')}
                             {...form.getInputProps('creator')}
                         />
                     </Group>
 
                     <TextInput
-                        label="Cover URL"
+                        label={t('media.coverUrl')}
                         placeholder="https://..."
                         {...form.getInputProps('coverUrl')}
                     />
 
                     <Textarea
-                        label="Beschreibung"
-                        placeholder="Kurze Zusammenfassung..."
+                        label={t('media.description')}
+                        placeholder={t('media.descriptionPlaceholder')}
                         minRows={3}
                         {...form.getInputProps('description')}
                     />
 
                     <Select
-                        label="Status"
-                        placeholder="Wähle einen Status"
+                        label={t('common.status')}
+                        placeholder={t('media.selectStatus')}
                         data={statusOptions.map(s => ({ value: s.value, label: s.label }))}
                         {...form.getInputProps('status')}
                     />
 
                     <Group grow>
                         <NumberInput
-                            label="Bewertung"
-                            placeholder="1-10"
+                            label={t('media.rating')}
+                            placeholder={t('media.ratingPlaceholder')}
                             min={0}
                             max={10}
                             step={0.5}
@@ -679,62 +693,62 @@ export default function MediaPage() {
                         />
 
                         <TextInput
-                            label="Quelle"
-                            placeholder="z.B. Netflix, Amazon Prime"
+                            label={t('media.source')}
+                            placeholder={t('media.sourcePlaceholder')}
                             {...form.getInputProps('source')}
                         />
                     </Group>
 
                     <Textarea
-                        label="Rezension"
-                        placeholder="Deine Meinung..."
+                        label={t('media.review')}
+                        placeholder={t('media.reviewPlaceholder')}
                         minRows={3}
                         {...form.getInputProps('review')}
                     />
 
                     <MultiSelect
-                        label="Genres"
-                        placeholder="Wähle Genres"
+                        label={t('media.genres')}
+                        placeholder={t('media.selectGenres')}
                         data={genreOptions}
                         {...form.getInputProps('genre')}
                         searchable
                     />
 
                     <Text size="sm" fw={500} mt="md">
-                        Fortschritt (optional)
+                        {t('media.progressOptional')}
                     </Text>
 
                     <Group grow>
                         <NumberInput
-                            label="Aktuell"
+                            label={t('media.currentProgress')}
                             placeholder="0"
                             min={0}
                             {...form.getInputProps('progressCurrent')}
                         />
 
                         <NumberInput
-                            label="Gesamt"
+                            label={t('media.totalProgress')}
                             placeholder="0"
                             min={0}
                             {...form.getInputProps('progressTotal')}
                         />
 
                         <TextInput
-                            label="Einheit"
-                            placeholder="z.B. Seiten, Folgen"
+                            label={t('media.unit')}
+                            placeholder={t('media.unitPlaceholder')}
                             {...form.getInputProps('progressUnit')}
                         />
                     </Group>
 
                     <Group justify="flex-end" mt="md">
                         <Button variant="subtle" onClick={handleClose}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             onClick={editingItem ? handleUpdate : handleCreate}
                             loading={creating}
                         >
-                            {editingItem ? 'Speichern' : 'Erstellen'}
+                            {editingItem ? t('common.save') : t('common.create')}
                         </Button>
                     </Group>
                 </Stack>

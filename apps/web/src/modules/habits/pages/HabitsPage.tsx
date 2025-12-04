@@ -38,6 +38,7 @@ import {
     IconLayoutGrid,
     IconList,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useConfetti, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
 import { CardStatistic } from '../../../components/CardStatistic';
@@ -57,22 +58,8 @@ interface CreateHabitForm {
     frequency: HabitFrequency;
 }
 
-// Duration unit options
-const DURATION_UNITS = [
-    { value: 'seconds', label: 'Sekunden' },
-    { value: 'minutes', label: 'Minuten' },
-    { value: 'hours', label: 'Stunden' },
-];
-
-// Helper to format unit for display
-const formatUnit = (unit?: string): string => {
-    switch (unit) {
-        case 'seconds': return 'Sek';
-        case 'minutes': return 'Min';
-        case 'hours': return 'Std';
-        default: return unit || '';
-    }
-};
+// Duration unit keys for translation
+const DURATION_UNIT_KEYS = ['seconds', 'minutes', 'hours'] as const;
 
 // Calculate elapsed seconds from server start time
 const calculateElapsedSeconds = (timerStartedAt?: string): number => {
@@ -107,7 +94,17 @@ const TimerDisplay = memo(function TimerDisplay({
     color: string;
     onStop: () => void;
 }) {
+    const { t } = useTranslation();
     const [elapsedSeconds, setElapsedSeconds] = useState(() => calculateElapsedSeconds(timerStartedAt));
+
+    const formatUnitShort = (u?: string): string => {
+        switch (u) {
+            case 'seconds': return t('habits.units.secondsShort');
+            case 'minutes': return t('habits.units.minutesShort');
+            case 'hours': return t('habits.units.hoursShort');
+            default: return u || '';
+        }
+    };
 
     useEffect(() => {
         // Update elapsed seconds every second
@@ -121,7 +118,7 @@ const TimerDisplay = memo(function TimerDisplay({
     return (
         <Group gap="xs">
             <Badge size="lg" variant="light" color={color} style={{ fontFamily: 'monospace' }}>
-                {formatTime(elapsedSeconds)} / {targetValue} {formatUnit(unit)}
+                {formatTime(elapsedSeconds)} / {targetValue} {formatUnitShort(unit)}
             </Badge>
             <ActionIcon size="sm" color="red" variant="filled" onClick={onStop}>
                 <IconPlayerStop size={14} />
@@ -150,10 +147,20 @@ const HabitCard = memo(function HabitCard({
     onStopTimer,
     hasActiveTimer,
 }: HabitCardProps) {
+    const { t } = useTranslation();
     const isCompleted = habit.completedToday;
     const progress = habit.type === 'boolean'
         ? (isCompleted ? 100 : 0)
         : ((habit.todayValue || 0) / (habit.targetValue || 1)) * 100;
+
+    const formatUnitShort = (u?: string): string => {
+        switch (u) {
+            case 'seconds': return t('habits.units.secondsShort');
+            case 'minutes': return t('habits.units.minutesShort');
+            case 'hours': return t('habits.units.hoursShort');
+            default: return u || '';
+        }
+    };
 
     return (
         <Card shadow="sm" withBorder padding="lg" radius="md" style={{ borderColor: isCompleted ? habit.color : undefined }}>
@@ -182,7 +189,7 @@ const HabitCard = memo(function HabitCard({
                             leftSection={<IconEdit size={16} />}
                             onClick={() => onEdit(habit)}
                         >
-                            Bearbeiten
+                            {t('common.edit')}
                         </Menu.Item>
                         <Menu.Divider />
                         <Menu.Item
@@ -190,7 +197,7 @@ const HabitCard = memo(function HabitCard({
                             color="red"
                             onClick={() => onDelete(habit.id)}
                         >
-                            Löschen
+                            {t('common.delete')}
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
@@ -201,11 +208,11 @@ const HabitCard = memo(function HabitCard({
             <Group justify="space-between" align="center">
                 <Group gap="xs">
                     <Badge size="sm" variant="light" color="orange" leftSection={<IconFlame size={12} />}>
-                        {habit.currentStreak} Tage
+                        {t('habits.streak', { count: habit.currentStreak })}
                     </Badge>
                     {habit.type !== 'boolean' && (
                         <Text size="xs" c="dimmed">
-                            {habit.todayValue || 0} / {habit.targetValue} {formatUnit(habit.unit)}
+                            {habit.todayValue || 0} / {habit.targetValue} {formatUnitShort(habit.unit)}
                         </Text>
                     )}
                 </Group>
@@ -218,7 +225,7 @@ const HabitCard = memo(function HabitCard({
                         leftSection={<IconCheck size={14} />}
                         onClick={() => onLog(habit)}
                     >
-                        Erledigt
+                        {t('common.done')}
                     </Button>
                 )}
 
@@ -253,7 +260,7 @@ const HabitCard = memo(function HabitCard({
                                 onClick={() => onStartTimer(habit)}
                                 disabled={hasActiveTimer}
                             >
-                                Timer starten
+                                {t('habits.timer.start')}
                             </Button>
                         )}
                     </>
@@ -261,7 +268,7 @@ const HabitCard = memo(function HabitCard({
 
                 {isCompleted && (
                     <Badge color="green" variant="filled">
-                        Erledigt
+                        {t('common.done')}
                     </Badge>
                 )}
             </Group>
@@ -270,12 +277,29 @@ const HabitCard = memo(function HabitCard({
 });
 
 export default function HabitsPage() {
+    const { t } = useTranslation();
     const [opened, { open, close }] = useDisclosure(false);
     const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
     const [globalViewMode, setViewMode] = useViewMode();
     // Map global viewMode to this page's supported modes (grid/list)
     const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
     const confetti = useConfetti();
+
+    // Helper to format unit for display
+    const formatUnit = (unit?: string): string => {
+        switch (unit) {
+            case 'seconds': return t('habits.units.secondsShort');
+            case 'minutes': return t('habits.units.minutesShort');
+            case 'hours': return t('habits.units.hoursShort');
+            default: return unit || '';
+        }
+    };
+
+    // Duration unit options with translations
+    const DURATION_UNITS = DURATION_UNIT_KEYS.map(key => ({
+        value: key,
+        label: t(`habits.units.${key}`)
+    }));
 
     const [form, setForm] = useState<CreateHabitForm>({
         name: '',
@@ -362,8 +386,8 @@ export default function HabitsPage() {
     const handleCreate = async () => {
         if (!form.name.trim()) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Bitte gib einen Namen ein',
+                title: t('common.error'),
+                message: t('habits.enterName'),
                 color: 'red',
             });
             return;
@@ -371,8 +395,8 @@ export default function HabitsPage() {
 
         await createHabit(form);
         notifications.show({
-            title: 'Erfolg',
-            message: 'Habit erstellt',
+            title: t('common.success'),
+            message: t('habits.habitCreated'),
             color: 'green',
         });
         handleClose();
@@ -385,8 +409,8 @@ export default function HabitsPage() {
 
         await updateHabit({ id: editingHabit.id, data: form });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Habit aktualisiert',
+            title: t('common.success'),
+            message: t('habits.habitUpdated'),
             color: 'green',
         });
         handleClose();
@@ -396,13 +420,13 @@ export default function HabitsPage() {
     const handleDelete = useCallback(async (id: string) => {
         await deleteHabit({ id });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Habit gelöscht',
+            title: t('common.success'),
+            message: t('habits.habitDeleted'),
             color: 'green',
         });
         refetch();
         refetchStats();
-    }, [deleteHabit, refetch, refetchStats]);
+    }, [deleteHabit, refetch, refetchStats, t]);
 
     const handleLog = useCallback(async (habit: Habit, value?: number) => {
         await logHabit({ id: habit.id, value });
@@ -413,8 +437,8 @@ export default function HabitsPage() {
         if (willBeCompleted) {
             confetti.fire();
             notifications.show({
-                title: 'Super!',
-                message: `${habit.name} erledigt!`,
+                title: t('common.success'),
+                message: t('habits.habitCompleted', { name: habit.name }),
                 color: 'green',
             });
         } else {
@@ -427,17 +451,17 @@ export default function HabitsPage() {
 
         refetch();
         refetchStats();
-    }, [logHabit, confetti, refetch, refetchStats]);
+    }, [logHabit, confetti, refetch, refetchStats, t, formatUnit]);
 
     const startTimer = useCallback(async (habit: Habit) => {
         await startTimerApi({ id: habit.id });
         notifications.show({
-            title: 'Timer gestartet',
-            message: `${habit.name} - Timer läuft`,
+            title: t('habits.timer.started'),
+            message: `${habit.name} - ${t('habits.timer.running')}`,
             color: habit.color,
         });
         await refetch();
-    }, [startTimerApi, refetch]);
+    }, [startTimerApi, refetch, t]);
 
     const stopTimer = useCallback(async (habit: Habit) => {
         const result = await stopTimerApi({ id: habit.id });
@@ -445,28 +469,28 @@ export default function HabitsPage() {
         if (result && result.xpAwarded > 0) {
             confetti.fire();
             notifications.show({
-                title: 'Super!',
-                message: `${habit.name} erledigt! +${result.xpAwarded} XP`,
+                title: t('common.success'),
+                message: t('habits.habitCompleted', { name: habit.name }) + ` +${result.xpAwarded} XP`,
                 color: 'green',
             });
         } else {
             notifications.show({
-                title: 'Timer gestoppt',
-                message: `${habit.name} - Fortschritt gespeichert`,
+                title: t('habits.timer.stopped'),
+                message: `${habit.name} - ${t('habits.timer.progressSaved')}`,
                 color: habit.color,
             });
         }
 
         refetch();
         refetchStats();
-    }, [stopTimerApi, confetti, refetch, refetchStats]);
+    }, [stopTimerApi, confetti, refetch, refetchStats, t]);
 
     return (
         <PageLayout
             header={{
-                title: "Habits",
-                subtitle: "Baue positive Gewohnheiten auf",
-                actionLabel: "Neues Habit",
+                title: t('habits.title'),
+                subtitle: t('habits.subtitle'),
+                actionLabel: t('habits.newHabit'),
                 actionIcon: <IconPlus size={18} />,
                 onAction: handleOpenCreate,
             }}
@@ -476,37 +500,37 @@ export default function HabitsPage() {
                 <SimpleGrid cols={{ base: 2, sm: 4 }} mb="lg">
                     <CardStatistic
                         type="circular"
-                        title="Heute"
+                        title={t('habits.stats.today')}
                         value={`${stats.completedToday}/${stats.totalToday}`}
                         progress={stats.totalToday > 0 ? (stats.completedToday / stats.totalToday) * 100 : 0}
                         color="green"
-                        subtitle="Erledigt"
+                        subtitle={t('habits.stats.todayCompleted')}
                         ringSize={40}
                         ringThickness={4}
                     />
                     <CardStatistic
                         type="icon"
-                        title="Aktuelle Streak"
+                        title={t('habits.stats.currentStreak')}
                         value={stats.currentStreak}
                         icon={IconFlame}
                         color="orange"
-                        subtitle="Tage"
+                        subtitle={t('common.days')}
                     />
                     <CardStatistic
                         type="icon"
-                        title="Längste Streak"
+                        title={t('habits.stats.longestStreak')}
                         value={stats.longestStreak}
                         icon={IconTrendingUp}
                         color="violet"
-                        subtitle="Tage"
+                        subtitle={t('common.days')}
                     />
                     <CardStatistic
                         type="icon"
-                        title="Aktive Habits"
+                        title={t('habits.stats.activeHabits')}
                         value={stats.activeHabits}
                         icon={IconTarget}
                         color="blue"
-                        subtitle="Gesamt"
+                        subtitle={t('habits.stats.total')}
                     />
                 </SimpleGrid>
             )}
@@ -536,10 +560,10 @@ export default function HabitsPage() {
                         <IconTarget size={32} />
                     </ThemeIcon>
                     <Text mt="md" c="dimmed">
-                        Noch keine Habits vorhanden
+                        {t('habits.emptyState')}
                     </Text>
                     <Button mt="md" onClick={handleOpenCreate}>
-                        Erstes Habit erstellen
+                        {t('habits.createFirst')}
                     </Button>
                 </Paper>
             ) : viewMode === 'list' ? (
@@ -547,12 +571,12 @@ export default function HabitsPage() {
                     <Table striped highlightOnHover>
                         <Table.Thead>
                             <Table.Tr>
-                                <Table.Th>Name</Table.Th>
-                                <Table.Th>Typ</Table.Th>
-                                <Table.Th>Fortschritt</Table.Th>
+                                <Table.Th>{t('common.name')}</Table.Th>
+                                <Table.Th>{t('common.type')}</Table.Th>
+                                <Table.Th>{t('common.progress')}</Table.Th>
                                 <Table.Th>Streak</Table.Th>
-                                <Table.Th>Status</Table.Th>
-                                <Table.Th>Aktionen</Table.Th>
+                                <Table.Th>{t('common.status')}</Table.Th>
+                                <Table.Th>{t('common.actions')}</Table.Th>
                             </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -708,31 +732,31 @@ export default function HabitsPage() {
             <Modal
                 opened={opened}
                 onClose={handleClose}
-                title={editingHabit ? 'Habit bearbeiten' : 'Neues Habit'}
+                title={editingHabit ? t('habits.editHabit') : t('habits.newHabit')}
                 size="md"
             >
                 <Stack>
                     <TextInput
-                        label="Name"
-                        placeholder="z.B. Wasser trinken"
+                        label={t('common.name')}
+                        placeholder={t('habits.placeholder')}
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.currentTarget.value })}
                         required
                     />
 
                     <Textarea
-                        label="Beschreibung"
-                        placeholder="Optional"
+                        label={t('common.description')}
+                        placeholder={t('common.optional')}
                         value={form.description}
                         onChange={(e) => setForm({ ...form, description: e.currentTarget.value })}
                     />
 
                     <Select
-                        label="Typ"
+                        label={t('common.type')}
                         data={[
-                            { value: 'boolean', label: 'Ja/Nein (einmal täglich)' },
-                            { value: 'quantity', label: 'Menge (z.B. 8 Gläser)' },
-                            { value: 'duration', label: 'Dauer (z.B. 30 Minuten)' },
+                            { value: 'boolean', label: `${t('habits.types.boolean')} (${t('habits.types.booleanDesc')})` },
+                            { value: 'quantity', label: `${t('habits.types.quantity')} (${t('habits.types.quantityDesc')})` },
+                            { value: 'duration', label: `${t('habits.types.duration')} (${t('habits.types.durationDesc')})` },
                         ]}
                         value={form.type}
                         onChange={(value) => {
@@ -748,14 +772,14 @@ export default function HabitsPage() {
                     {form.type === 'quantity' && (
                         <Group grow>
                             <NumberInput
-                                label="Zielwert"
+                                label={t('habits.targetValue')}
                                 min={1}
                                 value={form.targetValue}
                                 onChange={(value) => setForm({ ...form, targetValue: Number(value) || 1 })}
                             />
                             <TextInput
-                                label="Einheit"
-                                placeholder="z.B. Gläser, Stück"
+                                label={t('habits.unit')}
+                                placeholder={t('habits.unitPlaceholder')}
                                 value={form.unit}
                                 onChange={(e) => setForm({ ...form, unit: e.currentTarget.value })}
                             />
@@ -765,13 +789,13 @@ export default function HabitsPage() {
                     {form.type === 'duration' && (
                         <Group grow>
                             <NumberInput
-                                label="Zielwert"
+                                label={t('habits.targetValue')}
                                 min={1}
                                 value={form.targetValue}
                                 onChange={(value) => setForm({ ...form, targetValue: Number(value) || 1 })}
                             />
                             <Select
-                                label="Einheit"
+                                label={t('habits.unit')}
                                 data={DURATION_UNITS}
                                 value={form.unit || 'minutes'}
                                 onChange={(value) => setForm({ ...form, unit: value || 'minutes' })}
@@ -780,17 +804,17 @@ export default function HabitsPage() {
                     )}
 
                     <Select
-                        label="Frequenz"
+                        label={t('habits.frequency.daily').replace('Täglich', 'Frequenz')}
                         data={[
-                            { value: 'daily', label: 'Täglich' },
-                            { value: 'weekly', label: 'Wöchentlich' },
+                            { value: 'daily', label: t('habits.frequency.daily') },
+                            { value: 'weekly', label: t('habits.frequency.weekly') },
                         ]}
                         value={form.frequency}
                         onChange={(value) => setForm({ ...form, frequency: (value as CreateHabitForm['frequency']) || 'daily' })}
                     />
 
                     <ColorInput
-                        label="Farbe"
+                        label={t('common.color')}
                         value={form.color}
                         onChange={(color) => setForm({ ...form, color })}
                         swatches={[
@@ -805,7 +829,7 @@ export default function HabitsPage() {
                         fullWidth
                         mt="md"
                     >
-                        {editingHabit ? 'Speichern' : 'Erstellen'}
+                        {editingHabit ? t('common.save') : t('common.create')}
                     </Button>
                 </Stack>
             </Modal>

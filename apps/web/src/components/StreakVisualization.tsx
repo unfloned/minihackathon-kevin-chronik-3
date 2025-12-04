@@ -11,6 +11,7 @@ import {
 } from '@mantine/core';
 import { IconFlame, IconTrophy, IconStar } from '@tabler/icons-react';
 import { useMantineColorScheme } from '@mantine/core';
+import { useTranslation } from 'react-i18next';
 
 interface StreakVisualizationProps {
     currentStreak: number;
@@ -46,10 +47,12 @@ function AnimatedFlame({ size = 48, intensity = 1 }: { size?: number; intensity?
 // Calendar heatmap for habit completion
 function CalendarHeatmap({
     data,
-    isDark
+    isDark,
+    t,
 }: {
     data: { date: string; completed: boolean }[];
     isDark: boolean;
+    t: (key: string, options?: Record<string, unknown>) => string;
 }) {
     const today = new Date();
     const weeks = useMemo(() => {
@@ -79,7 +82,15 @@ function CalendarHeatmap({
         return isDark ? '#2C2E33' : '#E9ECEF';
     };
 
-    const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const dayLabels = [
+        t('streak.dayMo', { defaultValue: 'Mo' }),
+        t('streak.dayTu', { defaultValue: 'Tu' }),
+        t('streak.dayWe', { defaultValue: 'We' }),
+        t('streak.dayTh', { defaultValue: 'Th' }),
+        t('streak.dayFr', { defaultValue: 'Fr' }),
+        t('streak.daySa', { defaultValue: 'Sa' }),
+        t('streak.daySu', { defaultValue: 'Su' }),
+    ];
 
     return (
         <Box>
@@ -98,8 +109,8 @@ function CalendarHeatmap({
                             <Tooltip
                                 key={dayIndex}
                                 label={day.completed === null
-                                    ? 'Zukunft'
-                                    : `${day.date.toLocaleDateString('de-DE')} - ${day.completed ? 'Erledigt' : 'Verpasst'}`
+                                    ? t('streak.future', { defaultValue: 'Future' })
+                                    : `${day.date.toLocaleDateString()} - ${day.completed ? t('common.done') : t('streak.missed', { defaultValue: 'Missed' })}`
                                 }
                                 withArrow
                             >
@@ -130,14 +141,14 @@ function CalendarHeatmap({
 }
 
 // Streak milestones display
-function StreakMilestones({ currentStreak }: { currentStreak: number }) {
+function StreakMilestones({ currentStreak, t }: { currentStreak: number; t: (key: string, options?: Record<string, unknown>) => string }) {
     const milestones = [
-        { days: 7, label: '1 Woche', icon: IconStar, color: 'yellow' },
-        { days: 14, label: '2 Wochen', icon: IconStar, color: 'orange' },
-        { days: 30, label: '1 Monat', icon: IconTrophy, color: 'blue' },
-        { days: 60, label: '2 Monate', icon: IconTrophy, color: 'violet' },
-        { days: 100, label: '100 Tage', icon: IconTrophy, color: 'pink' },
-        { days: 365, label: '1 Jahr', icon: IconFlame, color: 'red' },
+        { days: 7, label: t('streak.oneWeek', { defaultValue: '1 Week' }), icon: IconStar, color: 'yellow' },
+        { days: 14, label: t('streak.twoWeeks', { defaultValue: '2 Weeks' }), icon: IconStar, color: 'orange' },
+        { days: 30, label: t('streak.oneMonth', { defaultValue: '1 Month' }), icon: IconTrophy, color: 'blue' },
+        { days: 60, label: t('streak.twoMonths', { defaultValue: '2 Months' }), icon: IconTrophy, color: 'violet' },
+        { days: 100, label: t('streak.hundredDays', { defaultValue: '100 Days' }), icon: IconTrophy, color: 'pink' },
+        { days: 365, label: t('streak.oneYear', { defaultValue: '1 Year' }), icon: IconFlame, color: 'red' },
     ];
 
     return (
@@ -148,8 +159,8 @@ function StreakMilestones({ currentStreak }: { currentStreak: number }) {
                     <Tooltip
                         key={milestone.days}
                         label={achieved
-                            ? `${milestone.label} erreicht!`
-                            : `Noch ${milestone.days - currentStreak} Tage bis ${milestone.label}`
+                            ? t('streak.achieved', { milestone: milestone.label, defaultValue: `${milestone.label} achieved!` })
+                            : t('streak.daysUntil', { days: milestone.days - currentStreak, milestone: milestone.label, defaultValue: `${milestone.days - currentStreak} days until ${milestone.label}` })
                         }
                         withArrow
                     >
@@ -181,6 +192,7 @@ export function StreakVisualization({
     longestStreak,
     completionHistory = []
 }: StreakVisualizationProps) {
+    const { t } = useTranslation();
     const { colorScheme } = useMantineColorScheme();
     const isDark = colorScheme === 'dark';
 
@@ -197,10 +209,10 @@ export function StreakVisualization({
                 <Stack align="center" justify="center" h={250}>
                     <IconFlame size={48} color="var(--mantine-color-gray-5)" />
                     <Text c="dimmed" ta="center">
-                        Noch keine Habits erfasst.
+                        {t('streak.noHabits', { defaultValue: 'No habits tracked yet.' })}
                     </Text>
                     <Text c="dimmed" size="xs" ta="center">
-                        Erstelle Habits um deine Streak zu starten!
+                        {t('streak.createHabits', { defaultValue: 'Create habits to start your streak!' })}
                     </Text>
                 </Stack>
             </Paper>
@@ -214,7 +226,7 @@ export function StreakVisualization({
                 <Group justify="space-between" align="flex-start">
                     <Stack gap="xs">
                         <Text size="xs" c="dimmed" tt="uppercase" fw={700}>
-                            Aktuelle Streak
+                            {t('habits.stats.currentStreak')}
                         </Text>
                         <Group gap="md" align="center">
                             <AnimatedFlame
@@ -244,33 +256,33 @@ export function StreakVisualization({
                                     </Text>
                                 </motion.div>
                                 <Text size="sm" c="dimmed">
-                                    {currentStreak === 1 ? 'Tag' : 'Tage'}
+                                    {t('common.days')}
                                 </Text>
                             </div>
                         </Group>
                     </Stack>
 
                     <Stack gap={4} align="flex-end">
-                        <Text size="xs" c="dimmed">Längste Streak</Text>
+                        <Text size="xs" c="dimmed">{t('habits.stats.longestStreak')}</Text>
                         <Group gap="xs">
                             <IconTrophy size={16} color="var(--mantine-color-yellow-5)" />
-                            <Text fw={600}>{longestStreak} Tage</Text>
+                            <Text fw={600}>{longestStreak} {t('common.days')}</Text>
                         </Group>
                     </Stack>
                 </Group>
 
                 {/* Milestones */}
                 <div>
-                    <Text size="sm" fw={500} mb="xs">Meilensteine</Text>
-                    <StreakMilestones currentStreak={currentStreak} />
+                    <Text size="sm" fw={500} mb="xs">{t('streak.milestones', { defaultValue: 'Milestones' })}</Text>
+                    <StreakMilestones currentStreak={currentStreak} t={t} />
                 </div>
 
                 {/* Calendar Heatmap */}
                 <div>
-                    <Text size="sm" fw={500} mb="xs">Letzte 12 Wochen</Text>
-                    <CalendarHeatmap data={completionHistory} isDark={isDark} />
+                    <Text size="sm" fw={500} mb="xs">{t('streak.lastWeeks', { defaultValue: 'Last 12 weeks' })}</Text>
+                    <CalendarHeatmap data={completionHistory} isDark={isDark} t={t} />
                     <Group justify="flex-end" gap="xs" mt="xs">
-                        <Text size="xs" c="dimmed">Weniger</Text>
+                        <Text size="xs" c="dimmed">{t('streak.less', { defaultValue: 'Less' })}</Text>
                         <Group gap={2}>
                             {[
                                 isDark ? '#2C2E33' : '#E9ECEF',
@@ -286,7 +298,7 @@ export function StreakVisualization({
                                 />
                             ))}
                         </Group>
-                        <Text size="xs" c="dimmed">Mehr</Text>
+                        <Text size="xs" c="dimmed">{t('streak.more', { defaultValue: 'More' })}</Text>
                     </Group>
                 </div>
             </Stack>

@@ -50,6 +50,7 @@ import {
     IconList,
     IconDotsVertical,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
@@ -69,25 +70,6 @@ type Meal = MealWithDetails;
 type MealPlan = MealPlanWithDetails;
 type ShoppingItem = ShoppingListItem;
 
-const mealTypeOptions: { value: MealType; label: string; icon: typeof IconCoffee }[] = [
-    { value: 'breakfast', label: 'Frühstück', icon: IconCoffee },
-    { value: 'lunch', label: 'Mittagessen', icon: IconSoup },
-    { value: 'dinner', label: 'Abendessen', icon: IconMeat },
-    { value: 'snack', label: 'Snack', icon: IconCookie },
-];
-
-const cuisineOptions = [
-    'Deutsch', 'Italienisch', 'Asiatisch', 'Mexikanisch', 'Indisch',
-    'Griechisch', 'Türkisch', 'Französisch', 'Amerikanisch', 'Mediterran',
-    'Vegetarisch', 'Vegan', 'Andere',
-];
-
-function getMealTypeIcon(type: MealType) {
-    const config = mealTypeOptions.find(t => t.value === type);
-    const Icon = config?.icon || IconToolsKitchen2;
-    return <Icon size={16} />;
-}
-
 function formatTime(minutes?: number): string {
     if (!minutes) return '-';
     if (minutes < 60) return `${minutes} Min`;
@@ -97,6 +79,7 @@ function formatTime(minutes?: number): string {
 }
 
 export default function MealsPage() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<string | null>('recipes');
     const [modalOpen, setModalOpen] = useState(false);
     const [planModalOpen, setPlanModalOpen] = useState(false);
@@ -106,6 +89,35 @@ export default function MealsPage() {
     const [globalViewMode, setViewMode] = useViewMode();
     // Fallback to 'grid' if global viewMode is not supported by this page
     const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
+
+    const mealTypeOptions: { value: MealType; label: string; icon: typeof IconCoffee }[] = [
+        { value: 'breakfast', label: t('meals.types.breakfast'), icon: IconCoffee },
+        { value: 'lunch', label: t('meals.types.lunch'), icon: IconSoup },
+        { value: 'dinner', label: t('meals.types.dinner'), icon: IconMeat },
+        { value: 'snack', label: t('meals.types.snack'), icon: IconCookie },
+    ];
+
+    const cuisineOptions = [
+        t('meals.cuisines.german'),
+        t('meals.cuisines.italian'),
+        t('meals.cuisines.asian'),
+        t('meals.cuisines.mexican'),
+        t('meals.cuisines.indian'),
+        t('meals.cuisines.greek'),
+        t('meals.cuisines.turkish'),
+        t('meals.cuisines.french'),
+        t('meals.cuisines.american'),
+        t('meals.cuisines.mediterranean'),
+        t('meals.cuisines.vegetarian'),
+        t('meals.cuisines.vegan'),
+        t('meals.cuisines.other'),
+    ];
+
+    const getMealTypeIcon = (type: MealType) => {
+        const config = mealTypeOptions.find(t => t.value === type);
+        const Icon = config?.icon || IconToolsKitchen2;
+        return <Icon size={16} />;
+    };
 
     // Date range for meal plans (current week)
     const weekStart = useMemo(() => {
@@ -183,21 +195,21 @@ export default function MealsPage() {
     });
 
     const unitOptions = [
-        { value: '', label: '-' },
-        { value: 'g', label: 'g' },
-        { value: 'kg', label: 'kg' },
-        { value: 'ml', label: 'ml' },
-        { value: 'l', label: 'l' },
-        { value: 'TL', label: 'TL' },
-        { value: 'EL', label: 'EL' },
-        { value: 'Stück', label: 'Stück' },
-        { value: 'Tasse', label: 'Tasse' },
-        { value: 'Prise', label: 'Prise' },
-        { value: 'Bund', label: 'Bund' },
-        { value: 'Zehen', label: 'Zehen' },
-        { value: 'Scheiben', label: 'Scheiben' },
-        { value: 'Packung', label: 'Packung' },
-        { value: 'Dose', label: 'Dose' },
+        { value: '', label: t('meals.units.none') },
+        { value: 'g', label: t('meals.units.g') },
+        { value: 'kg', label: t('meals.units.kg') },
+        { value: 'ml', label: t('meals.units.ml') },
+        { value: 'l', label: t('meals.units.l') },
+        { value: 'TL', label: t('meals.units.tl') },
+        { value: 'EL', label: t('meals.units.el') },
+        { value: 'Stück', label: t('meals.units.piece') },
+        { value: 'Tasse', label: t('meals.units.cup') },
+        { value: 'Prise', label: t('meals.units.pinch') },
+        { value: 'Bund', label: t('meals.units.bunch') },
+        { value: 'Zehen', label: t('meals.units.cloves') },
+        { value: 'Scheiben', label: t('meals.units.slices') },
+        { value: 'Packung', label: t('meals.units.pack') },
+        { value: 'Dose', label: t('meals.units.can') },
     ];
 
     const addIngredient = () => {
@@ -295,7 +307,7 @@ export default function MealsPage() {
     };
 
     const handleDeleteMeal = async (id: string) => {
-        if (confirm('Möchten Sie dieses Rezept wirklich löschen?')) {
+        if (confirm(t('meals.deleteConfirm'))) {
             await deleteMeal({ id });
             refetch();
         }
@@ -326,7 +338,7 @@ export default function MealsPage() {
     };
 
     const handleDeletePlan = async (id: string) => {
-        if (confirm('Möchten Sie diesen Essensplan wirklich löschen?')) {
+        if (confirm(t('meals.deletePlanConfirm'))) {
             await deletePlan({ id });
             refetchPlans();
         }
@@ -363,41 +375,41 @@ export default function MealsPage() {
     return (
         <Container size="xl" py="xl">
             <Stack gap="lg">
-                <PageTitle title="Mahlzeiten" subtitle="Verwalte deine Rezepte und plane deine Mahlzeiten" />
+                <PageTitle title={t('meals.title')} subtitle={t('meals.subtitle')} />
 
                 {stats && (
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="lg">
                         <CardStatistic
                             type="icon"
-                            title="Rezepte"
+                            title={t('meals.stats.total')}
                             value={stats.totalMeals}
                             icon={IconChefHat}
                             color="blue"
-                            subtitle="Gesamt"
+                            subtitle={t('meals.stats.totalSubtitle')}
                         />
                         <CardStatistic
                             type="icon"
-                            title="Gekocht"
+                            title={t('meals.stats.cooked')}
                             value={stats.totalCooked}
                             icon={IconCheck}
                             color="green"
-                            subtitle="Mal zubereitet"
+                            subtitle={t('meals.stats.cookedSubtitle')}
                         />
                         <CardStatistic
                             type="icon"
-                            title="Favoriten"
+                            title={t('meals.stats.favorites')}
                             value={stats.favorites}
                             icon={IconStarFilled}
                             color="yellow"
-                            subtitle="Lieblingsrezepte"
+                            subtitle={t('meals.stats.favoritesSubtitle')}
                         />
                         <CardStatistic
                             type="icon"
-                            title="Küchen"
+                            title={t('meals.stats.cuisines')}
                             value={stats.byCuisine.length}
                             icon={IconToolsKitchen2}
                             color="grape"
-                            subtitle="Verschiedene"
+                            subtitle={t('meals.stats.cuisinesSubtitle')}
                         />
                     </SimpleGrid>
                 )}
@@ -405,13 +417,13 @@ export default function MealsPage() {
                 <Tabs value={activeTab} onChange={setActiveTab}>
                     <Tabs.List>
                         <Tabs.Tab value="recipes" leftSection={<IconChefHat size={16} />}>
-                            Rezepte
+                            {t('meals.tabs.recipes')}
                         </Tabs.Tab>
                         <Tabs.Tab value="planner" leftSection={<IconCalendar size={16} />}>
-                            Essensplaner
+                            {t('meals.tabs.planner')}
                         </Tabs.Tab>
                         <Tabs.Tab value="shopping" leftSection={<IconShoppingCart size={16} />}>
-                            Einkaufsliste
+                            {t('meals.tabs.shopping')}
                         </Tabs.Tab>
                     </Tabs.List>
 
@@ -420,16 +432,16 @@ export default function MealsPage() {
                             <Paper shadow="sm" withBorder p="md" radius="md">
                                 <Group>
                                     <TextInput
-                                        placeholder="Rezepte durchsuchen..."
+                                        placeholder={t('meals.search')}
                                         leftSection={<IconSearch size={16} />}
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         style={{ flex: 1 }}
                                     />
                                     <Select
-                                        placeholder="Mahlzeit"
+                                        placeholder={t('meals.mealTypeFilter')}
                                         data={[
-                                            { value: 'all', label: 'Alle' },
+                                            { value: 'all', label: t('meals.all') },
                                             ...mealTypeOptions.map(opt => ({ value: opt.value, label: opt.label }))
                                         ]}
                                         value={selectedMealType}
@@ -445,13 +457,13 @@ export default function MealsPage() {
                                         ]}
                                     />
                                     <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
-                                        Neues Rezept
+                                        {t('meals.newRecipe')}
                                     </Button>
                                 </Group>
                             </Paper>
 
                             {isLoading ? (
-                                <Text>Lädt...</Text>
+                                <Text>{t('meals.loading')}</Text>
                             ) : viewMode === 'grid' ? (
                                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
                                     {filteredMeals.map(meal => (
@@ -520,14 +532,14 @@ export default function MealsPage() {
                                                         </Group>
                                                     )}
                                                     {meal.servings && (
-                                                        <Text size="sm">{meal.servings} Portionen</Text>
+                                                        <Text size="sm">{t('meals.servingsCount', { count: meal.servings })}</Text>
                                                     )}
                                                 </Group>
 
                                                 {meal.timesCooked > 0 && (
                                                     <Group gap={5}>
                                                         <IconFlame size={16} />
-                                                        <Text size="sm">{meal.timesCooked}x gekocht</Text>
+                                                        <Text size="sm">{t('meals.timesCooked', { count: meal.timesCooked })}</Text>
                                                     </Group>
                                                 )}
 
@@ -539,7 +551,7 @@ export default function MealsPage() {
                                                         size="xs"
                                                         onClick={() => handleMarkCooked(meal.id)}
                                                     >
-                                                        Als gekocht markieren
+                                                        {t('meals.markAsCooked')}
                                                     </Button>
                                                     <Group gap="xs">
                                                         <ActionIcon
@@ -566,13 +578,13 @@ export default function MealsPage() {
                                     <Table striped highlightOnHover>
                                         <Table.Thead>
                                             <Table.Tr>
-                                                <Table.Th>Rezept</Table.Th>
-                                                <Table.Th>Typ</Table.Th>
-                                                <Table.Th>Küche</Table.Th>
-                                                <Table.Th>Zeit</Table.Th>
-                                                <Table.Th>Portionen</Table.Th>
-                                                <Table.Th>Gekocht</Table.Th>
-                                                <Table.Th>Aktionen</Table.Th>
+                                                <Table.Th>{t('meals.table.recipe')}</Table.Th>
+                                                <Table.Th>{t('meals.table.type')}</Table.Th>
+                                                <Table.Th>{t('meals.table.cuisine')}</Table.Th>
+                                                <Table.Th>{t('meals.table.time')}</Table.Th>
+                                                <Table.Th>{t('meals.table.servings')}</Table.Th>
+                                                <Table.Th>{t('meals.table.cooked')}</Table.Th>
+                                                <Table.Th>{t('meals.table.actions')}</Table.Th>
                                             </Table.Tr>
                                         </Table.Thead>
                                         <Table.Tbody>
@@ -628,27 +640,27 @@ export default function MealsPage() {
                                                                     leftSection={<IconCheck size={16} />}
                                                                     onClick={() => handleMarkCooked(meal.id)}
                                                                 >
-                                                                    Als gekocht markieren
+                                                                    {t('meals.markAsCooked')}
                                                                 </Menu.Item>
                                                                 <Menu.Item
                                                                     leftSection={meal.isFavorite ? <IconStarFilled size={16} /> : <IconStar size={16} />}
                                                                     onClick={() => handleToggleFavorite(meal.id)}
                                                                 >
-                                                                    {meal.isFavorite ? 'Favorit entfernen' : 'Als Favorit'}
+                                                                    {meal.isFavorite ? t('meals.removeFavorite') : t('meals.addFavorite')}
                                                                 </Menu.Item>
                                                                 <Menu.Divider />
                                                                 <Menu.Item
                                                                     leftSection={<IconEdit size={16} />}
                                                                     onClick={() => openEditModal(meal)}
                                                                 >
-                                                                    Bearbeiten
+                                                                    {t('meals.edit')}
                                                                 </Menu.Item>
                                                                 <Menu.Item
                                                                     leftSection={<IconTrash size={16} />}
                                                                     color="red"
                                                                     onClick={() => handleDeleteMeal(meal.id)}
                                                                 >
-                                                                    Löschen
+                                                                    {t('meals.delete')}
                                                                 </Menu.Item>
                                                             </Menu.Dropdown>
                                                         </Menu>
@@ -664,8 +676,8 @@ export default function MealsPage() {
                                 <Paper shadow="sm" p="xl" radius="md" withBorder>
                                     <Stack align="center" gap="md">
                                         <IconChefHat size={60} opacity={0.3} />
-                                        <Text size="lg" c="dimmed">Keine Rezepte gefunden</Text>
-                                        <Button onClick={openCreateModal}>Erstes Rezept erstellen</Button>
+                                        <Text size="lg" c="dimmed">{t('meals.noRecipesFound')}</Text>
+                                        <Button onClick={openCreateModal}>{t('meals.createFirstRecipe')}</Button>
                                     </Stack>
                                 </Paper>
                             )}
@@ -676,13 +688,16 @@ export default function MealsPage() {
                         <Stack gap="lg">
                             <Group justify="space-between">
                                 <Text size="lg" fw={500}>
-                                    Woche vom {weekStart.toLocaleDateString('de-DE')} bis {weekEnd.toLocaleDateString('de-DE')}
+                                    {t('meals.planner.weekOf', {
+                                        start: weekStart.toLocaleDateString('de-DE'),
+                                        end: weekEnd.toLocaleDateString('de-DE')
+                                    })}
                                 </Text>
                                 <Button
                                     leftSection={<IconPlus size={16} />}
                                     onClick={() => openPlanModal()}
                                 >
-                                    Mahlzeit planen
+                                    {t('meals.planner.planMeal')}
                                 </Button>
                             </Group>
 
@@ -735,7 +750,7 @@ export default function MealsPage() {
                                                                                 </Text>
                                                                             </Group>
                                                                             <Text size="sm" lineClamp={2}>
-                                                                                {meal?.name || plan.customMealName || 'Geplant'}
+                                                                                {meal?.name || plan.customMealName || t('meals.planner.planned')}
                                                                             </Text>
                                                                         </Stack>
                                                                         <ActionIcon
@@ -774,9 +789,12 @@ export default function MealsPage() {
                         <Stack gap="lg">
                             <Group justify="space-between">
                                 <div>
-                                    <Text size="lg" fw={500}>Einkaufsliste</Text>
+                                    <Text size="lg" fw={500}>{t('meals.shopping.title')}</Text>
                                     <Text size="sm" c="dimmed">
-                                        Für die Woche vom {weekStart.toLocaleDateString('de-DE')} bis {weekEnd.toLocaleDateString('de-DE')}
+                                        {t('meals.shopping.weekRange', {
+                                            start: weekStart.toLocaleDateString('de-DE'),
+                                            end: weekEnd.toLocaleDateString('de-DE')
+                                        })}
                                     </Text>
                                 </div>
                             </Group>
@@ -803,9 +821,9 @@ export default function MealsPage() {
                                 <Paper shadow="sm" p="xl" radius="md" withBorder>
                                     <Stack align="center" gap="md">
                                         <IconShoppingCart size={60} opacity={0.3} />
-                                        <Text size="lg" c="dimmed">Keine Einkaufsliste verfügbar</Text>
+                                        <Text size="lg" c="dimmed">{t('meals.shopping.noList')}</Text>
                                         <Text size="sm" c="dimmed" ta="center">
-                                            Plane Mahlzeiten für diese Woche, um eine Einkaufsliste zu erstellen
+                                            {t('meals.shopping.noListHint')}
                                         </Text>
                                     </Stack>
                                 </Paper>
@@ -819,62 +837,62 @@ export default function MealsPage() {
             <Modal
                 opened={modalOpen}
                 onClose={() => setModalOpen(false)}
-                title={editingMeal ? 'Rezept bearbeiten' : 'Neues Rezept'}
+                title={editingMeal ? t('meals.editMeal') : t('meals.newMeal')}
                 size="lg"
             >
                 <form onSubmit={form.onSubmit(handleSubmitMeal)}>
                     <Stack gap="md">
                         <TextInput
-                            label="Name"
-                            placeholder="z.B. Spaghetti Bolognese"
+                            label={t('meals.name')}
+                            placeholder={t('meals.namePlaceholder')}
                             required
                             {...form.getInputProps('name')}
                         />
 
                         <Textarea
-                            label="Beschreibung"
-                            placeholder="Kurze Beschreibung des Gerichts..."
+                            label={t('meals.description')}
+                            placeholder={t('meals.descriptionPlaceholder')}
                             rows={2}
                             {...form.getInputProps('description')}
                         />
 
                         <TextInput
-                            label="Bild URL"
-                            placeholder="https://..."
+                            label={t('meals.imageUrl')}
+                            placeholder={t('meals.imageUrlPlaceholder')}
                             {...form.getInputProps('imageUrl')}
                         />
 
                         <Box>
                             <Group justify="space-between" mb="xs">
-                                <Text size="sm" fw={500}>Zutaten</Text>
+                                <Text size="sm" fw={500}>{t('meals.ingredients')}</Text>
                                 <Button
                                     size="xs"
                                     variant="light"
                                     leftSection={<IconPlus size={14} />}
                                     onClick={addIngredient}
                                 >
-                                    Zutat hinzufügen
+                                    {t('meals.addIngredient')}
                                 </Button>
                             </Group>
                             <Stack gap="xs">
                                 {form.values.ingredients.length === 0 ? (
                                     <Paper p="md" withBorder bg="gray.0">
                                         <Text size="sm" c="dimmed" ta="center">
-                                            Noch keine Zutaten. Klicke auf "Zutat hinzufügen".
+                                            {t('meals.noIngredients')}
                                         </Text>
                                     </Paper>
                                 ) : (
                                     form.values.ingredients.map((ingredient, index) => (
                                         <Group key={index} gap="xs" align="flex-end">
                                             <TextInput
-                                                placeholder="Menge"
+                                                placeholder={t('meals.ingredientAmount')}
                                                 value={ingredient.amount || ''}
                                                 onChange={(e) => updateIngredient(index, 'amount', e.target.value)}
                                                 style={{ width: 70 }}
                                                 size="sm"
                                             />
                                             <Select
-                                                placeholder="Einheit"
+                                                placeholder={t('meals.ingredientUnit')}
                                                 data={unitOptions}
                                                 value={ingredient.unit || ''}
                                                 onChange={(val) => updateIngredient(index, 'unit', val || '')}
@@ -883,7 +901,7 @@ export default function MealsPage() {
                                                 clearable
                                             />
                                             <TextInput
-                                                placeholder="Zutat (z.B. Hackfleisch)"
+                                                placeholder={t('meals.ingredientName')}
                                                 value={ingredient.name}
                                                 onChange={(e) => updateIngredient(index, 'name', e.target.value)}
                                                 style={{ flex: 1 }}
@@ -900,44 +918,44 @@ export default function MealsPage() {
                         </Box>
 
                         <Textarea
-                            label="Anleitung"
-                            placeholder="Schritt-für-Schritt Anleitung..."
+                            label={t('meals.instructions')}
+                            placeholder={t('meals.instructionsPlaceholder')}
                             rows={6}
                             {...form.getInputProps('instructions')}
                         />
 
                         <Group grow>
                             <NumberInput
-                                label="Vorbereitungszeit (Min)"
-                                placeholder="30"
+                                label={t('meals.prepTime')}
+                                placeholder={t('meals.prepTimePlaceholder')}
                                 min={0}
                                 {...form.getInputProps('prepTime')}
                             />
                             <NumberInput
-                                label="Kochzeit (Min)"
-                                placeholder="45"
+                                label={t('meals.cookTime')}
+                                placeholder={t('meals.cookTimePlaceholder')}
                                 min={0}
                                 {...form.getInputProps('cookTime')}
                             />
                         </Group>
 
                         <NumberInput
-                            label="Portionen"
-                            placeholder="4"
+                            label={t('meals.servings')}
+                            placeholder={t('meals.servingsPlaceholder')}
                             min={1}
                             {...form.getInputProps('servings')}
                         />
 
                         <Select
-                            label="Küche"
-                            placeholder="Wähle eine Küche"
+                            label={t('meals.cuisine')}
+                            placeholder={t('meals.selectCuisine')}
                             data={cuisineOptions}
                             searchable
                             {...form.getInputProps('cuisine')}
                         />
 
                         <Stack gap="xs">
-                            <Text size="sm" fw={500}>Mahlzeittyp</Text>
+                            <Text size="sm" fw={500}>{t('meals.mealType')}</Text>
                             <Group>
                                 {mealTypeOptions.map(opt => (
                                     <Checkbox
@@ -959,23 +977,23 @@ export default function MealsPage() {
                         </Stack>
 
                         <TextInput
-                            label="Rezept URL"
-                            placeholder="https://..."
+                            label={t('meals.recipeUrl')}
+                            placeholder={t('meals.recipeUrlPlaceholder')}
                             {...form.getInputProps('recipeUrl')}
                         />
 
                         <TextInput
-                            label="Quelle"
-                            placeholder="z.B. Chefkoch, eigenes Rezept..."
+                            label={t('meals.source')}
+                            placeholder={t('meals.sourcePlaceholder')}
                             {...form.getInputProps('source')}
                         />
 
                         <Group justify="flex-end" mt="md">
                             <Button variant="subtle" onClick={() => setModalOpen(false)}>
-                                Abbrechen
+                                {t('meals.cancel')}
                             </Button>
                             <Button type="submit">
-                                {editingMeal ? 'Aktualisieren' : 'Erstellen'}
+                                {editingMeal ? t('meals.update') : t('meals.create')}
                             </Button>
                         </Group>
                     </Stack>
@@ -986,14 +1004,14 @@ export default function MealsPage() {
             <Modal
                 opened={planModalOpen}
                 onClose={() => setPlanModalOpen(false)}
-                title="Mahlzeit planen"
+                title={t('meals.planner.planMealModal')}
                 size="md"
             >
                 <form onSubmit={planForm.onSubmit(handleSubmitPlan)}>
                     <Stack gap="md">
                         <DatePickerInput
-                            label="Datum"
-                            placeholder="Wähle ein Datum"
+                            label={t('meals.planner.date')}
+                            placeholder={t('meals.planner.selectDate')}
                             valueFormat="DD.MM.YYYY"
                             locale="de"
                             required
@@ -1001,16 +1019,16 @@ export default function MealsPage() {
                         />
 
                         <Select
-                            label="Mahlzeittyp"
-                            placeholder="Wähle einen Typ"
+                            label={t('meals.planner.mealType')}
+                            placeholder={t('meals.planner.selectMealType')}
                             data={mealTypeOptions.map(opt => ({ value: opt.value, label: opt.label }))}
                             required
                             {...planForm.getInputProps('mealType')}
                         />
 
                         <Select
-                            label="Rezept"
-                            placeholder="Wähle ein Rezept oder lasse leer für eigene Eingabe"
+                            label={t('meals.planner.recipe')}
+                            placeholder={t('meals.planner.selectRecipe')}
                             data={meals?.map(meal => ({ value: meal.id, label: meal.name })) || []}
                             searchable
                             clearable
@@ -1018,25 +1036,25 @@ export default function MealsPage() {
                         />
 
                         <TextInput
-                            label="Eigene Mahlzeit"
-                            placeholder="z.B. Essen gehen, Auswärts..."
+                            label={t('meals.planner.customMeal')}
+                            placeholder={t('meals.planner.customMealPlaceholder')}
                             disabled={!!planForm.values.mealId}
                             {...planForm.getInputProps('customMealName')}
                         />
 
                         <Textarea
-                            label="Notizen"
-                            placeholder="Zusätzliche Notizen..."
+                            label={t('meals.planner.notes')}
+                            placeholder={t('meals.planner.notesPlaceholder')}
                             rows={3}
                             {...planForm.getInputProps('notes')}
                         />
 
                         <Group justify="flex-end" mt="md">
                             <Button variant="subtle" onClick={() => setPlanModalOpen(false)}>
-                                Abbrechen
+                                {t('meals.cancel')}
                             </Button>
                             <Button type="submit">
-                                Planen
+                                {t('meals.planner.plan')}
                             </Button>
                         </Group>
                     </Stack>

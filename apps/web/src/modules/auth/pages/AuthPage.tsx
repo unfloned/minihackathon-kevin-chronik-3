@@ -29,6 +29,7 @@ import {
     IconCheck,
     IconInfoCircle,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getErrorMessage } from '../../../config/api';
 
@@ -52,6 +53,7 @@ function getStrengthColor(strength: number): string {
 }
 
 export default function AuthPage() {
+    const { t } = useTranslation();
     const [mode, setMode] = useState<AuthMode>('login');
     const [isLoading, setIsLoading] = useState(false);
     const [searchParams] = useSearchParams();
@@ -65,12 +67,12 @@ export default function AuthPage() {
             displayName: '',
         },
         validate: {
-            email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Ungültige E-Mail'),
+            email: (value) => (/^\S+@\S+$/.test(value) ? null : t('auth.invalidEmail')),
             password: (value) =>
-                value.length >= 6 ? null : 'Passwort muss mindestens 6 Zeichen haben',
+                value.length >= 6 ? null : t('auth.passwordMinLength', { count: 6 }),
             displayName: (value) =>
                 mode === 'register' && value.length < 2
-                    ? 'Name muss mindestens 2 Zeichen haben'
+                    ? t('auth.nameMinLength', { count: 2 })
                     : null,
         },
     });
@@ -95,8 +97,8 @@ export default function AuthPage() {
             if (mode === 'login') {
                 await login(values.email, values.password);
                 notifications.show({
-                    title: 'Willkommen zurück!',
-                    message: 'Du bist jetzt eingeloggt.',
+                    title: t('auth.welcomeBack'),
+                    message: t('auth.loggedIn'),
                     color: 'green',
                 });
             } else {
@@ -106,15 +108,15 @@ export default function AuthPage() {
                     displayName: values.displayName,
                 });
                 notifications.show({
-                    title: 'Account erstellt!',
-                    message: 'Willkommen bei Your Chaos, My Mission!',
+                    title: t('auth.accountCreated'),
+                    message: t('auth.welcomeToApp'),
                     color: 'green',
                 });
             }
             navigate('/app');
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
+                title: t('notifications.error'),
                 message: getErrorMessage(error),
                 color: 'red',
             });
@@ -128,14 +130,14 @@ export default function AuthPage() {
         try {
             await createDemoAccount();
             notifications.show({
-                title: 'Demo gestartet!',
-                message: 'Du nutzt jetzt einen Demo-Account mit Beispieldaten.',
+                title: t('auth.demoStarted'),
+                message: t('auth.demoInfo'),
                 color: 'blue',
             });
             navigate('/app');
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
+                title: t('notifications.error'),
                 message: getErrorMessage(error),
                 color: 'red',
             });
@@ -158,26 +160,24 @@ export default function AuthPage() {
                                 gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
                                 inherit
                             >
-                                Your Chaos
+                                {t('landing.title')}
                             </Text>
                         </Title>
                     </Group>
                     <Title order={1} c="dimmed">
-                        My Mission
+                        {t('landing.subtitle')}
                     </Title>
 
                     <Text size="lg" c="dimmed" mt="xl">
-                        Organisiere dein Leben mit einer App.
-                        Bewerbungen, Gewohnheiten, Ausgaben und mehr -
-                        alles an einem Ort.
+                        {t('landing.tagline')} {t('landing.description')}
                     </Text>
 
                     <Stack gap="sm" mt="xl">
                         {[
-                            'Bewerbungen tracken',
-                            'Gewohnheiten aufbauen',
-                            'Ausgaben im Blick',
-                            'XP sammeln & Level aufsteigen',
+                            t('landing.features.applications'),
+                            t('landing.features.habits'),
+                            t('landing.features.expenses'),
+                            t('landing.features.xp'),
                         ].map((feature) => (
                             <Group key={feature} gap="xs">
                                 <ThemeIcon size="sm" color="green" variant="light">
@@ -192,37 +192,37 @@ export default function AuthPage() {
                 {/* Right Side - Form */}
                 <Paper radius="md" p="xl" withBorder>
                     <Title order={2} ta="center" mb="md">
-                        {mode === 'login' ? 'Willkommen zurück' : 'Account erstellen'}
+                        {mode === 'login' ? t('auth.welcomeBack') : t('auth.createAccount')}
                     </Title>
 
                     <Text c="dimmed" size="sm" ta="center" mb="xl">
                         {mode === 'login'
-                            ? 'Melde dich an um fortzufahren'
-                            : 'Erstelle einen Account um loszulegen'}
+                            ? t('auth.loginPrompt')
+                            : t('auth.registerPrompt')}
                     </Text>
 
                     <form onSubmit={form.onSubmit(handleSubmit)}>
                         <Stack>
                             {mode === 'register' && (
                                 <TextInput
-                                    label="Name"
-                                    placeholder="Dein Name"
+                                    label={t('auth.name')}
+                                    placeholder={t('auth.namePlaceholder')}
                                     leftSection={<IconUser size={16} />}
                                     {...form.getInputProps('displayName')}
                                 />
                             )}
 
                             <TextInput
-                                label="E-Mail"
-                                placeholder="deine@email.de"
+                                label={t('auth.email')}
+                                placeholder={t('auth.emailPlaceholder')}
                                 leftSection={<IconMail size={16} />}
                                 {...form.getInputProps('email')}
                             />
 
                             <Box>
                                 <PasswordInput
-                                    label="Passwort"
-                                    placeholder="Dein Passwort"
+                                    label={t('auth.password')}
+                                    placeholder={t('auth.passwordPlaceholder')}
                                     leftSection={<IconLock size={16} />}
                                     {...form.getInputProps('password')}
                                 />
@@ -244,17 +244,17 @@ export default function AuthPage() {
                                     size="xs"
                                     ta="right"
                                 >
-                                    Passwort vergessen?
+                                    {t('auth.forgotPassword')}
                                 </Anchor>
                             )}
 
                             <Button type="submit" fullWidth loading={isLoading}>
-                                {mode === 'login' ? 'Anmelden' : 'Registrieren'}
+                                {mode === 'login' ? t('auth.login') : t('auth.register')}
                             </Button>
                         </Stack>
                     </form>
 
-                    <Divider label="oder" labelPosition="center" my="lg" />
+                    <Divider label={t('common.or')} labelPosition="center" my="lg" />
 
                     <Button
                         fullWidth
@@ -263,7 +263,7 @@ export default function AuthPage() {
                         onClick={handleDemoLogin}
                         loading={isLoading}
                     >
-                        Demo ausprobieren
+                        {t('auth.tryDemo')}
                     </Button>
 
                     <Alert
@@ -272,30 +272,30 @@ export default function AuthPage() {
                         variant="light"
                         mt="md"
                     >
-                        Mit der Demo kannst du alle Features testen ohne einen Account zu erstellen.
+                        {t('auth.demoInfo')}
                     </Alert>
 
                     <Text ta="center" mt="xl" size="sm">
                         {mode === 'login' ? (
                             <>
-                                Noch kein Account?{' '}
+                                {t('auth.noAccount')}{' '}
                                 <Anchor
                                     component="button"
                                     type="button"
                                     onClick={() => setMode('register')}
                                 >
-                                    Registrieren
+                                    {t('auth.register')}
                                 </Anchor>
                             </>
                         ) : (
                             <>
-                                Bereits registriert?{' '}
+                                {t('auth.hasAccount')}{' '}
                                 <Anchor
                                     component="button"
                                     type="button"
                                     onClick={() => setMode('login')}
                                 >
-                                    Anmelden
+                                    {t('auth.login')}
                                 </Anchor>
                             </>
                         )}

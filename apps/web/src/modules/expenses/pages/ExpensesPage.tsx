@@ -44,6 +44,7 @@ import {
 } from '@tabler/icons-react';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
+import { useTranslation } from 'react-i18next';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
 import type { ExpenseWithCategory, ExpenseStats, ExpenseCategorySimple } from '@ycmm/core';
@@ -60,6 +61,7 @@ interface ExpenseFormData {
 }
 
 export default function ExpensesPage() {
+    const { t } = useTranslation();
     const [opened, { open, close }] = useDisclosure(false);
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
     const [globalViewMode, setViewMode] = useViewMode();
@@ -111,8 +113,8 @@ export default function ExpensesPage() {
         method: 'POST',
         onSuccess: () => {
             notifications.show({
-                title: 'Erfolg',
-                message: 'Ausgabe erfolgreich erstellt',
+                title: t('notifications.success'),
+                message: t('expenses.expenseCreated'),
                 color: 'green',
             });
             refetchExpenses();
@@ -121,8 +123,8 @@ export default function ExpensesPage() {
         },
         onError: () => {
             notifications.show({
-                title: 'Fehler',
-                message: 'Ausgabe konnte nicht erstellt werden',
+                title: t('notifications.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         },
@@ -141,8 +143,8 @@ export default function ExpensesPage() {
         method: 'PATCH',
         onSuccess: () => {
             notifications.show({
-                title: 'Erfolg',
-                message: 'Ausgabe erfolgreich aktualisiert',
+                title: t('notifications.success'),
+                message: t('expenses.expenseUpdated'),
                 color: 'green',
             });
             refetchExpenses();
@@ -151,8 +153,8 @@ export default function ExpensesPage() {
         },
         onError: () => {
             notifications.show({
-                title: 'Fehler',
-                message: 'Ausgabe konnte nicht aktualisiert werden',
+                title: t('notifications.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         },
@@ -165,8 +167,8 @@ export default function ExpensesPage() {
             method: 'DELETE',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Ausgabe erfolgreich gelöscht',
+                    title: t('notifications.success'),
+                    message: t('expenses.expenseDeleted'),
                     color: 'green',
                 });
                 refetchExpenses();
@@ -174,8 +176,8 @@ export default function ExpensesPage() {
             },
             onError: () => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: 'Ausgabe konnte nicht gelöscht werden',
+                    title: t('notifications.error'),
+                    message: t('errors.generic'),
                     color: 'red',
                 });
             },
@@ -217,8 +219,8 @@ export default function ExpensesPage() {
     const handleSubmit = async () => {
         if (!formData.amount || !formData.description || !formData.categoryId || !formData.date) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Bitte alle Felder ausfüllen',
+                title: t('notifications.error'),
+                message: t('errors.validation'),
                 color: 'red',
             });
             return;
@@ -239,7 +241,7 @@ export default function ExpensesPage() {
     };
 
     const handleDelete = async (expenseId: string) => {
-        if (window.confirm('Möchten Sie diese Ausgabe wirklich löschen?')) {
+        if (window.confirm(t('expenses.deleteConfirm'))) {
             await deleteExpense({ id: expenseId });
         }
     };
@@ -281,12 +283,12 @@ export default function ExpensesPage() {
             <Stack gap="xl">
                 {/* Header */}
                 <Group justify="space-between" align="center">
-                    <PageTitle title="Ausgaben" subtitle={getMonthName()} />
+                    <PageTitle title={t('expenses.title')} subtitle={getMonthName()} />
                     <Button
                         leftSection={<IconPlus size={18} />}
                         onClick={() => handleOpenModal()}
                     >
-                        Neue Ausgabe
+                        {t('expenses.newExpense')}
                     </Button>
                 </Group>
 
@@ -294,25 +296,25 @@ export default function ExpensesPage() {
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="lg">
                     <CardStatistic
                         type="icon"
-                        title="Gesamt Ausgaben"
+                        title={t('expenses.stats.totalExpenses')}
                         value={formatCurrency(stats?.total || 0)}
                         icon={IconReceipt}
                         color="blue"
-                        subtitle={`${expenses?.length || 0} Transaktionen`}
+                        subtitle={t('expenses.transactions', { count: expenses?.length || 0 })}
                     />
 
                     <CardStatistic
                         type="icon"
-                        title="Kategorien"
+                        title={t('expenses.categories')}
                         value={stats?.byCategory?.length || 0}
                         icon={IconCategory}
                         color="grape"
-                        subtitle="Verschiedene Kategorien"
+                        subtitle={t('expenses.differentCategories')}
                     />
 
                     <CardStatistic
                         type="icon"
-                        title="Durchschnitt"
+                        title={t('expenses.average')}
                         value={formatCurrency(
                             expenses && expenses.length > 0
                                 ? (stats?.total || 0) / expenses.length
@@ -320,7 +322,7 @@ export default function ExpensesPage() {
                         )}
                         icon={IconChartPie}
                         color="teal"
-                        subtitle="Pro Transaktion"
+                        subtitle={t('expenses.perTransaction')}
                     />
                 </SimpleGrid>
 
@@ -328,7 +330,7 @@ export default function ExpensesPage() {
                 {stats?.byCategory && stats.byCategory.length > 0 && (
                     <Card shadow="sm" padding="lg" radius="md" withBorder>
                         <Text size="lg" fw={600} mb="md">
-                            Ausgaben nach Kategorie
+                            {t('expenses.byCategory')}
                         </Text>
                         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
                             {stats.byCategory.map((cat) => {
@@ -343,7 +345,7 @@ export default function ExpensesPage() {
                                                 <div>
                                                     <Text fw={500} size="sm">{cat.categoryName}</Text>
                                                     <Text size="xs" c="dimmed">
-                                                        {cat.count} {cat.count === 1 ? 'Transaktion' : 'Transaktionen'}
+                                                        {t('expenses.transactions', { count: cat.count })}
                                                     </Text>
                                                 </div>
                                             </Group>
@@ -356,7 +358,7 @@ export default function ExpensesPage() {
                                             radius="xl"
                                         />
                                         <Text size="xs" c="dimmed" ta="right" mt={4}>
-                                            {percentage.toFixed(1)}% des Gesamts
+                                            {t('expenses.percentOfTotal', { percent: percentage.toFixed(1) })}
                                         </Text>
                                     </Paper>
                                 );
@@ -368,7 +370,7 @@ export default function ExpensesPage() {
                 {/* View Toggle */}
                 <Paper shadow="sm" withBorder p="md" radius="md">
                     <Group justify="space-between">
-                        <Text fw={500}>Alle Ausgaben</Text>
+                        <Text fw={500}>{t('expenses.allExpenses')}</Text>
                         <SegmentedControl
                             value={viewMode}
                             onChange={(value) => setViewMode(value as 'grid' | 'list')}
@@ -387,10 +389,10 @@ export default function ExpensesPage() {
                             <IconReceipt size={32} />
                         </ThemeIcon>
                         <Text mt="md" c="dimmed">
-                            Keine Ausgaben für diesen Monat vorhanden
+                            {t('expenses.emptyState')}
                         </Text>
                         <Button mt="md" onClick={() => handleOpenModal()}>
-                            Erste Ausgabe hinzufügen
+                            {t('expenses.createFirst')}
                         </Button>
                     </Paper>
                 ) : viewMode === 'grid' ? (
@@ -423,7 +425,7 @@ export default function ExpensesPage() {
                                                 leftSection={<IconEdit size={16} />}
                                                 onClick={() => handleOpenModal(expense)}
                                             >
-                                                Bearbeiten
+                                                {t('common.edit')}
                                             </Menu.Item>
                                             <Menu.Divider />
                                             <Menu.Item
@@ -431,7 +433,7 @@ export default function ExpensesPage() {
                                                 leftSection={<IconTrash size={16} />}
                                                 onClick={() => handleDelete(expense.id)}
                                             >
-                                                Löschen
+                                                {t('common.delete')}
                                             </Menu.Item>
                                         </Menu.Dropdown>
                                     </Menu>
@@ -451,11 +453,11 @@ export default function ExpensesPage() {
                         <Table striped highlightOnHover>
                             <Table.Thead>
                                 <Table.Tr>
-                                    <Table.Th>Datum</Table.Th>
-                                    <Table.Th>Beschreibung</Table.Th>
-                                    <Table.Th>Kategorie</Table.Th>
-                                    <Table.Th style={{ textAlign: 'right' }}>Betrag</Table.Th>
-                                    <Table.Th style={{ textAlign: 'right' }}>Aktionen</Table.Th>
+                                    <Table.Th>{t('common.date')}</Table.Th>
+                                    <Table.Th>{t('common.description')}</Table.Th>
+                                    <Table.Th>{t('common.category')}</Table.Th>
+                                    <Table.Th style={{ textAlign: 'right' }}>{t('expenses.amount')}</Table.Th>
+                                    <Table.Th style={{ textAlign: 'right' }}>{t('common.actions')}</Table.Th>
                                 </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
@@ -474,7 +476,7 @@ export default function ExpensesPage() {
                                                 </Badge>
                                             ) : (
                                                 <Text size="sm" c="dimmed">
-                                                    Keine Kategorie
+                                                    {t('expenses.uncategorized')}
                                                 </Text>
                                             )}
                                         </Table.Td>
@@ -493,7 +495,7 @@ export default function ExpensesPage() {
                                                         leftSection={<IconEdit size={16} />}
                                                         onClick={() => handleOpenModal(expense)}
                                                     >
-                                                        Bearbeiten
+                                                        {t('common.edit')}
                                                     </Menu.Item>
                                                     <Menu.Divider />
                                                     <Menu.Item
@@ -501,7 +503,7 @@ export default function ExpensesPage() {
                                                         leftSection={<IconTrash size={16} />}
                                                         onClick={() => handleDelete(expense.id)}
                                                     >
-                                                        Löschen
+                                                        {t('common.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
@@ -518,12 +520,12 @@ export default function ExpensesPage() {
             <Modal
                 opened={opened}
                 onClose={handleCloseModal}
-                title={editingExpense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}
+                title={editingExpense ? t('expenses.editExpense') : t('expenses.newExpense')}
                 size="md"
             >
                 <Stack gap="md">
                     <NumberInput
-                        label="Betrag"
+                        label={t('expenses.amount')}
                         placeholder="0.00"
                         required
                         min={0}
@@ -536,8 +538,8 @@ export default function ExpensesPage() {
                     />
 
                     <TextInput
-                        label="Beschreibung"
-                        placeholder="z.B. Einkauf bei Edeka"
+                        label={t('common.description')}
+                        placeholder={t('expenses.descriptionPlaceholder')}
                         required
                         value={formData.description}
                         onChange={(e) =>
@@ -546,8 +548,8 @@ export default function ExpensesPage() {
                     />
 
                     <Select
-                        label="Kategorie"
-                        placeholder="Kategorie auswählen"
+                        label={t('common.category')}
+                        placeholder={t('expenses.selectCategory')}
                         required
                         data={
                             categories?.map((cat) => ({
@@ -562,8 +564,8 @@ export default function ExpensesPage() {
                     />
 
                     <DateInput
-                        label="Datum"
-                        placeholder="Datum auswählen"
+                        label={t('common.date')}
+                        placeholder={t('expenses.selectDate')}
                         required
                         value={formData.date}
                         onChange={(value) => setFormData({ ...formData, date: toDateOrNull(value) })}
@@ -573,13 +575,13 @@ export default function ExpensesPage() {
 
                     <Group justify="flex-end" mt="md">
                         <Button variant="subtle" onClick={handleCloseModal}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             onClick={handleSubmit}
                             loading={createLoading || updateLoading}
                         >
-                            {editingExpense ? 'Speichern' : 'Erstellen'}
+                            {editingExpense ? t('common.save') : t('common.create')}
                         </Button>
                     </Group>
                 </Stack>

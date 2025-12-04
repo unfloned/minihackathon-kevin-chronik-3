@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import { Paper, Text, Group, Stack, SimpleGrid, Skeleton } from '@mantine/core';
 import { useMantineColorScheme } from '@mantine/core';
+import { useTranslation } from 'react-i18next';
 
 interface ExpenseChartProps {
     data?: {
@@ -23,6 +24,7 @@ interface ExpenseChartProps {
 }
 
 export function ExpenseChart({ data, isLoading }: ExpenseChartProps) {
+    const { t } = useTranslation();
     const { colorScheme } = useMantineColorScheme();
     const isDark = colorScheme === 'dark';
 
@@ -57,21 +59,21 @@ export function ExpenseChart({ data, isLoading }: ExpenseChartProps) {
         return (
             <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
                 <Paper withBorder p="md" radius="md">
-                    <Text fw={500} mb="md">Ausgaben-Trend</Text>
+                    <Text fw={500} mb="md">{t('expenseChart.trend', { defaultValue: 'Expense Trend' })}</Text>
                     <Stack align="center" justify="center" h={200}>
                         <Text c="dimmed" size="sm" ta="center">
-                            Noch keine Ausgaben erfasst.
+                            {t('dashboard.noExpensesTracked')}
                         </Text>
                         <Text c="dimmed" size="xs" ta="center">
-                            Füge Ausgaben hinzu um deinen Trend zu sehen.
+                            {t('expenseChart.addExpenses', { defaultValue: 'Add expenses to see your trend.' })}
                         </Text>
                     </Stack>
                 </Paper>
                 <Paper withBorder p="md" radius="md">
-                    <Text fw={500} mb="md">Nach Kategorie</Text>
+                    <Text fw={500} mb="md">{t('expenses.byCategory')}</Text>
                     <Stack align="center" justify="center" h={200}>
                         <Text c="dimmed" size="sm" ta="center">
-                            Keine Kategoriedaten vorhanden.
+                            {t('expenseChart.noCategories', { defaultValue: 'No category data available.' })}
                         </Text>
                     </Stack>
                 </Paper>
@@ -111,7 +113,7 @@ export function ExpenseChart({ data, isLoading }: ExpenseChartProps) {
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="md">
             {/* Trend Chart */}
             <Paper withBorder p="md" radius="md">
-                <Text fw={500} mb="md">Ausgaben-Trend</Text>
+                <Text fw={500} mb="md">{t('expenseChart.trend', { defaultValue: 'Expense Trend' })}</Text>
                 <ResponsiveContainer width="100%" height={200}>
                     <AreaChart data={trendData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <defs>
@@ -147,7 +149,7 @@ export function ExpenseChart({ data, isLoading }: ExpenseChartProps) {
 
             {/* Category Pie Chart */}
             <Paper withBorder p="md" radius="md">
-                <Text fw={500} mb="md">Nach Kategorie</Text>
+                <Text fw={500} mb="md">{t('expenses.byCategory')}</Text>
                 <Group justify="center">
                     <ResponsiveContainer width="100%" height={200}>
                         <PieChart>

@@ -31,85 +31,34 @@ import {
     IconArrowRight,
     IconCode,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
-const features = [
-    {
-        icon: IconBriefcase,
-        title: 'Bewerbungstracker',
-        description: 'Behalte den Überblick über alle deine Bewerbungen',
-        color: 'blue',
-    },
-    {
-        icon: IconCheck,
-        title: 'Habit Tracker',
-        description: 'Baue gute Gewohnheiten auf und tracke deinen Fortschritt',
-        color: 'green',
-    },
-    {
-        icon: IconCoin,
-        title: 'Ausgaben Tracker',
-        description: 'Wisse immer wohin dein Geld geht',
-        color: 'yellow',
-    },
-    {
-        icon: IconCalendar,
-        title: 'Fristen & Deadlines',
-        description: 'Verpasse nie wieder wichtige Termine',
-        color: 'red',
-    },
-    {
-        icon: IconCreditCard,
-        title: 'Abo-Tracker',
-        description: 'Alle Abonnements auf einen Blick',
-        color: 'violet',
-    },
-    {
-        icon: IconDeviceTv,
-        title: 'Medien-Tracker',
-        description: 'Filme, Serien, Bücher - alles getrackt',
-        color: 'pink',
-    },
-    {
-        icon: IconBox,
-        title: 'Inventar',
-        description: 'Finde alles wieder was du besitzt',
-        color: 'orange',
-    },
-    {
-        icon: IconNote,
-        title: 'Notizen',
-        description: 'Deine Gedanken sicher festgehalten',
-        color: 'teal',
-    },
-    {
-        icon: IconList,
-        title: 'Listen',
-        description: 'Einkaufslisten, TODOs und mehr',
-        color: 'cyan',
-    },
-    {
-        icon: IconTarget,
-        title: 'Projekte & Ziele',
-        description: 'Große Vorhaben in kleine Schritte aufteilen',
-        color: 'indigo',
-    },
-    {
-        icon: IconToolsKitchen2,
-        title: 'Meal Planning',
-        description: 'Wochenplan für Mahlzeiten erstellen',
-        color: 'lime',
-    },
-    {
-        icon: IconGift,
-        title: 'Wunschlisten',
-        description: 'Teile deine Wünsche mit anderen',
-        color: 'grape',
-    },
+const featureIcons = [
+    { icon: IconBriefcase, key: 'applications', color: 'blue' },
+    { icon: IconCheck, key: 'habits', color: 'green' },
+    { icon: IconCoin, key: 'expenses', color: 'yellow' },
+    { icon: IconCalendar, key: 'deadlines', color: 'red' },
+    { icon: IconCreditCard, key: 'subscriptions', color: 'violet' },
+    { icon: IconDeviceTv, key: 'media', color: 'pink' },
+    { icon: IconBox, key: 'inventory', color: 'orange' },
+    { icon: IconNote, key: 'notes', color: 'teal' },
+    { icon: IconList, key: 'lists', color: 'cyan' },
+    { icon: IconTarget, key: 'projects', color: 'indigo' },
+    { icon: IconToolsKitchen2, key: 'meals', color: 'lime' },
+    { icon: IconGift, key: 'wishlists', color: 'grape' },
 ];
 
 export default function LandingPage() {
+    const { t } = useTranslation();
     const { isAuthenticated } = useAuth();
+
+    const features = featureIcons.map((f) => ({
+        icon: f.icon,
+        title: t(`landing.featureList.${f.key}.title`),
+        description: t(`landing.featureList.${f.key}.description`),
+        color: f.color,
+    }));
 
     return (
         <>
@@ -117,30 +66,30 @@ export default function LandingPage() {
             <Container size="lg" py={80}>
                 <Stack align="center" gap="xl">
                     <Badge size="lg" variant="light" color="blue">
-                        Dein persönlicher Organisator
+                        {t('landing.badge')}
                     </Badge>
 
                     <Title
                         ta="center"
                         style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}
                     >
-                        Dein{' '}
+                        {t('landing.heroYour')}{' '}
                         <Text
                             component="span"
                             variant="gradient"
                             gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
                             inherit
                         >
-                            Chaos
+                            {t('landing.heroChaos')}
                         </Text>
-                        , meine{' '}
+                        , {t('landing.heroMy')}{' '}
                         <Text
                             component="span"
                             variant="gradient"
                             gradient={{ from: 'cyan', to: 'teal', deg: 90 }}
                             inherit
                         >
-                            Mission
+                            {t('landing.heroMission')}
                         </Text>
                     </Title>
 
@@ -150,8 +99,7 @@ export default function LandingPage() {
                         c="dimmed"
                         maw={600}
                     >
-                        Eine App für alles. Bewerbungen, Gewohnheiten, Ausgaben, Medien
-                        und vieles mehr - organisiert und gamifiziert.
+                        {t('landing.heroDescription')}
                     </Text>
 
                     <Group mt="md">
@@ -162,7 +110,7 @@ export default function LandingPage() {
                                 size="lg"
                                 rightSection={<IconArrowRight size={18} />}
                             >
-                                Zur App
+                                {t('landing.toApp')}
                             </Button>
                         ) : (
                             <>
@@ -172,7 +120,7 @@ export default function LandingPage() {
                                     size="lg"
                                     rightSection={<IconArrowRight size={18} />}
                                 >
-                                    Jetzt Loslegen
+                                    {t('landing.getStarted')}
                                 </Button>
                                 <Button
                                     component={Link}
@@ -180,7 +128,7 @@ export default function LandingPage() {
                                     size="lg"
                                     variant="light"
                                 >
-                                    Demo ausprobieren
+                                    {t('landing.tryDemo')}
                                 </Button>
                             </>
                         )}
@@ -192,7 +140,7 @@ export default function LandingPage() {
                             <IconTrophy size={20} />
                         </ThemeIcon>
                         <Text size="sm" c="dimmed">
-                            Sammle XP, steige Level auf und schalte Achievements frei!
+                            {t('landing.gamification')}
                         </Text>
                     </Group>
                 </Stack>
@@ -202,10 +150,10 @@ export default function LandingPage() {
             <Container size="xl" py={60}>
                 <Stack gap="xl">
                     <Title order={2} ta="center">
-                        Alles was du brauchst
+                        {t('landing.everythingYouNeed')}
                     </Title>
                     <Text ta="center" c="dimmed" maw={600} mx="auto">
-                        12+ Module um dein Leben zu organisieren - alles an einem Ort
+                        {t('landing.modulesDescription')}
                     </Text>
 
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 3, lg: 4 }} spacing="lg">
@@ -242,7 +190,7 @@ export default function LandingPage() {
                             <IconCode size={24} />
                         </ThemeIcon>
                         <Text fw={600} size="lg">
-                            Ein Projekt des{' '}
+                            {t('dashboard.projectOf')}{' '}
                             <Anchor
                                 href="https://minihackathon.de/"
                                 target="_blank"

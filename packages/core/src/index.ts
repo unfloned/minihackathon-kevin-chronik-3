@@ -1,3 +1,7 @@
+// ===== i18n =====
+export { de, en } from './i18n/index.js';
+export type { TranslationKeys } from './i18n/index.js';
+
 // ===== Entities =====
 export { User } from './entities/user.entity.js';
 export type { UserPublic } from './entities/user.entity.js';

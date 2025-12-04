@@ -22,6 +22,7 @@ import {
     Container,
 } from '@mantine/core';
 import { DateInput, DateValue } from '@mantine/dates';
+import { useTranslation } from 'react-i18next';
 
 // Helper to convert Mantine v8 DateValue to Date
 const toDateOrNull = (value: DateValue): Date | null => {
@@ -103,6 +104,7 @@ const defaultForm: CreateItemForm = {
 };
 
 export default function InventoryPage() {
+    const { t } = useTranslation();
     const [opened, { open, close }] = useDisclosure(false);
     const [lendOpened, { open: openLend, close: closeLend }] = useDisclosure(false);
     const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
@@ -186,15 +188,15 @@ export default function InventoryPage() {
             if (editingItem) {
                 await updateItem({ id: editingItem.id, data: form });
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Artikel wurde aktualisiert',
+                    title: t('common.success'),
+                    message: t('inventory.itemUpdated'),
                     color: 'green',
                 });
             } else {
                 await createItem(form);
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Artikel wurde erstellt',
+                    title: t('common.success'),
+                    message: t('inventory.itemCreated'),
                     color: 'green',
                 });
             }
@@ -202,28 +204,28 @@ export default function InventoryPage() {
             refetch();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Ein Fehler ist aufgetreten',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Wirklich löschen?')) return;
+        if (!confirm(t('inventory.deleteConfirm'))) return;
 
         try {
             await deleteItem({ id });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Artikel wurde gelöscht',
+                title: t('common.success'),
+                message: t('inventory.itemDeleted'),
                 color: 'green',
             });
             refetch();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Artikel konnte nicht gelöscht werden',
+                title: t('common.error'),
+                message: t('inventory.deleteError'),
                 color: 'red',
             });
         }
@@ -239,16 +241,16 @@ export default function InventoryPage() {
                 expectedReturn: lendReturn?.toISOString(),
             });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Artikel wurde verliehen',
+                title: t('common.success'),
+                message: t('inventory.itemLent'),
                 color: 'green',
             });
             closeLend();
             refetch();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Artikel konnte nicht verliehen werden',
+                title: t('common.error'),
+                message: t('inventory.lendError'),
                 color: 'red',
             });
         }
@@ -258,15 +260,15 @@ export default function InventoryPage() {
         try {
             await returnItem({ id });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Artikel wurde zurückgegeben',
+                title: t('common.success'),
+                message: t('inventory.itemReturned'),
                 color: 'green',
             });
             refetch();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Artikel konnte nicht zurückgegeben werden',
+                title: t('common.error'),
+                message: t('inventory.returnError'),
                 color: 'red',
             });
         }
@@ -301,21 +303,21 @@ export default function InventoryPage() {
                             leftSection={<IconEdit size={14} />}
                             onClick={() => handleOpenEdit(item)}
                         >
-                            Bearbeiten
+                            {t('common.edit')}
                         </Menu.Item>
                         {!item.isLent ? (
                             <Menu.Item
                                 leftSection={<IconUser size={14} />}
                                 onClick={() => handleOpenLend(item)}
                             >
-                                Verleihen
+                                {t('inventory.lend')}
                             </Menu.Item>
                         ) : (
                             <Menu.Item
                                 leftSection={<IconArrowBack size={14} />}
                                 onClick={() => handleReturn(item.id)}
                             >
-                                Zurücknehmen
+                                {t('inventory.return')}
                             </Menu.Item>
                         )}
                         <Menu.Divider />
@@ -324,7 +326,7 @@ export default function InventoryPage() {
                             color="red"
                             onClick={() => handleDelete(item.id)}
                         >
-                            Löschen
+                            {t('common.delete')}
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
@@ -356,7 +358,7 @@ export default function InventoryPage() {
                     <ThemeIcon size="sm" variant="light">
                         <IconBox size={14} />
                     </ThemeIcon>
-                    <Text size="sm">Menge: {item.quantity}</Text>
+                    <Text size="sm">{t('inventory.quantity')}: {item.quantity}</Text>
                 </Group>
 
                 {item.currentValue && (
@@ -379,7 +381,7 @@ export default function InventoryPage() {
 
                 {item.isLent && (
                     <Badge color="orange" variant="filled" mt="sm">
-                        Verliehen an {item.isLent.to}
+                        {t('inventory.lentTo')} {item.isLent.to}
                     </Badge>
                 )}
             </Stack>
@@ -402,11 +404,11 @@ export default function InventoryPage() {
             <Table.Td>
                 {item.isLent ? (
                     <Badge color="orange" variant="filled">
-                        Verliehen
+                        {t('inventory.lentStatus.lent')}
                     </Badge>
                 ) : (
                     <Badge color="green" variant="light">
-                        Verfügbar
+                        {t('inventory.lentStatus.available')}
                     </Badge>
                 )}
             </Table.Td>
@@ -422,21 +424,21 @@ export default function InventoryPage() {
                             leftSection={<IconEdit size={14} />}
                             onClick={() => handleOpenEdit(item)}
                         >
-                            Bearbeiten
+                            {t('common.edit')}
                         </Menu.Item>
                         {!item.isLent ? (
                             <Menu.Item
                                 leftSection={<IconUser size={14} />}
                                 onClick={() => handleOpenLend(item)}
                             >
-                                Verleihen
+                                {t('inventory.lend')}
                             </Menu.Item>
                         ) : (
                             <Menu.Item
                                 leftSection={<IconArrowBack size={14} />}
                                 onClick={() => handleReturn(item.id)}
                             >
-                                Zurücknehmen
+                                {t('inventory.return')}
                             </Menu.Item>
                         )}
                         <Menu.Divider />
@@ -445,7 +447,7 @@ export default function InventoryPage() {
                             color="red"
                             onClick={() => handleDelete(item.id)}
                         >
-                            Löschen
+                            {t('common.delete')}
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
@@ -458,8 +460,8 @@ export default function InventoryPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <PageTitle title="Inventar" subtitle="Verwalten Sie Ihre Gegenstände" />
-                    <Button onClick={handleOpenCreate}>Neuer Artikel</Button>
+                    <PageTitle title={t('inventory.title')} subtitle={t('inventory.subtitle')} />
+                    <Button onClick={handleOpenCreate}>{t('inventory.newItem')}</Button>
                 </Group>
 
                 {/* Stats */}
@@ -467,28 +469,28 @@ export default function InventoryPage() {
                     <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
                         <CardStatistic
                             type="icon"
-                            title="Artikel"
+                            title={t('inventory.stats.total')}
                             value={stats.totalItems}
                             icon={IconBox}
                             color="blue"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Gesamtwert"
+                            title={t('inventory.stats.value')}
                             value={`${stats.totalValue.toFixed(2)} EUR`}
                             icon={IconCurrencyEuro}
                             color="green"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Verliehen"
+                            title={t('inventory.stats.lent')}
                             value={stats.lentItems}
                             icon={IconUser}
                             color="orange"
                         />
                         <CardStatistic
                             type="icon"
-                            title="Kategorien"
+                            title={t('inventory.stats.categories')}
                             value={stats.categories}
                             icon={IconCategory}
                             color="violet"
@@ -500,13 +502,13 @@ export default function InventoryPage() {
                 <Paper shadow="sm" withBorder p="md" radius="md">
                     <Group>
                         <TextInput
-                            placeholder="Artikel suchen..."
+                            placeholder={t('inventory.searchPlaceholder')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.currentTarget.value)}
                             style={{ flex: 1 }}
                         />
                         <Select
-                            placeholder="Kategorie"
+                            placeholder={t('common.category')}
                             data={categories || []}
                             value={filterCategory}
                             onChange={setFilterCategory}
@@ -514,7 +516,7 @@ export default function InventoryPage() {
                             style={{ width: 200 }}
                         />
                         <Select
-                            placeholder="Standort"
+                            placeholder={t('inventory.location')}
                             data={locations?.map(l => l.area) || []}
                             value={filterLocation}
                             onChange={setFilterLocation}
@@ -541,7 +543,7 @@ export default function InventoryPage() {
                 </SimpleGrid>
             ) : filteredItems.length === 0 ? (
                 <Paper withBorder p="xl" ta="center">
-                    <Text c="dimmed">Keine Artikel gefunden</Text>
+                    <Text c="dimmed">{t('inventory.noItemsFound')}</Text>
                 </Paper>
             ) : viewMode !== 'list' ? (
                 <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
@@ -552,13 +554,13 @@ export default function InventoryPage() {
                     <Table striped highlightOnHover>
                         <Table.Thead>
                             <Table.Tr>
-                                <Table.Th>Name</Table.Th>
-                                <Table.Th>Kategorie</Table.Th>
-                                <Table.Th>Standort</Table.Th>
-                                <Table.Th>Menge</Table.Th>
-                                <Table.Th>Wert</Table.Th>
-                                <Table.Th>Status</Table.Th>
-                                <Table.Th>Aktionen</Table.Th>
+                                <Table.Th>{t('inventory.table.name')}</Table.Th>
+                                <Table.Th>{t('inventory.table.category')}</Table.Th>
+                                <Table.Th>{t('inventory.table.location')}</Table.Th>
+                                <Table.Th>{t('inventory.table.quantity')}</Table.Th>
+                                <Table.Th>{t('inventory.table.value')}</Table.Th>
+                                <Table.Th>{t('inventory.table.status')}</Table.Th>
+                                <Table.Th>{t('inventory.table.actions')}</Table.Th>
                             </Table.Tr>
                         </Table.Thead>
                         <Table.Tbody>
@@ -572,29 +574,29 @@ export default function InventoryPage() {
             <Modal
                 opened={opened}
                 onClose={close}
-                title={editingItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}
+                title={editingItem ? t('inventory.editItem') : t('inventory.newItem')}
                 size="lg"
             >
                 <Stack gap="md">
                     <TextInput
-                        label="Name"
-                        placeholder="Artikelname"
+                        label={t('common.name')}
+                        placeholder={t('inventory.namePlaceholder')}
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.currentTarget.value })}
                         required
                     />
 
                     <Textarea
-                        label="Beschreibung"
-                        placeholder="Beschreibung des Artikels"
+                        label={t('common.description')}
+                        placeholder={t('inventory.descriptionPlaceholder')}
                         value={form.description}
                         onChange={(e) => setForm({ ...form, description: e.currentTarget.value })}
                         minRows={3}
                     />
 
                     <Select
-                        label="Kategorie"
-                        placeholder="Kategorie auswählen"
+                        label={t('common.category')}
+                        placeholder={t('inventory.selectCategory')}
                         data={categories || []}
                         value={form.category}
                         onChange={(value) => setForm({ ...form, category: value || '' })}
@@ -604,8 +606,8 @@ export default function InventoryPage() {
                     />
 
                     <TextInput
-                        label="Standort (Bereich)"
-                        placeholder="z.B. Keller, Garage"
+                        label={t('inventory.locationArea')}
+                        placeholder={t('inventory.locationAreaPlaceholder')}
                         value={form.location.area}
                         onChange={(e) => setForm({
                             ...form,
@@ -615,8 +617,8 @@ export default function InventoryPage() {
                     />
 
                     <TextInput
-                        label="Standort (Container)"
-                        placeholder="z.B. Regal A, Kiste 3"
+                        label={t('inventory.locationContainer')}
+                        placeholder={t('inventory.locationContainerPlaceholder')}
                         value={form.location.container || ''}
                         onChange={(e) => setForm({
                             ...form,
@@ -625,8 +627,8 @@ export default function InventoryPage() {
                     />
 
                     <TextInput
-                        label="Standort (Details)"
-                        placeholder="Zusätzliche Details"
+                        label={t('inventory.locationDetail')}
+                        placeholder={t('inventory.locationDetailPlaceholder')}
                         value={form.location.details || ''}
                         onChange={(e) => setForm({
                             ...form,
@@ -635,7 +637,7 @@ export default function InventoryPage() {
                     />
 
                     <NumberInput
-                        label="Menge"
+                        label={t('inventory.quantity')}
                         placeholder="1"
                         value={form.quantity}
                         onChange={(value) => setForm({ ...form, quantity: Number(value) || 1 })}
@@ -644,7 +646,7 @@ export default function InventoryPage() {
                     />
 
                     <NumberInput
-                        label="Kaufpreis (EUR)"
+                        label={t('inventory.purchasePrice')}
                         placeholder="0.00"
                         value={form.purchasePrice}
                         onChange={(value) => setForm({ ...form, purchasePrice: Number(value) })}
@@ -653,7 +655,7 @@ export default function InventoryPage() {
                     />
 
                     <NumberInput
-                        label="Aktueller Wert (EUR)"
+                        label={t('inventory.currentValue')}
                         placeholder="0.00"
                         value={form.currentValue}
                         onChange={(value) => setForm({ ...form, currentValue: Number(value) })}
@@ -662,18 +664,18 @@ export default function InventoryPage() {
                     />
 
                     <TextInput
-                        label="Seriennummer"
-                        placeholder="Seriennummer oder ID"
+                        label={t('inventory.serialNumber')}
+                        placeholder={t('inventory.serialNumberPlaceholder')}
                         value={form.serialNumber}
                         onChange={(e) => setForm({ ...form, serialNumber: e.currentTarget.value })}
                     />
 
                     <Group justify="flex-end">
                         <Button variant="default" onClick={close}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button onClick={handleSubmit} loading={creating}>
-                            {editingItem ? 'Speichern' : 'Erstellen'}
+                            {editingItem ? t('common.save') : t('common.create')}
                         </Button>
                     </Group>
                 </Stack>
@@ -683,20 +685,20 @@ export default function InventoryPage() {
             <Modal
                 opened={lendOpened}
                 onClose={closeLend}
-                title={`Artikel verleihen: ${lendingItem?.name}`}
+                title={`${t('inventory.lendItem')}: ${lendingItem?.name}`}
             >
                 <Stack gap="md">
                     <TextInput
-                        label="Verliehen an"
-                        placeholder="Name der Person"
+                        label={t('inventory.lentTo')}
+                        placeholder={t('inventory.lentToPlaceholder')}
                         value={lendTo}
                         onChange={(e) => setLendTo(e.currentTarget.value)}
                         required
                     />
 
                     <DateInput
-                        label="Erwartete Rückgabe"
-                        placeholder="Datum auswählen"
+                        label={t('inventory.expectedReturn')}
+                        placeholder={t('inventory.selectDate')}
                         value={lendReturn}
                         onChange={(v) => setLendReturn(toDateOrNull(v))}
                         clearable
@@ -704,10 +706,10 @@ export default function InventoryPage() {
 
                     <Group justify="flex-end">
                         <Button variant="default" onClick={closeLend}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button onClick={handleLendSubmit} disabled={!lendTo}>
-                            Verleihen
+                            {t('inventory.lend')}
                         </Button>
                     </Group>
                 </Stack>

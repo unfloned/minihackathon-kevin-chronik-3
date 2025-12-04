@@ -31,6 +31,7 @@ import {
     IconTag,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import type { NoteSimple } from '@ycmm/core';
@@ -39,6 +40,7 @@ import type { NoteSimple } from '@ycmm/core';
 type Note = NoteSimple;
 
 export default function NotesPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -85,8 +87,8 @@ export default function NotesPage() {
         e.stopPropagation();
         await deleteNote({ id });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Notiz gelöscht',
+            title: t('common.success'),
+            message: t('notes.noteDeleted'),
             color: 'green',
         });
         refetch();
@@ -103,8 +105,8 @@ export default function NotesPage() {
         e.stopPropagation();
         await archiveNote({ id });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Notiz archiviert',
+            title: t('common.success'),
+            message: t('notes.noteArchived'),
             color: 'green',
         });
         refetch();
@@ -115,8 +117,8 @@ export default function NotesPage() {
         e.stopPropagation();
         await unarchiveNote({ id });
         notifications.show({
-            title: 'Erfolg',
-            message: 'Notiz wiederhergestellt',
+            title: t('common.success'),
+            message: t('notes.noteUnarchived'),
             color: 'green',
         });
         refetch();
@@ -181,14 +183,14 @@ export default function NotesPage() {
                             leftSection={<IconEdit size={16} />}
                             onClick={(e) => handleOpenEdit(note, e)}
                         >
-                            Bearbeiten
+                            {t('notes.edit')}
                         </Menu.Item>
                         {!note.isArchived && (
                             <Menu.Item
                                 leftSection={note.isPinned ? <IconPinnedOff size={16} /> : <IconPin size={16} />}
                                 onClick={(e) => handleTogglePin(note.id, e)}
                             >
-                                {note.isPinned ? 'Lösen' : 'Anpinnen'}
+                                {note.isPinned ? t('notes.unpin') : t('notes.pin')}
                             </Menu.Item>
                         )}
                         {note.isArchived ? (
@@ -196,14 +198,14 @@ export default function NotesPage() {
                                 leftSection={<IconArchiveOff size={16} />}
                                 onClick={(e) => handleUnarchive(note.id, e)}
                             >
-                                Wiederherstellen
+                                {t('notes.restore')}
                             </Menu.Item>
                         ) : (
                             <Menu.Item
                                 leftSection={<IconArchive size={16} />}
                                 onClick={(e) => handleArchive(note.id, e)}
                             >
-                                Archivieren
+                                {t('notes.archive')}
                             </Menu.Item>
                         )}
                         <Menu.Divider />
@@ -212,7 +214,7 @@ export default function NotesPage() {
                             color="red"
                             onClick={(e) => handleDelete(note.id, e)}
                         >
-                            Löschen
+                            {t('notes.delete')}
                         </Menu.Item>
                     </Menu.Dropdown>
                 </Menu>
@@ -254,9 +256,9 @@ export default function NotesPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <PageTitle title="Notizen" subtitle="Deine persönlichen Notizen und Ideen" />
+                    <PageTitle title={t('notes.title')} subtitle={t('notes.subtitle')} />
                     <Button leftSection={<IconPlus size={18} />} onClick={handleOpenCreate}>
-                        Neue Notiz
+                        {t('notes.newNote')}
                     </Button>
                 </Group>
 
@@ -264,7 +266,7 @@ export default function NotesPage() {
                 <Paper withBorder p="md">
                     <Group>
                         <TextInput
-                            placeholder="Suchen..."
+                            placeholder={t('notes.search')}
                             leftSection={<IconSearch size={16} />}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.currentTarget.value)}
@@ -274,8 +276,8 @@ export default function NotesPage() {
                             value={view}
                             onChange={(v) => setView(v as 'active' | 'archived')}
                             data={[
-                                { label: 'Aktiv', value: 'active' },
-                                { label: 'Archiv', value: 'archived' },
+                                { label: t('notes.active'), value: 'active' },
+                                { label: t('notes.archivedView'), value: 'archived' },
                             ]}
                         />
                     </Group>
@@ -288,7 +290,7 @@ export default function NotesPage() {
                                 style={{ cursor: 'pointer' }}
                                 onClick={() => setSelectedTag(null)}
                             >
-                                Alle
+                                {t('notes.all')}
                             </Badge>
                             {allTags.map(tag => (
                                 <Badge
@@ -318,15 +320,15 @@ export default function NotesPage() {
                         </ThemeIcon>
                         <Text mt="md" c="dimmed">
                             {view === 'archived'
-                                ? 'Keine archivierten Notizen'
+                                ? t('notes.noArchivedNotes')
                                 : searchQuery || selectedTag
-                                    ? 'Keine Notizen gefunden'
-                                    : 'Noch keine Notizen vorhanden'
+                                    ? t('notes.noNotesFound')
+                                    : t('notes.noNotesYet')
                             }
                         </Text>
                         {view === 'active' && !searchQuery && !selectedTag && (
                             <Button mt="md" onClick={handleOpenCreate}>
-                                Erste Notiz erstellen
+                                {t('notes.createFirst')}
                             </Button>
                         )}
                     </Paper>
@@ -335,7 +337,7 @@ export default function NotesPage() {
                         {pinnedNotes.length > 0 && view === 'active' && (
                             <>
                                 <Text size="sm" fw={500} c="dimmed" tt="uppercase">
-                                    Angepinnt
+                                    {t('notes.pinnedSection')}
                                 </Text>
                                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
                                     {pinnedNotes.map(note => (
@@ -349,7 +351,7 @@ export default function NotesPage() {
                             <>
                                 {pinnedNotes.length > 0 && view === 'active' && (
                                     <Text size="sm" fw={500} c="dimmed" tt="uppercase">
-                                        Weitere Notizen
+                                        {t('notes.otherNotes')}
                                     </Text>
                                 )}
                                 <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">

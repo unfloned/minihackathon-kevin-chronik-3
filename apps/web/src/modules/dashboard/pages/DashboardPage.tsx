@@ -29,6 +29,7 @@ import {
     IconCode,
     IconChartBar,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useRequest } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
@@ -61,6 +62,7 @@ function getChaosColor(chaos: number) {
 
 
 export default function DashboardPage() {
+    const { t } = useTranslation();
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const { data: stats, isLoading } = useRequest<DashboardStats>('/dashboard/stats');
@@ -74,17 +76,17 @@ export default function DashboardPage() {
         <Container size="xl" py="xl">
             <Stack gap="lg">
                 {/* Header */}
-                <PageTitle title="Dashboard" subtitle={`Willkommen zurück, ${user?.displayName}!`} />
+                <PageTitle title={t('dashboard.title')} subtitle={t('dashboard.welcome', { name: user?.displayName })} />
 
             {/* Demo Banner */}
             {user?.isDemo && (
-                <Alert variant="light" color="blue" title="Du nutzt einen Demo-Account mit Beispieldaten">
+                <Alert variant="light" color="blue" title={t('dashboard.demoAccount')}>
                     <Group justify="space-between" align="center">
                         <Text size="sm">
-                            Registriere dich für deinen eigenen Account mit deinen persönlichen Daten.
+                            {t('dashboard.demoRegisterPrompt')}
                         </Text>
                         <Button variant="filled" size="sm" onClick={handleRegister}>
-                            Jetzt registrieren
+                            {t('dashboard.registerNow')}
                         </Button>
                     </Group>
                 </Alert>
@@ -94,16 +96,16 @@ export default function DashboardPage() {
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
                 <CardStatistic
                     type="circular"
-                    title="Chaos Score"
+                    title={t('dashboard.chaosScore')}
                     value={`${stats?.chaosScore ?? 0}%`}
                     progress={stats?.chaosScore ?? 0}
                     color={getChaosColor(stats?.chaosScore ?? 100)}
                     ringSize={80}
                     ringThickness={8}
-                    tooltip="Der Chaos Score zeigt wie organisiert du bist. 0% = perfekt organisiert, 100% = totales Chaos. Er basiert auf offenen Aufgaben, verpassten Deadlines, unerledigten Habits und mehr."
+                    tooltip={t('dashboard.chaosScoreTooltip')}
                     trend={{
                         value: stats?.chaosScoreTrend ?? 0,
-                        label: `${(stats?.chaosScoreTrend ?? 0) > 0 ? '+' : ''}${stats?.chaosScoreTrend ?? 0}% diese Woche`,
+                        label: t('dashboard.chaosScoreTrend', { value: `${(stats?.chaosScoreTrend ?? 0) > 0 ? '+' : ''}${stats?.chaosScoreTrend ?? 0}` }),
                         icon: getChaosTrendIcon(stats?.chaosScoreTrend ?? 0),
                         color: getChaosTrendColor(stats?.chaosScoreTrend ?? 0),
                     }}
@@ -112,23 +114,23 @@ export default function DashboardPage() {
 
                 <CardStatistic
                     type="extended"
-                    title="Level"
+                    title={t('dashboard.level')}
                     value={stats?.level ?? 1}
                     icon={IconTrophy}
                     color="violet"
                     progress={stats?.xpProgress?.percentage ?? 0}
                     progressTooltip={`${stats?.xpProgress?.current ?? 0} / ${stats?.xpProgress?.required ?? 100} XP`}
-                    subtitle={`${stats?.xp ?? 0} XP gesamt`}
+                    subtitle={t('dashboard.xpTotal', { xp: stats?.xp ?? 0 })}
                     isLoading={isLoading}
                 />
 
                 <CardStatistic
                     type="icon"
-                    title="Streak"
-                    value={`${stats?.streak ?? 0} Tage`}
+                    title={t('dashboard.streak')}
+                    value={t('habits.streak', { count: stats?.streak ?? 0 })}
                     icon={IconFlame}
                     color="orange"
-                    subtitle={(stats?.streak ?? 0) > 0 ? 'Weiter so!' : 'Starte deine Streak!'}
+                    subtitle={(stats?.streak ?? 0) > 0 ? t('dashboard.keepGoing') : t('dashboard.startStreak')}
                     isLoading={isLoading}
                 />
             </SimpleGrid>
@@ -142,7 +144,7 @@ export default function DashboardPage() {
                             <ThemeIcon size="sm" variant="light" color="green">
                                 <IconCheck size={14} />
                             </ThemeIcon>
-                            <Text fw={500}>Heute's Habits</Text>
+                            <Text fw={500}>{t('dashboard.todayHabits')}</Text>
                         </Group>
                         {isLoading ? (
                             <Skeleton height={20} width={40} />
@@ -154,7 +156,7 @@ export default function DashboardPage() {
                     </Group>
                     {(stats?.todayHabits?.total ?? 0) === 0 ? (
                         <Text c="dimmed" size="sm">
-                            Noch keine Habits eingerichtet.
+                            {t('dashboard.noHabitsSetup')}
                         </Text>
                     ) : (
                         <Progress
@@ -171,7 +173,7 @@ export default function DashboardPage() {
                             <ThemeIcon size="sm" variant="light" color="red">
                                 <IconCalendar size={14} />
                             </ThemeIcon>
-                            <Text fw={500}>Nächste Fristen</Text>
+                            <Text fw={500}>{t('dashboard.upcomingDeadlines')}</Text>
                         </Group>
                         {isLoading ? (
                             <Skeleton height={20} width={30} />
@@ -183,8 +185,8 @@ export default function DashboardPage() {
                     </Group>
                     <Text c="dimmed" size="sm">
                         {(stats?.upcomingDeadlines ?? 0) === 0
-                            ? 'Keine anstehenden Fristen.'
-                            : `${stats?.upcomingDeadlines} Frist${(stats?.upcomingDeadlines ?? 0) > 1 ? 'en' : ''} diese Woche.`}
+                            ? t('dashboard.noUpcomingDeadlines')
+                            : t('dashboard.deadlinesThisWeek', { count: stats?.upcomingDeadlines ?? 0 })}
                     </Text>
                 </Card>
 
@@ -195,7 +197,7 @@ export default function DashboardPage() {
                             <ThemeIcon size="sm" variant="light" color="blue">
                                 <IconBriefcase size={14} />
                             </ThemeIcon>
-                            <Text fw={500}>Bewerbungen</Text>
+                            <Text fw={500}>{t('nav.applications')}</Text>
                         </Group>
                         {isLoading ? (
                             <Skeleton height={20} width={30} />
@@ -205,8 +207,8 @@ export default function DashboardPage() {
                     </Group>
                     <Text c="dimmed" size="sm">
                         {(stats?.activeApplications ?? 0) === 0
-                            ? 'Keine aktiven Bewerbungen.'
-                            : `${stats?.activeApplications} aktive Bewerbung${(stats?.activeApplications ?? 0) > 1 ? 'en' : ''}.`}
+                            ? t('dashboard.noActiveApplications')
+                            : t('dashboard.activeApplications', { count: stats?.activeApplications ?? 0 })}
                     </Text>
                 </Card>
 
@@ -217,7 +219,7 @@ export default function DashboardPage() {
                             <ThemeIcon size="sm" variant="light" color="yellow">
                                 <IconCoin size={14} />
                             </ThemeIcon>
-                            <Text fw={500}>Ausgaben diesen Monat</Text>
+                            <Text fw={500}>{t('dashboard.expensesThisMonth')}</Text>
                         </Group>
                     </Group>
                     {isLoading ? (
@@ -232,8 +234,8 @@ export default function DashboardPage() {
                     )}
                     <Text c="dimmed" size="sm">
                         {(stats?.monthlyExpenses ?? 0) === 0
-                            ? 'Noch keine Ausgaben getrackt.'
-                            : 'Diesen Monat ausgegeben.'}
+                            ? t('dashboard.noExpensesTracked')
+                            : t('dashboard.spentThisMonth')}
                     </Text>
                 </Card>
 
@@ -244,7 +246,7 @@ export default function DashboardPage() {
                             <ThemeIcon size="sm" variant="light" color="violet">
                                 <IconStar size={14} />
                             </ThemeIcon>
-                            <Text fw={500}>Achievements</Text>
+                            <Text fw={500}>{t('nav.achievements')}</Text>
                         </Group>
                     </Group>
                     {isLoading ? (
@@ -254,7 +256,7 @@ export default function DashboardPage() {
                         </Stack>
                     ) : (stats?.recentAchievements?.length ?? 0) === 0 ? (
                         <Text c="dimmed" size="sm">
-                            Schalte dein erstes Achievement frei!
+                            {t('dashboard.unlockFirstAchievement')}
                         </Text>
                     ) : (
                         <Stack gap="xs">
@@ -273,10 +275,10 @@ export default function DashboardPage() {
                 {/* Current Media */}
                 <Card withBorder padding="lg">
                     <Group justify="space-between" mb="md">
-                        <Text fw={500}>Aktuell am Schauen</Text>
+                        <Text fw={500}>{t('dashboard.currentlyWatching')}</Text>
                     </Group>
                     <Text c="dimmed" size="sm">
-                        Keine Medien getrackt.
+                        {t('dashboard.noMediaTracked')}
                     </Text>
                 </Card>
             </SimpleGrid>
@@ -288,7 +290,7 @@ export default function DashboardPage() {
                         <ThemeIcon size="sm" variant="light" color="blue">
                             <IconChartBar size={14} />
                         </ThemeIcon>
-                        <Text fw={500}>Ausgaben-Übersicht</Text>
+                        <Text fw={500}>{t('dashboard.expenseOverview')}</Text>
                     </Group>
                     <ExpenseChart
                         isLoading={isLoading}
@@ -300,7 +302,7 @@ export default function DashboardPage() {
                         <ThemeIcon size="sm" variant="light" color="orange">
                             <IconFlame size={14} />
                         </ThemeIcon>
-                        <Text fw={500}>Habit Streak</Text>
+                        <Text fw={500}>{t('dashboard.habitStreak')}</Text>
                     </Group>
                     <StreakVisualization
                         currentStreak={stats?.streak ?? 0}
@@ -317,7 +319,7 @@ export default function DashboardPage() {
                         <IconCode size={14} />
                     </ThemeIcon>
                     <Text size="xs" c="dimmed">
-                        Ein Projekt des{' '}
+                        {t('dashboard.projectOf')}{' '}
                         <Anchor
                             href="https://minihackathon.de/"
                             target="_blank"

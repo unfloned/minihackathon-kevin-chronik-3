@@ -29,11 +29,13 @@ import {
     IconUserCog,
     IconDatabase,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation } from '../../../hooks';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { UserPublic, AdminStats } from '@ycmm/core';
 
 export default function AdminPage() {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const [isResetting, setIsResetting] = useState(false);
 
@@ -48,8 +50,8 @@ export default function AdminPage() {
                 refetchUsers();
                 refetchStats();
                 notifications.show({
-                    title: 'Erfolgreich',
-                    message: 'Admin-Status wurde geändert',
+                    title: t('common.success'),
+                    message: t('admin.adminStatusChanged'),
                     color: 'green',
                 });
             },
@@ -63,8 +65,8 @@ export default function AdminPage() {
             onSuccess: () => {
                 refetchUsers();
                 notifications.show({
-                    title: 'Erfolgreich',
-                    message: 'Benutzerdaten wurden gelöscht',
+                    title: t('common.success'),
+                    message: t('admin.userDataDeleted'),
                     color: 'green',
                 });
             },
@@ -78,8 +80,8 @@ export default function AdminPage() {
             onSuccess: () => {
                 setIsResetting(false);
                 notifications.show({
-                    title: 'Demo zurückgesetzt',
-                    message: 'Die Demo-Daten wurden erfolgreich zurückgesetzt',
+                    title: t('admin.demoReset'),
+                    message: t('admin.demoResetSuccess'),
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
@@ -92,14 +94,13 @@ export default function AdminPage() {
 
     const handleResetDemo = () => {
         modals.openConfirmModal({
-            title: 'Demo-Daten zurücksetzen?',
+            title: t('admin.resetDemoConfirmTitle'),
             children: (
                 <Text size="sm">
-                    Alle bestehenden Demo-Daten werden gelöscht und durch frische Beispieldaten ersetzt.
-                    Diese Aktion kann nicht rückgängig gemacht werden.
+                    {t('admin.resetDemoConfirmMessage')}
                 </Text>
             ),
-            labels: { confirm: 'Zurücksetzen', cancel: 'Abbrechen' },
+            labels: { confirm: t('admin.resetDemo'), cancel: t('common.cancel') },
             confirmProps: { color: 'red' },
             onConfirm: () => {
                 setIsResetting(true);
@@ -109,15 +110,19 @@ export default function AdminPage() {
     };
 
     const handleToggleAdmin = (targetUser: UserPublic) => {
-        const action = targetUser.isAdmin ? 'entfernen' : 'erteilen';
+        const action = targetUser.isAdmin ? t('admin.removeAdmin') : t('admin.makeAdmin');
         modals.openConfirmModal({
-            title: `Admin-Rechte ${action}?`,
+            title: t('admin.confirmAdminToggle', { action }),
             children: (
                 <Text size="sm">
-                    Möchtest du {targetUser.displayName} ({targetUser.email}) die Admin-Rechte {action}?
+                    {t('admin.confirmAdminToggleMessage', {
+                        name: targetUser.displayName,
+                        email: targetUser.email,
+                        action: action.toLowerCase()
+                    })}
                 </Text>
             ),
-            labels: { confirm: 'Bestätigen', cancel: 'Abbrechen' },
+            labels: { confirm: t('common.confirm'), cancel: t('common.cancel') },
             onConfirm: () => {
                 setAdmin({ userId: targetUser.id, isAdmin: !targetUser.isAdmin });
             },
@@ -126,14 +131,16 @@ export default function AdminPage() {
 
     const handleDeleteUserData = (targetUser: UserPublic) => {
         modals.openConfirmModal({
-            title: 'Benutzerdaten löschen?',
+            title: t('admin.deleteUserDataConfirmTitle'),
             children: (
                 <Text size="sm">
-                    Alle Daten von {targetUser.displayName} ({targetUser.email}) werden unwiderruflich gelöscht.
-                    Der Account selbst bleibt bestehen.
+                    {t('admin.deleteUserDataConfirmMessage', {
+                        name: targetUser.displayName,
+                        email: targetUser.email
+                    })}
                 </Text>
             ),
-            labels: { confirm: 'Löschen', cancel: 'Abbrechen' },
+            labels: { confirm: t('common.delete'), cancel: t('common.cancel') },
             confirmProps: { color: 'red' },
             onConfirm: () => {
                 deleteUserData({ userId: targetUser.id });
@@ -147,11 +154,10 @@ export default function AdminPage() {
             <Container size="md" py="xl">
                 <Alert
                     icon={<IconAlertCircle size={16} />}
-                    title="Zugriff verweigert"
+                    title={t('errors.unauthorized')}
                     color="red"
                 >
-                    Du hast keine Berechtigung, diese Seite zu sehen.
-                    Nur Administratoren können auf das Admin-Dashboard zugreifen.
+                    {t('admin.noPermission')}
                 </Alert>
             </Container>
         );
@@ -163,8 +169,8 @@ export default function AdminPage() {
                 {/* Header */}
                 <Group justify="space-between">
                     <div>
-                        <Title order={2}>Admin Dashboard</Title>
-                        <Text c="dimmed">Benutzer- und Demo-Verwaltung</Text>
+                        <Title order={2}>{t('admin.title')}</Title>
+                        <Text c="dimmed">{t('admin.subtitle')}</Text>
                     </div>
                     <Button
                         leftSection={<IconRefresh size={16} />}
@@ -174,7 +180,7 @@ export default function AdminPage() {
                             refetchUsers();
                         }}
                     >
-                        Aktualisieren
+                        {t('admin.refresh')}
                     </Button>
                 </Group>
 
@@ -186,7 +192,7 @@ export default function AdminPage() {
                                 <IconUsers size={20} />
                             </ThemeIcon>
                             <div>
-                                <Text size="xs" c="dimmed">Gesamt</Text>
+                                <Text size="xs" c="dimmed">{t('common.total')}</Text>
                                 <Text size="xl" fw={700}>
                                     {statsLoading ? <Loader size="xs" /> : stats?.totalUsers ?? 0}
                                 </Text>
@@ -199,7 +205,7 @@ export default function AdminPage() {
                                 <IconUserCog size={20} />
                             </ThemeIcon>
                             <div>
-                                <Text size="xs" c="dimmed">Demo</Text>
+                                <Text size="xs" c="dimmed">{t('admin.demoUsers')}</Text>
                                 <Text size="xl" fw={700}>
                                     {statsLoading ? <Loader size="xs" /> : stats?.demoUsers ?? 0}
                                 </Text>
@@ -212,7 +218,7 @@ export default function AdminPage() {
                                 <IconShield size={20} />
                             </ThemeIcon>
                             <div>
-                                <Text size="xs" c="dimmed">Admins</Text>
+                                <Text size="xs" c="dimmed">{t('admin.admins')}</Text>
                                 <Text size="xl" fw={700}>
                                     {statsLoading ? <Loader size="xs" /> : stats?.adminUsers ?? 0}
                                 </Text>
@@ -225,7 +231,7 @@ export default function AdminPage() {
                                 <IconUsers size={20} />
                             </ThemeIcon>
                             <div>
-                                <Text size="xs" c="dimmed">Regular</Text>
+                                <Text size="xs" c="dimmed">{t('admin.regularUsers')}</Text>
                                 <Text size="xl" fw={700}>
                                     {statsLoading ? <Loader size="xs" /> : stats?.regularUsers ?? 0}
                                 </Text>
@@ -242,8 +248,8 @@ export default function AdminPage() {
                                 <IconDatabase size={20} />
                             </ThemeIcon>
                             <div>
-                                <Text fw={500}>Demo-Verwaltung</Text>
-                                <Text size="sm" c="dimmed">Demo-Daten zurücksetzen für Live-Präsentationen</Text>
+                                <Text fw={500}>{t('admin.demoManagement')}</Text>
+                                <Text size="sm" c="dimmed">{t('admin.demoManagementSubtitle')}</Text>
                             </div>
                         </Group>
                         <Button
@@ -253,18 +259,17 @@ export default function AdminPage() {
                             onClick={handleResetDemo}
                             loading={isResetting}
                         >
-                            Demo zurücksetzen
+                            {t('admin.resetDemo')}
                         </Button>
                     </Group>
                     <Text size="sm" c="dimmed">
-                        Der Demo-Account (demo@ycmm.app) enthält vorbereitete Beispieldaten für alle Module.
-                        Beim Zurücksetzen werden alle Demo-Daten gelöscht und durch frische Beispieldaten ersetzt.
+                        {t('admin.demoManagementDescription')}
                     </Text>
                 </Card>
 
                 {/* User Table */}
                 <Card withBorder>
-                    <Title order={4} mb="md">Benutzer</Title>
+                    <Title order={4} mb="md">{t('admin.users')}</Title>
                     {usersLoading ? (
                         <Group justify="center" py="xl">
                             <Loader />
@@ -273,12 +278,12 @@ export default function AdminPage() {
                         <Table striped highlightOnHover>
                             <Table.Thead>
                                 <Table.Tr>
-                                    <Table.Th>Name</Table.Th>
-                                    <Table.Th>Email</Table.Th>
-                                    <Table.Th>Level</Table.Th>
-                                    <Table.Th>Status</Table.Th>
-                                    <Table.Th>Registriert</Table.Th>
-                                    <Table.Th>Aktionen</Table.Th>
+                                    <Table.Th>{t('common.name')}</Table.Th>
+                                    <Table.Th>{t('admin.email')}</Table.Th>
+                                    <Table.Th>{t('admin.level')}</Table.Th>
+                                    <Table.Th>{t('common.status')}</Table.Th>
+                                    <Table.Th>{t('admin.registered')}</Table.Th>
+                                    <Table.Th>{t('common.actions')}</Table.Th>
                                 </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
@@ -295,9 +300,9 @@ export default function AdminPage() {
                                         </Table.Td>
                                         <Table.Td>
                                             <Group gap="xs">
-                                                {u.isDemo && <Badge color="orange" size="sm">Demo</Badge>}
-                                                {u.isAdmin && <Badge color="red" size="sm">Admin</Badge>}
-                                                {!u.isDemo && !u.isAdmin && <Badge color="gray" size="sm">User</Badge>}
+                                                {u.isDemo && <Badge color="orange" size="sm">{t('admin.demo')}</Badge>}
+                                                {u.isAdmin && <Badge color="red" size="sm">{t('admin.admin')}</Badge>}
+                                                {!u.isDemo && !u.isAdmin && <Badge color="gray" size="sm">{t('admin.user')}</Badge>}
                                             </Group>
                                         </Table.Td>
                                         <Table.Td>
@@ -312,7 +317,7 @@ export default function AdminPage() {
                                                     color={u.isAdmin ? 'red' : 'blue'}
                                                     onClick={() => handleToggleAdmin(u)}
                                                     disabled={u.id === user?.id}
-                                                    title={u.isAdmin ? 'Admin entfernen' : 'Zum Admin machen'}
+                                                    title={u.isAdmin ? t('admin.removeAdmin') : t('admin.makeAdmin')}
                                                 >
                                                     {u.isAdmin ? <IconShieldOff size={16} /> : <IconShield size={16} />}
                                                 </ActionIcon>
@@ -320,7 +325,7 @@ export default function AdminPage() {
                                                     variant="light"
                                                     color="red"
                                                     onClick={() => handleDeleteUserData(u)}
-                                                    title="Daten löschen"
+                                                    title={t('admin.deleteData')}
                                                 >
                                                     <IconTrash size={16} />
                                                 </ActionIcon>

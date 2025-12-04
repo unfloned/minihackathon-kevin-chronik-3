@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Container,
     Card,
@@ -51,14 +52,6 @@ import type { ListSimple, ListType } from '@ycmm/core';
 // Alias for component usage
 type List = ListSimple;
 
-const listTypeOptions = [
-    { value: 'shopping', label: 'Einkaufsliste' },
-    { value: 'todo', label: 'To-Do Liste' },
-    { value: 'packing', label: 'Packliste' },
-    { value: 'checklist', label: 'Checkliste' },
-    { value: 'custom', label: 'Benutzerdefiniert' },
-];
-
 const listTypeIcons: Record<string, typeof IconList> = {
     shopping: IconShoppingCart,
     todo: IconChecklist,
@@ -69,10 +62,19 @@ const listTypeIcons: Record<string, typeof IconList> = {
 
 function ListsPage() {
     const navigate = useNavigate();
+    const { t } = useTranslation();
     const [view, setView] = useState<'active' | 'archived'>('active');
     const [editingList, setEditingList] = useState<List | null>(null);
     const [globalViewMode, setViewMode] = useViewMode();
     const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
+
+    const listTypeOptions = [
+        { value: 'shopping', label: t('lists.types.shopping') },
+        { value: 'todo', label: t('lists.types.todo') },
+        { value: 'packing', label: t('common.list') },
+        { value: 'checklist', label: t('lists.types.checklist') },
+        { value: 'custom', label: t('lists.types.custom') },
+    ];
 
     const [createModalOpened, { open: openCreateModal, close: closeCreateModal }] = useDisclosure(false);
     const [editModalOpened, { open: openEditModal, close: closeEditModal }] = useDisclosure(false);
@@ -104,8 +106,8 @@ function ListsPage() {
             method: 'POST',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Liste erfolgreich erstellt',
+                    title: t('common.success'),
+                    message: t('lists.listCreated'),
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
@@ -115,8 +117,8 @@ function ListsPage() {
             },
             onError: (error: string) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Liste konnte nicht erstellt werden',
+                    title: t('common.error'),
+                    message: error || t('errors.generic'),
                     color: 'red',
                     icon: <IconAlertCircle size={16} />,
                 });
@@ -130,8 +132,8 @@ function ListsPage() {
             method: 'PATCH',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Liste erfolgreich aktualisiert',
+                    title: t('common.success'),
+                    message: t('lists.listUpdated'),
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
@@ -142,8 +144,8 @@ function ListsPage() {
             },
             onError: (error: string) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Liste konnte nicht aktualisiert werden',
+                    title: t('common.error'),
+                    message: error || t('errors.generic'),
                     color: 'red',
                     icon: <IconAlertCircle size={16} />,
                 });
@@ -157,8 +159,8 @@ function ListsPage() {
             method: 'DELETE',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Liste erfolgreich gelöscht',
+                    title: t('common.success'),
+                    message: t('lists.listDeleted'),
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
@@ -167,8 +169,8 @@ function ListsPage() {
             },
             onError: (error: string) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Liste konnte nicht gelöscht werden',
+                    title: t('common.error'),
+                    message: error || t('errors.generic'),
                     color: 'red',
                     icon: <IconAlertCircle size={16} />,
                 });
@@ -182,8 +184,8 @@ function ListsPage() {
             method: 'POST',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Liste erfolgreich archiviert',
+                    title: t('common.success'),
+                    message: t('notes.noteArchived'),
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
@@ -191,8 +193,8 @@ function ListsPage() {
             },
             onError: (error: string) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Liste konnte nicht archiviert werden',
+                    title: t('common.error'),
+                    message: error || t('errors.generic'),
                     color: 'red',
                     icon: <IconAlertCircle size={16} />,
                 });
@@ -206,8 +208,8 @@ function ListsPage() {
             method: 'POST',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Liste erfolgreich wiederhergestellt',
+                    title: t('common.success'),
+                    message: t('notes.noteUnarchived'),
                     color: 'green',
                     icon: <IconCheck size={16} />,
                 });
@@ -216,8 +218,8 @@ function ListsPage() {
             },
             onError: (error: string) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Liste konnte nicht wiederhergestellt werden',
+                    title: t('common.error'),
+                    message: error || t('errors.generic'),
                     color: 'red',
                     icon: <IconAlertCircle size={16} />,
                 });
@@ -241,7 +243,7 @@ function ListsPage() {
     };
 
     const handleDeleteList = (listId: string) => {
-        if (confirm('Möchten Sie diese Liste wirklich löschen?')) {
+        if (confirm(t('lists.deleteList') + '?')) {
             deleteList({ id: listId });
         }
     };
@@ -315,7 +317,7 @@ function ListsPage() {
                                         openEditListModal(list);
                                     }}
                                 >
-                                    Bearbeiten
+                                    {t('common.edit')}
                                 </Menu.Item>
                                 {!list.isArchived ? (
                                     <Menu.Item
@@ -325,7 +327,7 @@ function ListsPage() {
                                             handleArchiveList(list.id);
                                         }}
                                     >
-                                        Archivieren
+                                        {t('common.archive')}
                                     </Menu.Item>
                                 ) : (
                                     <Menu.Item
@@ -335,7 +337,7 @@ function ListsPage() {
                                             handleUnarchiveList(list.id);
                                         }}
                                     >
-                                        Wiederherstellen
+                                        {t('common.unarchive')}
                                     </Menu.Item>
                                 )}
                                 <Menu.Divider />
@@ -347,7 +349,7 @@ function ListsPage() {
                                         handleDeleteList(list.id);
                                     }}
                                 >
-                                    Löschen
+                                    {t('common.delete')}
                                 </Menu.Item>
                             </Menu.Dropdown>
                         </Menu>
@@ -358,7 +360,7 @@ function ListsPage() {
                             {listTypeOptions.find((opt) => opt.value === list.type)?.label}
                         </Badge>
                         <Badge color={progress === 100 ? 'green' : 'blue'} variant="light" size="sm">
-                            {completedCount}/{list.items.length} erledigt
+                            {completedCount}/{list.items.length} {t('common.completed').toLowerCase()}
                         </Badge>
                     </Group>
 
@@ -368,7 +370,7 @@ function ListsPage() {
 
                     {list.items.length === 0 && (
                         <Text size="sm" c="dimmed" ta="center">
-                            Keine Einträge
+                            {t('lists.emptyListState')}
                         </Text>
                     )}
                 </Stack>
@@ -381,12 +383,12 @@ function ListsPage() {
             <Table striped highlightOnHover>
                 <Table.Thead>
                     <Table.Tr>
-                        <Table.Th>Liste</Table.Th>
-                        <Table.Th>Typ</Table.Th>
-                        <Table.Th>Fortschritt</Table.Th>
-                        <Table.Th>Einträge</Table.Th>
-                        <Table.Th>Erstellt</Table.Th>
-                        <Table.Th>Aktionen</Table.Th>
+                        <Table.Th>{t('common.list')}</Table.Th>
+                        <Table.Th>{t('common.type')}</Table.Th>
+                        <Table.Th>{t('common.progress')}</Table.Th>
+                        <Table.Th>{t('lists.items')}</Table.Th>
+                        <Table.Th>{t('common.date')}</Table.Th>
+                        <Table.Th>{t('common.actions')}</Table.Th>
                     </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
@@ -496,9 +498,9 @@ function ListsPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between" align="center">
-                    <PageTitle title="Listen" subtitle="Verwalte deine Einkaufs-, To-Do- und Packlisten" />
+                    <PageTitle title={t('lists.title')} subtitle={t('lists.subtitle')} />
                     <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
-                        Neue Liste
+                        {t('lists.newList')}
                     </Button>
                 </Group>
 
@@ -506,7 +508,7 @@ function ListsPage() {
                 <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
                     <CardStatistic
                         type="icon"
-                        title="Aktive Listen"
+                        title={t('lists.stats.total')}
                         value={totalLists}
                         icon={IconClipboardList}
                         color="blue"
@@ -514,7 +516,7 @@ function ListsPage() {
                     />
                     <CardStatistic
                         type="icon"
-                        title="Einträge gesamt"
+                        title={t('lists.stats.items')}
                         value={totalItems}
                         icon={IconListDetails}
                         color="violet"
@@ -522,7 +524,7 @@ function ListsPage() {
                     />
                     <CardStatistic
                         type="circular"
-                        title="Erledigt"
+                        title={t('lists.stats.completed')}
                         value={`${completedItems}/${totalItems}`}
                         progress={totalItems > 0 ? (completedItems / totalItems) * 100 : 0}
                         color="green"
@@ -532,7 +534,7 @@ function ListsPage() {
                     />
                     <CardStatistic
                         type="icon"
-                        title="Archiviert"
+                        title={t('notes.stats.archived')}
                         value={archivedCount}
                         icon={IconArchive}
                         color="gray"
@@ -547,8 +549,8 @@ function ListsPage() {
                             value={view}
                             onChange={(value) => setView(value as 'active' | 'archived')}
                             data={[
-                                { label: 'Aktive Listen', value: 'active' },
-                                { label: 'Archiviert', value: 'archived' },
+                                { label: t('notes.active'), value: 'active' },
+                                { label: t('notes.archived'), value: 'archived' },
                             ]}
                         />
                         <SegmentedControl
@@ -576,11 +578,11 @@ function ListsPage() {
                                 <IconClipboardList size={32} />
                             </ThemeIcon>
                             <Text c="dimmed" ta="center">
-                                {view === 'active' ? 'Keine aktiven Listen vorhanden' : 'Keine archivierten Listen vorhanden'}
+                                {view === 'active' ? t('lists.emptyState') : t('notes.noArchivedNotes')}
                             </Text>
                             {view === 'active' && (
                                 <Button leftSection={<IconPlus size={16} />} onClick={openCreateModal}>
-                                    Erste Liste erstellen
+                                    {t('lists.createFirst')}
                                 </Button>
                             )}
                         </Stack>
@@ -595,95 +597,95 @@ function ListsPage() {
             </Stack>
 
             {/* Create List Modal */}
-            <Modal opened={createModalOpened} onClose={closeCreateModal} title="Neue Liste erstellen" size="md">
+            <Modal opened={createModalOpened} onClose={closeCreateModal} title={t('lists.newList')} size="md">
                 <Stack gap="md">
                     <TextInput
-                        label="Name"
-                        placeholder="Listenname"
+                        label={t('common.name')}
+                        placeholder={t('common.name')}
                         required
                         value={newListData.name}
                         onChange={(e) => setNewListData({ ...newListData, name: e.currentTarget.value })}
                     />
                     <Textarea
-                        label="Beschreibung"
-                        placeholder="Beschreibung (optional)"
+                        label={t('common.description')}
+                        placeholder={`${t('common.description')} (${t('common.optional').toLowerCase()})`}
                         value={newListData.description}
                         onChange={(e) => setNewListData({ ...newListData, description: e.currentTarget.value })}
                         minRows={3}
                     />
                     <Select
-                        label="Typ"
-                        placeholder="Listentyp auswählen"
+                        label={t('common.type')}
+                        placeholder={t('common.type')}
                         required
                         value={newListData.type}
                         onChange={(value) => setNewListData({ ...newListData, type: value as ListType })}
                         data={listTypeOptions}
                     />
                     <ColorInput
-                        label="Farbe"
-                        placeholder="Farbe auswählen"
+                        label={t('common.color')}
+                        placeholder={t('common.color')}
                         value={newListData.color}
                         onChange={(value) => setNewListData({ ...newListData, color: value })}
                         swatches={['#228be6', '#40c057', '#fab005', '#fd7e14', '#fa5252', '#be4bdb', '#7950f2', '#15aabf']}
                     />
                     <Group justify="flex-end" mt="md">
                         <Button variant="subtle" onClick={closeCreateModal}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             onClick={handleCreateList}
                             loading={creatingList}
                             disabled={!newListData.name.trim()}
                         >
-                            Erstellen
+                            {t('common.create')}
                         </Button>
                     </Group>
                 </Stack>
             </Modal>
 
             {/* Edit List Modal */}
-            <Modal opened={editModalOpened} onClose={closeEditModal} title="Liste bearbeiten" size="md">
+            <Modal opened={editModalOpened} onClose={closeEditModal} title={t('lists.editList')} size="md">
                 {editingList && (
                     <Stack gap="md">
                         <TextInput
-                            label="Name"
-                            placeholder="Listenname"
+                            label={t('common.name')}
+                            placeholder={t('common.name')}
                             required
                             value={editingList.name}
                             onChange={(e) => setEditingList({ ...editingList, name: e.currentTarget.value })}
                         />
                         <Textarea
-                            label="Beschreibung"
-                            placeholder="Beschreibung (optional)"
+                            label={t('common.description')}
+                            placeholder={`${t('common.description')} (${t('common.optional').toLowerCase()})`}
                             value={editingList.description}
                             onChange={(e) => setEditingList({ ...editingList, description: e.currentTarget.value })}
                             minRows={3}
                         />
                         <Select
-                            label="Typ"
-                            placeholder="Listentyp auswählen"
+                            label={t('common.type')}
+                            placeholder={t('common.type')}
                             required
                             value={editingList.type}
                             onChange={(value) => setEditingList({ ...editingList, type: value as ListType })}
                             data={listTypeOptions}
                         />
                         <ColorInput
-                            label="Farbe"
-                            placeholder="Farbe auswählen"
+                            label={t('common.color')}
+                            placeholder={t('common.color')}
                             value={editingList.color}
                             onChange={(value) => setEditingList({ ...editingList, color: value })}
                             swatches={['#228be6', '#40c057', '#fab005', '#fd7e14', '#fa5252', '#be4bdb', '#7950f2', '#15aabf']}
                         />
                         <Group justify="flex-end" mt="md">
                             <Button variant="subtle" onClick={closeEditModal}>
-                                Abbrechen
+                                {t('common.cancel')}
                             </Button>
                             <Button
                                 onClick={handleUpdateList}
                                 loading={updatingList}
                                 disabled={!editingList.name.trim()}
                             >
-                                Speichern
+                                {t('common.save')}
                             </Button>
                         </Group>
                     </Stack>

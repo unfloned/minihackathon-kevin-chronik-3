@@ -46,6 +46,7 @@ import {
     IconLayoutGrid,
     IconList,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
@@ -61,45 +62,13 @@ import type {
 // Alias for component usage
 type WishlistItem = WishlistItemWithDetails;
 
-const categoryOptions: { value: WishlistCategory; label: string; icon: typeof IconDevices }[] = [
-    { value: 'tech', label: 'Technik', icon: IconDevices },
-    { value: 'fashion', label: 'Mode', icon: IconShirt },
-    { value: 'home', label: 'Zuhause', icon: IconHome },
-    { value: 'hobby', label: 'Hobby', icon: IconPalette },
-    { value: 'books', label: 'Bücher', icon: IconBook },
-    { value: 'travel', label: 'Reisen', icon: IconPlane },
-    { value: 'experience', label: 'Erlebnis', icon: IconStar },
-    { value: 'other', label: 'Sonstiges', icon: IconDots },
-];
-
-const priorityOptions: { value: WishlistPriority; label: string; color: string }[] = [
-    { value: 'low', label: 'Niedrig', color: 'gray' },
-    { value: 'medium', label: 'Mittel', color: 'blue' },
-    { value: 'high', label: 'Hoch', color: 'orange' },
-    { value: 'must_have', label: 'Must-Have', color: 'red' },
-];
-
-function getCategoryIcon(category: WishlistCategory) {
-    const config = categoryOptions.find(c => c.value === category);
-    const Icon = config?.icon || IconDots;
-    return <Icon size={16} />;
-}
-
-function getPriorityBadge(priority: WishlistPriority) {
-    const config = priorityOptions.find(p => p.value === priority);
-    return (
-        <Badge size="xs" color={config?.color || 'gray'}>
-            {config?.label || priority}
-        </Badge>
-    );
-}
-
 function formatPrice(price?: PriceInfo): string {
     if (!price) return '-';
     return `${price.amount.toFixed(2)} ${price.currency}`;
 }
 
 export default function WishlistsPage() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<string | null>('all');
     const [modalOpen, setModalOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<WishlistItem | null>(null);
@@ -109,6 +78,39 @@ export default function WishlistsPage() {
     const [globalViewMode, setViewMode] = useViewMode();
     // Fallback to 'grid' if global viewMode is not supported by this page
     const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
+
+    const categoryOptions: { value: WishlistCategory; label: string; icon: typeof IconDevices }[] = [
+        { value: 'tech', label: t('wishlists.categories.tech'), icon: IconDevices },
+        { value: 'fashion', label: t('wishlists.categories.fashion'), icon: IconShirt },
+        { value: 'home', label: t('wishlists.categories.home'), icon: IconHome },
+        { value: 'hobby', label: t('wishlists.categories.hobby'), icon: IconPalette },
+        { value: 'books', label: t('wishlists.categories.books'), icon: IconBook },
+        { value: 'travel', label: t('wishlists.categories.travel'), icon: IconPlane },
+        { value: 'experience', label: t('wishlists.categories.experience'), icon: IconStar },
+        { value: 'other', label: t('wishlists.categories.other'), icon: IconDots },
+    ];
+
+    const priorityOptions: { value: WishlistPriority; label: string; color: string }[] = [
+        { value: 'low', label: t('wishlists.priority.low'), color: 'gray' },
+        { value: 'medium', label: t('wishlists.priority.medium'), color: 'blue' },
+        { value: 'high', label: t('wishlists.priority.high'), color: 'orange' },
+        { value: 'must_have', label: t('wishlists.priority.mustHave'), color: 'red' },
+    ];
+
+    const getCategoryIcon = (category: WishlistCategory) => {
+        const config = categoryOptions.find(c => c.value === category);
+        const Icon = config?.icon || IconDots;
+        return <Icon size={16} />;
+    };
+
+    const getPriorityBadge = (priority: WishlistPriority) => {
+        const config = priorityOptions.find(p => p.value === priority);
+        return (
+            <Badge size="xs" color={config?.color || 'gray'}>
+                {config?.label || priority}
+            </Badge>
+        );
+    };
 
     const { data: items, isLoading, refetch } = useRequest<WishlistItem[]>('/wishlist-items');
     const { data: stats } = useRequest<WishlistStats>('/wishlist-items/stats');
@@ -237,7 +239,7 @@ export default function WishlistsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (confirm('Möchten Sie diesen Artikel wirklich löschen?')) {
+        if (confirm(t('wishlists.deleteConfirm'))) {
             await deleteItem({ id });
             await refetch();
         }
@@ -253,36 +255,36 @@ export default function WishlistsPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <PageTitle title="Wunschliste" subtitle="Verwalte deine Wünsche und Geschenkideen" />
-                    <Button onClick={openCreateModal}>Neuer Artikel</Button>
+                    <PageTitle title={t('wishlists.title')} subtitle={t('wishlists.subtitle')} />
+                    <Button onClick={openCreateModal}>{t('wishlists.newItem')}</Button>
                 </Group>
 
                 {/* Stats */}
                 <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
                     <CardStatistic
                         type="icon"
-                        title="Gesamt Artikel"
+                        title={t('wishlists.stats.totalItems')}
                         value={stats?.totalItems || 0}
                         icon={IconHeart}
                         color="pink"
                     />
                     <CardStatistic
                         type="icon"
-                        title="Gesamtwert"
+                        title={t('wishlists.stats.totalValue')}
                         value={formatPrice(stats?.totalValue ? { amount: stats.totalValue, currency: 'EUR' } : undefined)}
                         icon={IconCurrencyEuro}
                         color="green"
                     />
                     <CardStatistic
                         type="icon"
-                        title="Geschenkideen"
+                        title={t('wishlists.stats.giftIdeas')}
                         value={stats?.giftIdeas || 0}
                         icon={IconGift}
                         color="violet"
                     />
                     <CardStatistic
                         type="icon"
-                        title="Gekauft"
+                        title={t('wishlists.stats.purchased')}
                         value={stats?.purchased || 0}
                         icon={IconShoppingCart}
                         color="blue"
@@ -293,15 +295,15 @@ export default function WishlistsPage() {
                 <Paper shadow="sm" withBorder p="md" radius="md">
                     <Group>
                         <TextInput
-                            placeholder="Artikel suchen..."
+                            placeholder={t('wishlists.search')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.currentTarget.value)}
                             style={{ flex: 1 }}
                         />
                         <Select
-                            placeholder="Kategorie"
+                            placeholder={t('wishlists.form.category')}
                             data={[
-                                { value: 'all', label: 'Alle Kategorien' },
+                                { value: 'all', label: t('wishlists.allCategories') },
                                 ...categoryOptions.map(c => ({ value: c.value, label: c.label })),
                             ]}
                             value={categoryFilter}
@@ -309,9 +311,9 @@ export default function WishlistsPage() {
                             style={{ width: 180 }}
                         />
                         <Select
-                            placeholder="Priorität"
+                            placeholder={t('wishlists.form.priority')}
                             data={[
-                                { value: 'all', label: 'Alle Prioritäten' },
+                                { value: 'all', label: t('wishlists.allPriorities') },
                                 ...priorityOptions.map(p => ({ value: p.value, label: p.label })),
                             ]}
                             value={priorityFilter}
@@ -333,31 +335,31 @@ export default function WishlistsPage() {
                 <Tabs value={activeTab} onChange={setActiveTab}>
                 <Tabs.List>
                     <Tabs.Tab value="all" leftSection={<IconHeart size={16} />}>
-                        Alle Artikel
+                        {t('wishlists.tabs.all')}
                     </Tabs.Tab>
                     <Tabs.Tab value="gifts" leftSection={<IconGift size={16} />}>
-                        Geschenkideen
+                        {t('wishlists.tabs.gifts')}
                     </Tabs.Tab>
                     <Tabs.Tab value="purchased" leftSection={<IconShoppingCart size={16} />}>
-                        Gekauft
+                        {t('wishlists.tabs.purchased')}
                     </Tabs.Tab>
                 </Tabs.List>
 
                 <Tabs.Panel value="all" pt="md">
                     {isLoading ? (
-                        <Text>Laden...</Text>
+                        <Text>{t('wishlists.loading')}</Text>
                     ) : filteredItems.length === 0 ? (
                         <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <ThemeIcon size={60} radius="xl" variant="light">
                                     <IconHeart size={32} />
                                 </ThemeIcon>
-                                <Text size="lg" fw={500}>Keine Artikel gefunden</Text>
+                                <Text size="lg" fw={500}>{t('wishlists.emptyState')}</Text>
                                 <Text c="dimmed" ta="center">
-                                    Füge deinen ersten Artikel zur Wunschliste hinzu
+                                    {t('wishlists.emptyStateDesc')}
                                 </Text>
                                 <Button onClick={openCreateModal} leftSection={<IconPlus size={18} />}>
-                                    Neuer Artikel
+                                    {t('wishlists.newItem')}
                                 </Button>
                             </Stack>
                         </Paper>
@@ -406,14 +408,14 @@ export default function WishlistsPage() {
                                                         leftSection={<IconEdit size={14} />}
                                                         onClick={() => openEditModal(item)}
                                                     >
-                                                        Bearbeiten
+                                                        {t('wishlists.modal.edit')}
                                                     </Menu.Item>
                                                     <Menu.Item
                                                         leftSection={<IconTrash size={14} />}
                                                         color="red"
                                                         onClick={() => handleDelete(item.id)}
                                                     >
-                                                        Löschen
+                                                        {t('wishlists.modal.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
@@ -432,7 +434,7 @@ export default function WishlistsPage() {
                                             </Badge>
                                             {item.isGiftIdea && (
                                                 <Badge size="xs" color="pink" leftSection={<IconGift size={12} />}>
-                                                    Geschenk
+                                                    {t('wishlists.labels.gift')}
                                                 </Badge>
                                             )}
                                         </Group>
@@ -446,7 +448,7 @@ export default function WishlistsPage() {
 
                                         {item.giftFor && (
                                             <Text size="xs" c="dimmed">
-                                                Für: {item.giftFor}
+                                                {t('wishlists.labels.for')} {item.giftFor}
                                                 {item.occasion && ` (${item.occasion})`}
                                             </Text>
                                         )}
@@ -461,7 +463,7 @@ export default function WishlistsPage() {
                                                 >
                                                     <Group gap={4}>
                                                         <IconExternalLink size={14} />
-                                                        Zum Produkt
+                                                        {t('wishlists.actions.toProduct')}
                                                     </Group>
                                                 </Anchor>
                                             )}
@@ -475,7 +477,7 @@ export default function WishlistsPage() {
                                             onClick={() => handlePurchase(item.id)}
                                             mt="xs"
                                         >
-                                            Als gekauft markieren
+                                            {t('wishlists.actions.markPurchased')}
                                         </Button>
                                     </Stack>
                                 </Card>
@@ -486,12 +488,12 @@ export default function WishlistsPage() {
                             <Table striped highlightOnHover>
                                 <Table.Thead>
                                     <Table.Tr>
-                                        <Table.Th>Artikel</Table.Th>
-                                        <Table.Th>Kategorie</Table.Th>
-                                        <Table.Th>Priorität</Table.Th>
-                                        <Table.Th>Preis</Table.Th>
-                                        <Table.Th>Shop</Table.Th>
-                                        <Table.Th>Aktionen</Table.Th>
+                                        <Table.Th>{t('wishlists.table.item')}</Table.Th>
+                                        <Table.Th>{t('wishlists.table.category')}</Table.Th>
+                                        <Table.Th>{t('wishlists.table.priority')}</Table.Th>
+                                        <Table.Th>{t('wishlists.table.price')}</Table.Th>
+                                        <Table.Th>{t('wishlists.table.shop')}</Table.Th>
+                                        <Table.Th>{t('wishlists.table.actions')}</Table.Th>
                                     </Table.Tr>
                                 </Table.Thead>
                                 <Table.Tbody>
@@ -548,7 +550,7 @@ export default function WishlistsPage() {
                                                                     href={item.productUrl}
                                                                     target="_blank"
                                                                 >
-                                                                    Zum Produkt
+                                                                    {t('wishlists.actions.toProduct')}
                                                                 </Menu.Item>
                                                             )}
                                                             <Menu.Item
@@ -578,16 +580,16 @@ export default function WishlistsPage() {
 
                 <Tabs.Panel value="gifts" pt="md">
                     {isLoading ? (
-                        <Text>Laden...</Text>
+                        <Text>{t('wishlists.loading')}</Text>
                     ) : filteredItems.length === 0 ? (
                         <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <ThemeIcon size={60} radius="xl" variant="light" color="pink">
                                     <IconGift size={32} />
                                 </ThemeIcon>
-                                <Text size="lg" fw={500}>Keine Geschenkideen gefunden</Text>
+                                <Text size="lg" fw={500}>{t('wishlists.emptyGifts')}</Text>
                                 <Text c="dimmed" ta="center">
-                                    Füge deine erste Geschenkidee hinzu
+                                    {t('wishlists.emptyGiftsDesc')}
                                 </Text>
                             </Stack>
                         </Paper>
@@ -636,14 +638,14 @@ export default function WishlistsPage() {
                                                         leftSection={<IconEdit size={14} />}
                                                         onClick={() => openEditModal(item)}
                                                     >
-                                                        Bearbeiten
+                                                        {t('wishlists.modal.edit')}
                                                     </Menu.Item>
                                                     <Menu.Item
                                                         leftSection={<IconTrash size={14} />}
                                                         color="red"
                                                         onClick={() => handleDelete(item.id)}
                                                     >
-                                                        Löschen
+                                                        {t('wishlists.modal.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
@@ -671,7 +673,7 @@ export default function WishlistsPage() {
 
                                         {item.giftFor && (
                                             <Text size="xs" c="dimmed">
-                                                Für: {item.giftFor}
+                                                {t('wishlists.labels.for')} {item.giftFor}
                                                 {item.occasion && ` (${item.occasion})`}
                                             </Text>
                                         )}
@@ -698,7 +700,7 @@ export default function WishlistsPage() {
                                             onClick={() => handlePurchase(item.id)}
                                             mt="xs"
                                         >
-                                            Als gekauft markieren
+                                            {t('wishlists.actions.markPurchased')}
                                         </Button>
                                     </Stack>
                                 </Card>
@@ -709,16 +711,16 @@ export default function WishlistsPage() {
 
                 <Tabs.Panel value="purchased" pt="md">
                     {isLoading ? (
-                        <Text>Laden...</Text>
+                        <Text>{t('wishlists.loading')}</Text>
                     ) : filteredItems.length === 0 ? (
                         <Paper shadow="sm" p="xl" radius="md" withBorder>
                             <Stack align="center" gap="md">
                                 <ThemeIcon size={60} radius="xl" variant="light" color="green">
                                     <IconShoppingCart size={32} />
                                 </ThemeIcon>
-                                <Text size="lg" fw={500}>Keine gekauften Artikel</Text>
+                                <Text size="lg" fw={500}>{t('wishlists.emptyPurchased')}</Text>
                                 <Text c="dimmed" ta="center">
-                                    Artikel die du kaufst erscheinen hier
+                                    {t('wishlists.emptyPurchasedDesc')}
                                 </Text>
                             </Stack>
                         </Paper>
@@ -767,14 +769,14 @@ export default function WishlistsPage() {
                                                         leftSection={<IconEdit size={14} />}
                                                         onClick={() => openEditModal(item)}
                                                     >
-                                                        Bearbeiten
+                                                        {t('wishlists.modal.edit')}
                                                     </Menu.Item>
                                                     <Menu.Item
                                                         leftSection={<IconTrash size={14} />}
                                                         color="red"
                                                         onClick={() => handleDelete(item.id)}
                                                     >
-                                                        Löschen
+                                                        {t('wishlists.modal.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
@@ -793,7 +795,7 @@ export default function WishlistsPage() {
                                             </Badge>
                                             {item.isGiftIdea && (
                                                 <Badge size="xs" color="pink" leftSection={<IconGift size={12} />}>
-                                                    Geschenk
+                                                    {t('wishlists.labels.gift')}
                                                 </Badge>
                                             )}
                                         </Group>
@@ -807,14 +809,14 @@ export default function WishlistsPage() {
 
                                         {item.giftFor && (
                                             <Text size="xs" c="dimmed">
-                                                Für: {item.giftFor}
+                                                {t('wishlists.labels.for')} {item.giftFor}
                                                 {item.occasion && ` (${item.occasion})`}
                                             </Text>
                                         )}
 
                                         {item.purchasedAt && (
                                             <Badge size="xs" color="green" leftSection={<IconCheck size={12} />}>
-                                                Gekauft am {new Date(item.purchasedAt).toLocaleDateString('de-DE')}
+                                                {t('wishlists.labels.purchasedOn')} {new Date(item.purchasedAt).toLocaleDateString('de-DE')}
                                             </Badge>
                                         )}
 
@@ -846,46 +848,46 @@ export default function WishlistsPage() {
                     setEditingItem(null);
                     form.reset();
                 }}
-                title={editingItem ? 'Artikel bearbeiten' : 'Neuer Artikel'}
+                title={editingItem ? t('wishlists.form.editTitle') : t('wishlists.form.newTitle')}
                 size="lg"
             >
                 <form onSubmit={form.onSubmit(handleSubmit)}>
                     <Stack gap="md">
                         <TextInput
-                            label="Name"
-                            placeholder="z.B. Smartwatch"
+                            label={t('wishlists.form.name')}
+                            placeholder={t('wishlists.form.namePlaceholder')}
                             required
                             {...form.getInputProps('name')}
                         />
 
                         <Textarea
-                            label="Beschreibung"
-                            placeholder="Beschreibe den Artikel..."
+                            label={t('wishlists.form.description')}
+                            placeholder={t('wishlists.form.descriptionPlaceholder')}
                             minRows={3}
                             {...form.getInputProps('description')}
                         />
 
                         <TextInput
-                            label="Bild-URL"
-                            placeholder="https://..."
+                            label={t('wishlists.form.imageUrl')}
+                            placeholder={t('wishlists.form.imageUrlPlaceholder')}
                             {...form.getInputProps('imageUrl')}
                         />
 
                         <TextInput
-                            label="Produkt-URL"
-                            placeholder="https://..."
+                            label={t('wishlists.form.productUrl')}
+                            placeholder={t('wishlists.form.productUrlPlaceholder')}
                             {...form.getInputProps('productUrl')}
                         />
 
                         <Group grow>
                             <Select
-                                label="Kategorie"
+                                label={t('wishlists.form.category')}
                                 data={categoryOptions.map(c => ({ value: c.value, label: c.label }))}
                                 {...form.getInputProps('category')}
                             />
 
                             <Select
-                                label="Priorität"
+                                label={t('wishlists.form.priority')}
                                 data={priorityOptions.map(p => ({ value: p.value, label: p.label }))}
                                 {...form.getInputProps('priority')}
                             />
@@ -893,8 +895,8 @@ export default function WishlistsPage() {
 
                         <Group grow>
                             <NumberInput
-                                label="Preis"
-                                placeholder="0.00"
+                                label={t('wishlists.form.price')}
+                                placeholder={t('wishlists.form.pricePlaceholder')}
                                 decimalScale={2}
                                 fixedDecimalScale
                                 min={0}
@@ -902,7 +904,7 @@ export default function WishlistsPage() {
                             />
 
                             <Select
-                                label="Währung"
+                                label={t('wishlists.form.currency')}
                                 data={[
                                     { value: 'EUR', label: 'EUR' },
                                     { value: 'USD', label: 'USD' },
@@ -913,35 +915,35 @@ export default function WishlistsPage() {
                         </Group>
 
                         <TextInput
-                            label="Geschäft"
-                            placeholder="z.B. Amazon, MediaMarkt"
+                            label={t('wishlists.form.store')}
+                            placeholder={t('wishlists.form.storePlaceholder')}
                             {...form.getInputProps('store')}
                         />
 
                         <Switch
-                            label="Als Geschenkidee markieren"
+                            label={t('wishlists.form.isGiftIdea')}
                             {...form.getInputProps('isGiftIdea', { type: 'checkbox' })}
                         />
 
                         {form.values.isGiftIdea && (
                             <>
                                 <TextInput
-                                    label="Für wen?"
-                                    placeholder="z.B. Mama, Papa, Freund"
+                                    label={t('wishlists.form.giftFor')}
+                                    placeholder={t('wishlists.form.giftForPlaceholder')}
                                     {...form.getInputProps('giftFor')}
                                 />
 
                                 <TextInput
-                                    label="Anlass"
-                                    placeholder="z.B. Geburtstag, Weihnachten"
+                                    label={t('wishlists.form.occasionLabel')}
+                                    placeholder={t('wishlists.form.occasionPlaceholder')}
                                     {...form.getInputProps('occasion')}
                                 />
                             </>
                         )}
 
                         <Textarea
-                            label="Notizen"
-                            placeholder="Zusätzliche Notizen..."
+                            label={t('wishlists.form.notes')}
+                            placeholder={t('wishlists.form.notesPlaceholder')}
                             minRows={2}
                             {...form.getInputProps('notes')}
                         />
@@ -955,10 +957,10 @@ export default function WishlistsPage() {
                                     form.reset();
                                 }}
                             >
-                                Abbrechen
+                                {t('common.cancel')}
                             </Button>
                             <Button type="submit">
-                                {editingItem ? 'Speichern' : 'Erstellen'}
+                                {editingItem ? t('common.save') : t('common.create')}
                             </Button>
                         </Group>
                     </Stack>

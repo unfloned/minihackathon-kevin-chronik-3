@@ -95,6 +95,7 @@ import {
     IconCalendarMonth,
 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useConfetti } from '../../../hooks';
 import type { AchievementPublic, GamificationStats } from '@ycmm/core';
 import { PageTitle } from '../../../components/PageTitle';
@@ -222,25 +223,6 @@ const iconMap: Record<string, React.ElementType> = {
     'calendar-month': IconCalendarMonth,
 };
 
-const categoryLabels: Record<string, string> = {
-    all: 'Alle',
-    general: 'Allgemein',
-    streaks: 'Streaks',
-    habits: 'Habits',
-    deadlines: 'Fristen',
-    subscriptions: 'Abos',
-    applications: 'Bewerbungen',
-    expenses: 'Ausgaben',
-    notes: 'Notizen',
-    lists: 'Listen',
-    projects: 'Projekte',
-    inventory: 'Inventar',
-    media: 'Medien',
-    meals: 'Mahlzeiten',
-    wishlists: 'Wünsche',
-    legendary: 'Legendär',
-};
-
 const categoryColors: Record<string, string> = {
     general: 'blue',
     streaks: 'orange',
@@ -260,8 +242,28 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function AchievementsPage() {
+    const { t } = useTranslation();
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const confetti = useConfetti();
+
+    const categoryLabels: Record<string, string> = {
+        all: t('achievements.categories.all'),
+        general: t('achievements.categories.general'),
+        streaks: t('achievements.categories.streaks'),
+        habits: t('achievements.categories.habits'),
+        deadlines: t('achievements.categories.deadlines'),
+        subscriptions: t('nav.subscriptions'),
+        applications: t('nav.applications'),
+        expenses: t('achievements.categories.expenses'),
+        notes: t('nav.notes'),
+        lists: t('nav.lists'),
+        projects: t('achievements.categories.projects'),
+        inventory: t('nav.inventory'),
+        media: t('nav.media'),
+        meals: t('nav.meals'),
+        wishlists: t('nav.wishlists'),
+        legendary: 'Legendär',
+    };
 
     const { data: allAchievements, isLoading: loadingAll } = useRequest<Achievement[]>(
         '/gamification/achievements'
@@ -305,13 +307,13 @@ export default function AchievementsPage() {
         <Container size="xl" py="xl">
             <Stack gap="xl">
                 {/* Header */}
-                <PageTitle title="Achievements" subtitle="Schalte Achievements frei und sammle XP!" />
+                <PageTitle title={t('achievements.title')} subtitle={t('achievements.subtitle')} />
 
                 {/* Stats Overview */}
                 <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
                     <CardStatistic
                         type="progress"
-                        title="Level"
+                        title={t('dashboard.level')}
                         value={stats?.level ?? 1}
                         icon={IconStar}
                         color="violet"
@@ -322,7 +324,7 @@ export default function AchievementsPage() {
 
                     <CardStatistic
                         type="icon"
-                        title="Gesamt XP"
+                        title={t('achievements.stats.xpEarned')}
                         value={stats?.xp?.toLocaleString() ?? 0}
                         icon={IconCoin}
                         color="yellow"
@@ -331,7 +333,7 @@ export default function AchievementsPage() {
 
                     <CardStatistic
                         type="circular"
-                        title="Achievements"
+                        title={t('achievements.title')}
                         value={`${unlockedCount} / ${totalAchievements}`}
                         progress={completionPercentage}
                         progressLabel={
@@ -346,7 +348,7 @@ export default function AchievementsPage() {
 
                 {/* Category Filter */}
                 <MultiSelect
-                    placeholder="Alle Kategorien"
+                    placeholder={t('achievements.categories.all')}
                     value={selectedCategories}
                     onChange={setSelectedCategories}
                     data={categories.map(cat => ({
@@ -425,7 +427,7 @@ export default function AchievementsPage() {
 
                                     {isUnlocked && userAchievement?.unlockedAt && (
                                         <Text size="xs" c="dimmed" mt="sm">
-                                            Freigeschaltet am {new Date(userAchievement.unlockedAt).toLocaleDateString('de-DE')}
+                                            {t('achievements.unlockedOn', { date: new Date(userAchievement.unlockedAt).toLocaleDateString('de-DE') })}
                                         </Text>
                                     )}
                                 </Card>
@@ -440,7 +442,7 @@ export default function AchievementsPage() {
                             <IconTrophy size={32} />
                         </ThemeIcon>
                         <Text mt="md" c="dimmed">
-                            Keine Achievements in dieser Kategorie gefunden.
+                            {t('achievements.noAchievements')}
                         </Text>
                     </Paper>
                 )}

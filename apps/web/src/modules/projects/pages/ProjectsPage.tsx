@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
     Text,
     SimpleGrid,
@@ -73,19 +74,6 @@ const defaultForm: CreateProjectForm = {
     color: '#228be6',
 };
 
-const projectTypeOptions = [
-    { value: 'project', label: 'Projekt' },
-    { value: 'goal', label: 'Ziel' },
-];
-
-const statusOptions = [
-    { value: 'planning', label: 'Planung' },
-    { value: 'active', label: 'Aktiv' },
-    { value: 'on_hold', label: 'Pausiert' },
-    { value: 'completed', label: 'Abgeschlossen' },
-    { value: 'cancelled', label: 'Abgebrochen' },
-];
-
 const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
         case 'planning': return 'gray';
@@ -107,6 +95,7 @@ const getStatusIcon = (status: ProjectStatus) => {
 };
 
 export default function ProjectsPage() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [opened, { open, close }] = useDisclosure(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
@@ -116,6 +105,19 @@ export default function ProjectsPage() {
     const [filterType, setFilterType] = useState<ProjectType | 'all'>('all');
     const [globalViewMode, setViewMode] = useViewMode();
     const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
+
+    const projectTypeOptions = [
+        { value: 'project', label: 'Projekt' },
+        { value: 'goal', label: 'Ziel' },
+    ];
+
+    const statusOptions = [
+        { value: 'planning', label: t('projects.status.planning') },
+        { value: 'active', label: t('projects.status.active') },
+        { value: 'on_hold', label: t('projects.status.onHold') },
+        { value: 'completed', label: t('projects.status.completed') },
+        { value: 'cancelled', label: t('projects.status.cancelled') },
+    ];
 
     const { data: projects, isLoading, refetch } = useRequest<Project[]>('/projects');
     const { data: archivedProjects, refetch: refetchArchived } = useRequest<Project[]>('/projects/archived');
@@ -166,8 +168,8 @@ export default function ProjectsPage() {
     const handleSubmit = async () => {
         if (!form.name.trim()) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Bitte gib einen Namen ein',
+                title: t('common.error'),
+                message: t('habits.enterName'),
                 color: 'red',
             });
             return;
@@ -186,15 +188,15 @@ export default function ProjectsPage() {
                     },
                 });
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Projekt wurde aktualisiert',
+                    title: t('common.success'),
+                    message: t('projects.projectUpdated'),
                     color: 'green',
                 });
             } else {
                 await createProject(form);
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Projekt wurde erstellt',
+                    title: t('common.success'),
+                    message: t('projects.projectCreated'),
                     color: 'green',
                 });
             }
@@ -204,31 +206,31 @@ export default function ProjectsPage() {
             refetchArchived();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Es ist ein Fehler aufgetreten',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Bist du sicher, dass du dieses Projekt löschen möchtest?')) {
+        if (!window.confirm(t('inventory.deleteConfirm'))) {
             return;
         }
 
         try {
             await deleteProject({ id });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Projekt wurde gelöscht',
+                title: t('common.success'),
+                message: t('projects.projectDeleted'),
                 color: 'green',
             });
             refetch();
             refetchArchived();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Es ist ein Fehler aufgetreten',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
@@ -238,16 +240,16 @@ export default function ProjectsPage() {
         try {
             await archiveProject({ id });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Projekt wurde archiviert',
+                title: t('common.success'),
+                message: t('notes.noteArchived'),
                 color: 'green',
             });
             refetch();
             refetchArchived();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Es ist ein Fehler aufgetreten',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
@@ -257,16 +259,16 @@ export default function ProjectsPage() {
         try {
             await unarchiveProject({ id });
             notifications.show({
-                title: 'Erfolg',
-                message: 'Projekt wurde wiederhergestellt',
+                title: t('common.success'),
+                message: t('notes.noteUnarchived'),
                 color: 'green',
             });
             refetch();
             refetchArchived();
         } catch (error) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Es ist ein Fehler aufgetreten',
+                title: t('common.error'),
+                message: t('errors.generic'),
                 color: 'red',
             });
         }
@@ -286,9 +288,9 @@ export default function ProjectsPage() {
             <Stack gap="lg">
                 {/* Header */}
                 <Group justify="space-between">
-                    <PageTitle title="Projekte & Ziele" subtitle="Verwalte deine Projekte und Ziele" />
+                    <PageTitle title={t('projects.title')} subtitle={t('projects.subtitle')} />
                     <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
-                        Neues Projekt
+                        {t('projects.newProject')}
                     </Button>
                 </Group>
 
@@ -298,15 +300,15 @@ export default function ProjectsPage() {
                         value={view}
                         onChange={(value) => setView(value as 'active' | 'archived')}
                         data={[
-                            { label: 'Aktiv', value: 'active' },
-                            { label: 'Archiviert', value: 'archived' },
+                            { label: t('common.active'), value: 'active' },
+                            { label: t('notes.archived'), value: 'archived' },
                         ]}
                     />
                     <SegmentedControl
                         value={filterType}
                         onChange={(value) => setFilterType(value as ProjectType | 'all')}
                         data={[
-                            { label: 'Alle', value: 'all' },
+                            { label: t('common.all'), value: 'all' },
                             { label: 'Projekte', value: 'project' },
                             { label: 'Ziele', value: 'goal' },
                         ]}
@@ -315,7 +317,7 @@ export default function ProjectsPage() {
 
                 <Group>
                     <TextInput
-                        placeholder="Projekte suchen..."
+                        placeholder={t('common.search')}
                         leftSection={<IconSearch size={16} />}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -344,12 +346,12 @@ export default function ProjectsPage() {
                                 <IconTarget size={30} />
                             </ThemeIcon>
                             <Text size="lg" fw={500}>
-                                Keine Projekte gefunden
+                                {t('projects.emptyState')}
                             </Text>
                             <Text c="dimmed" size="sm">
                                 {view === 'active'
-                                    ? 'Erstelle dein erstes Projekt, um loszulegen'
-                                    : 'Du hast noch keine archivierten Projekte'}
+                                    ? t('projects.createFirst')
+                                    : t('notes.noArchivedNotes')}
                             </Text>
                         </Stack>
                     </Paper>
@@ -407,7 +409,7 @@ export default function ProjectsPage() {
                                                             handleOpenEdit(project);
                                                         }}
                                                     >
-                                                        Bearbeiten
+                                                        {t('common.edit')}
                                                     </Menu.Item>
                                                     {view === 'active' ? (
                                                         <Menu.Item
@@ -417,7 +419,7 @@ export default function ProjectsPage() {
                                                                 handleArchive(project.id);
                                                             }}
                                                         >
-                                                            Archivieren
+                                                            {t('common.archive')}
                                                         </Menu.Item>
                                                     ) : (
                                                         <Menu.Item
@@ -427,7 +429,7 @@ export default function ProjectsPage() {
                                                                 handleUnarchive(project.id);
                                                             }}
                                                         >
-                                                            Wiederherstellen
+                                                            {t('common.unarchive')}
                                                         </Menu.Item>
                                                     )}
                                                     <Menu.Divider />
@@ -439,14 +441,14 @@ export default function ProjectsPage() {
                                                             handleDelete(project.id);
                                                         }}
                                                     >
-                                                        Löschen
+                                                        {t('common.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
                                         </Group>
 
                                         <Text size="sm" c="dimmed" lineClamp={2}>
-                                            {project.description || 'Keine Beschreibung'}
+                                            {project.description || t('common.description')}
                                         </Text>
 
                                         <Group gap="xs">
@@ -473,7 +475,7 @@ export default function ProjectsPage() {
                                         <Stack gap="xs">
                                             <Group justify="space-between">
                                                 <Text size="xs" c="dimmed">
-                                                    Fortschritt
+                                                    {t('common.progress')}
                                                 </Text>
                                                 <Text size="xs" fw={500}>
                                                     {project.progress}%
@@ -486,7 +488,7 @@ export default function ProjectsPage() {
                                             <Group gap="xs">
                                                 <IconCalendar size={14} stroke={1.5} />
                                                 <Text size="xs" c="dimmed">
-                                                    Ziel: {new Date(project.targetDate).toLocaleDateString('de-DE')}
+                                                    {t('projects.deadline')}: {new Date(project.targetDate).toLocaleDateString('de-DE')}
                                                 </Text>
                                             </Group>
                                         )}
@@ -500,12 +502,12 @@ export default function ProjectsPage() {
                         <Table striped highlightOnHover>
                             <Table.Thead>
                                 <Table.Tr>
-                                    <Table.Th>Projekt</Table.Th>
-                                    <Table.Th>Typ</Table.Th>
-                                    <Table.Th>Status</Table.Th>
-                                    <Table.Th>Fortschritt</Table.Th>
-                                    <Table.Th>Zieldatum</Table.Th>
-                                    <Table.Th>Aktionen</Table.Th>
+                                    <Table.Th>{t('common.name')}</Table.Th>
+                                    <Table.Th>{t('common.type')}</Table.Th>
+                                    <Table.Th>{t('common.status')}</Table.Th>
+                                    <Table.Th>{t('common.progress')}</Table.Th>
+                                    <Table.Th>{t('projects.deadline')}</Table.Th>
+                                    <Table.Th>{t('common.actions')}</Table.Th>
                                 </Table.Tr>
                             </Table.Thead>
                             <Table.Tbody>
@@ -582,7 +584,7 @@ export default function ProjectsPage() {
                                                                 handleOpenEdit(project);
                                                             }}
                                                         >
-                                                            Bearbeiten
+                                                            {t('common.edit')}
                                                         </Menu.Item>
                                                         {view === 'active' ? (
                                                             <Menu.Item
@@ -592,7 +594,7 @@ export default function ProjectsPage() {
                                                                     handleArchive(project.id);
                                                                 }}
                                                             >
-                                                                Archivieren
+                                                                {t('common.archive')}
                                                             </Menu.Item>
                                                         ) : (
                                                             <Menu.Item
@@ -602,7 +604,7 @@ export default function ProjectsPage() {
                                                                     handleUnarchive(project.id);
                                                                 }}
                                                             >
-                                                                Wiederherstellen
+                                                                {t('common.unarchive')}
                                                             </Menu.Item>
                                                         )}
                                                         <Menu.Divider />
@@ -614,7 +616,7 @@ export default function ProjectsPage() {
                                                                 handleDelete(project.id);
                                                             }}
                                                         >
-                                                            Löschen
+                                                            {t('common.delete')}
                                                         </Menu.Item>
                                                     </Menu.Dropdown>
                                                 </Menu>
@@ -630,28 +632,28 @@ export default function ProjectsPage() {
                 <Modal
                 opened={opened}
                 onClose={close}
-                title={editingProject ? 'Projekt bearbeiten' : 'Neues Projekt'}
+                title={editingProject ? t('projects.editProject') : t('projects.newProject')}
                 size="md"
             >
                 <Stack gap="md">
                     <TextInput
-                        label="Name"
-                        placeholder="Projektname eingeben"
+                        label={t('common.name')}
+                        placeholder={t('meals.namePlaceholder')}
                         value={form.name}
                         onChange={(e) => setForm({ ...form, name: e.target.value })}
                         required
                     />
 
                     <Textarea
-                        label="Beschreibung"
-                        placeholder="Projektbeschreibung eingeben"
+                        label={t('common.description')}
+                        placeholder={t('meals.descriptionPlaceholder')}
                         value={form.description}
                         onChange={(e) => setForm({ ...form, description: e.target.value })}
                         minRows={3}
                     />
 
                     <Select
-                        label="Typ"
+                        label={t('common.type')}
                         data={projectTypeOptions}
                         value={form.type}
                         onChange={(value) => setForm({ ...form, type: value as ProjectType })}
@@ -659,7 +661,7 @@ export default function ProjectsPage() {
                     />
 
                     <ColorInput
-                        label="Farbe"
+                        label={t('common.color')}
                         value={form.color}
                         onChange={(value) => setForm({ ...form, color: value })}
                         format="hex"
@@ -676,8 +678,8 @@ export default function ProjectsPage() {
                     />
 
                     <DateInput
-                        label="Zieldatum"
-                        placeholder="Zieldatum auswählen"
+                        label={t('projects.deadline')}
+                        placeholder={t('deadlines.selectDate')}
                         value={form.targetDate}
                         onChange={(value) => setForm({ ...form, targetDate: toDateOrNull(value) ?? undefined })}
                         clearable
@@ -685,10 +687,10 @@ export default function ProjectsPage() {
 
                     <Group justify="flex-end" mt="md">
                         <Button variant="subtle" onClick={close}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button onClick={handleSubmit} loading={creating}>
-                            {editingProject ? 'Aktualisieren' : 'Erstellen'}
+                            {editingProject ? t('common.save') : t('common.create')}
                         </Button>
                     </Group>
                 </Stack>

@@ -44,7 +44,7 @@ export default function SettingsPage() {
         },
         validate: {
             displayName: (value) =>
-                value.length >= 2 ? null : 'Name muss mindestens 2 Zeichen haben',
+                value.length >= 2 ? null : t('auth.nameMinLength', { count: 2 }),
         },
     });
 
@@ -56,11 +56,11 @@ export default function SettingsPage() {
         },
         validate: {
             currentPassword: (value) =>
-                value.length >= 1 ? null : 'Aktuelles Passwort erforderlich',
+                value.length >= 1 ? null : t('errors.required'),
             newPassword: (value) =>
-                value.length >= 8 ? null : 'Mindestens 8 Zeichen',
+                value.length >= 8 ? null : t('auth.passwordMinLength', { count: 8 }),
             confirmPassword: (value, values) =>
-                value === values.newPassword ? null : 'Passwörter stimmen nicht überein',
+                value === values.newPassword ? null : t('auth.passwordsNoMatch'),
         },
     });
 
@@ -70,15 +70,15 @@ export default function SettingsPage() {
             method: 'PATCH',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Profil aktualisiert',
-                    message: 'Deine Änderungen wurden gespeichert.',
+                    title: t('settings.profile') + ' ' + t('common.success'),
+                    message: t('notifications.success'),
                     color: 'green',
                 });
                 refreshUser();
             },
             onError: (error) => {
                 notifications.show({
-                    title: 'Fehler',
+                    title: t('common.error'),
                     message: error,
                     color: 'red',
                 });
@@ -92,15 +92,15 @@ export default function SettingsPage() {
             method: 'POST',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Passwort geändert',
-                    message: 'Dein Passwort wurde erfolgreich geändert.',
+                    title: t('settings.changePassword'),
+                    message: t('notifications.success'),
                     color: 'green',
                 });
                 passwordForm.reset();
             },
             onError: (error) => {
                 notifications.show({
-                    title: 'Fehler',
+                    title: t('common.error'),
                     message: error,
                     color: 'red',
                 });
@@ -123,20 +123,18 @@ export default function SettingsPage() {
 
     const openDeleteModal = () => {
         modals.openConfirmModal({
-            title: 'Account löschen',
+            title: t('settings.deleteAccount'),
             children: (
                 <Text size="sm">
-                    Bist du sicher, dass du deinen Account löschen möchtest? Diese Aktion kann
-                    nicht rückgängig gemacht werden und alle deine Daten werden unwiderruflich
-                    gelöscht.
+                    {t('settings.deleteAccountWarning')}
                 </Text>
             ),
-            labels: { confirm: 'Account löschen', cancel: 'Abbrechen' },
+            labels: { confirm: t('settings.deleteAccount'), cancel: t('common.cancel') },
             confirmProps: { color: 'red' },
             onConfirm: () => {
                 // TODO: Implement account deletion
                 notifications.show({
-                    title: 'Noch nicht implementiert',
+                    title: t('notifications.info'),
                     message: 'Account-Löschung wird bald verfügbar sein.',
                     color: 'yellow',
                 });
@@ -149,13 +147,13 @@ export default function SettingsPage() {
             <Stack gap="lg">
                 <div>
                     <Title order={2}>{t('settings.title')}</Title>
-                    <Text c="dimmed">Verwalte dein Profil und deine Einstellungen</Text>
+                    <Text c="dimmed">{t('settings.profile')} und {t('settings.account')}</Text>
                 </div>
 
             {/* Demo Account Warning */}
             {user?.isDemo && (
                 <Alert icon={<IconInfoCircle size={16} />} color="blue">
-                    Du nutzt einen Demo-Account mit Beispieldaten. Registriere dich für deinen eigenen Account.
+                    {t('dashboard.demoAccount')}. {t('dashboard.demoRegisterPrompt')}
                 </Alert>
             )}
 
@@ -184,13 +182,13 @@ export default function SettingsPage() {
                 <form onSubmit={profileForm.onSubmit((values) => updateProfile(values))}>
                     <Stack gap="sm">
                         <TextInput
-                            label="Anzeigename"
-                            placeholder="Dein Name"
+                            label={t('settings.displayName')}
+                            placeholder={t('auth.namePlaceholder')}
                             {...profileForm.getInputProps('displayName')}
                             disabled={user?.isDemo}
                         />
                         <TextInput
-                            label="E-Mail"
+                            label={t('auth.email')}
                             value={user?.email || ''}
                             disabled
                         />
@@ -199,7 +197,7 @@ export default function SettingsPage() {
                             loading={isUpdatingProfile}
                             disabled={user?.isDemo}
                         >
-                            Profil speichern
+                            {t('settings.profile')} {t('common.save')}
                         </Button>
                     </Stack>
                 </form>
@@ -216,22 +214,22 @@ export default function SettingsPage() {
                     <form onSubmit={passwordForm.onSubmit((values) => changePassword(values))}>
                         <Stack gap="sm">
                             <PasswordInput
-                                label="Aktuelles Passwort"
-                                placeholder="Dein aktuelles Passwort"
+                                label={t('auth.password')}
+                                placeholder={t('auth.passwordPlaceholder')}
                                 {...passwordForm.getInputProps('currentPassword')}
                             />
                             <PasswordInput
-                                label="Neues Passwort"
-                                placeholder="Mindestens 8 Zeichen"
+                                label={t('auth.newPassword')}
+                                placeholder={t('auth.passwordMinLength', { count: 8 })}
                                 {...passwordForm.getInputProps('newPassword')}
                             />
                             <PasswordInput
-                                label="Passwort bestätigen"
-                                placeholder="Neues Passwort wiederholen"
+                                label={t('auth.confirmPassword')}
+                                placeholder={t('auth.confirmPassword')}
                                 {...passwordForm.getInputProps('confirmPassword')}
                             />
                             <Button type="submit" loading={isChangingPassword}>
-                                Passwort ändern
+                                {t('settings.changePassword')}
                             </Button>
                         </Stack>
                     </form>
@@ -247,13 +245,13 @@ export default function SettingsPage() {
 
                 <Stack gap="md">
                     <Select
-                        label="Farbschema"
+                        label={t('settings.theme')}
                         value={colorScheme}
                         onChange={handleThemeChange}
                         data={[
-                            { value: 'light', label: 'Hell' },
-                            { value: 'dark', label: 'Dunkel' },
-                            { value: 'auto', label: 'System' },
+                            { value: 'light', label: t('settings.lightMode') },
+                            { value: 'dark', label: t('settings.darkMode') },
+                            { value: 'auto', label: t('settings.systemTheme') },
                         ]}
                     />
                 </Stack>
@@ -267,7 +265,7 @@ export default function SettingsPage() {
                 </Group>
 
                 <Select
-                    label="Sprache"
+                    label={t('settings.language')}
                     value={i18n.language}
                     onChange={handleLanguageChange}
                     data={[
@@ -286,8 +284,8 @@ export default function SettingsPage() {
 
                 <Stack gap="md">
                     <Switch
-                        label="Benachrichtigungen aktivieren"
-                        description="Erhalte Benachrichtigungen über Fristen, Erinnerungen und mehr"
+                        label={t('settings.notifications')}
+                        description={`${t('deadlines.title')}, ${t('deadlines.reminder')} und mehr`}
                         checked={notificationsEnabled}
                         onChange={(e) => setNotificationsEnabled(e.currentTarget.checked)}
                     />
@@ -299,16 +297,15 @@ export default function SettingsPage() {
                 <Card withBorder padding="lg" style={{ borderColor: 'var(--mantine-color-red-6)' }}>
                     <Group gap="xs" mb="md">
                         <IconTrash size={20} color="var(--mantine-color-red-6)" />
-                        <Title order={4} c="red">Gefahrenzone</Title>
+                        <Title order={4} c="red">{t('settings.deleteAccount')}</Title>
                     </Group>
 
                     <Text size="sm" c="dimmed" mb="md">
-                        Wenn du deinen Account löschst, werden alle deine Daten unwiderruflich
-                        entfernt. Diese Aktion kann nicht rückgängig gemacht werden.
+                        {t('settings.deleteAccountWarning')}
                     </Text>
 
                     <Button color="red" variant="outline" onClick={openDeleteModal}>
-                        Account löschen
+                        {t('settings.deleteAccount')}
                     </Button>
                 </Card>
             )}

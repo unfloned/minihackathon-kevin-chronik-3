@@ -35,6 +35,7 @@ import {
     IconLayoutGrid,
     IconList,
 } from '@tabler/icons-react';
+import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
 import { PageTitle } from '../../../components/PageTitle';
@@ -54,53 +55,14 @@ interface CreateSubscriptionForm {
     website: string;
 }
 
-const billingCycleLabels: Record<SubscriptionBillingCycle, string> = {
-    weekly: 'Wöchentlich',
-    monthly: 'Monatlich',
-    quarterly: 'Vierteljährlich',
-    yearly: 'Jährlich',
-};
-
 const statusColors: Record<SubscriptionStatus, string> = {
     active: 'green',
     paused: 'yellow',
     cancelled: 'gray',
 };
 
-const statusLabels: Record<SubscriptionStatus, string> = {
-    active: 'Aktiv',
-    paused: 'Pausiert',
-    cancelled: 'Gekündigt',
-};
-
-const categoryOptions = [
-    { value: 'entertainment', label: 'Unterhaltung' },
-    { value: 'productivity', label: 'Produktivität' },
-    { value: 'utilities', label: 'Versorgung' },
-    { value: 'health', label: 'Gesundheit' },
-    { value: 'education', label: 'Bildung' },
-    { value: 'finance', label: 'Finanzen' },
-    { value: 'shopping', label: 'Shopping' },
-    { value: 'other', label: 'Sonstiges' },
-];
-
-const categoryLabels: Record<string, string> = {
-    entertainment: 'Unterhaltung',
-    productivity: 'Produktivität',
-    utilities: 'Versorgung',
-    health: 'Gesundheit',
-    education: 'Bildung',
-    finance: 'Finanzen',
-    shopping: 'Shopping',
-    other: 'Sonstiges',
-};
-
-const billingCycleOptions = [
-    { value: 'weekly', label: 'Wöchentlich' },
-    { value: 'monthly', label: 'Monatlich' },
-    { value: 'quarterly', label: 'Vierteljährlich' },
-    { value: 'yearly', label: 'Jährlich' },
-];
+const categoryKeys = ['entertainment', 'productivity', 'utilities', 'health', 'education', 'finance', 'shopping', 'other'] as const;
+const billingCycleKeys: SubscriptionBillingCycle[] = ['weekly', 'monthly', 'quarterly', 'yearly'];
 
 const emptyForm: CreateSubscriptionForm = {
     name: '',
@@ -113,12 +75,42 @@ const emptyForm: CreateSubscriptionForm = {
 };
 
 export default function SubscriptionsPage() {
+    const { t } = useTranslation();
     const [opened, { open, close }] = useDisclosure(false);
     const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
     const [formData, setFormData] = useState<CreateSubscriptionForm>(emptyForm);
     const [globalViewMode, setViewMode] = useViewMode();
     // Map global viewMode to this page's supported modes (grid/list)
     const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
+
+    // Dynamic labels from translations
+    const billingCycleLabels: Record<SubscriptionBillingCycle, string> = {
+        weekly: t('subscriptions.billingCycle.weekly'),
+        monthly: t('subscriptions.billingCycle.monthly'),
+        quarterly: t('subscriptions.billingCycle.quarterly'),
+        yearly: t('subscriptions.billingCycle.yearly'),
+    };
+
+    const statusLabels: Record<SubscriptionStatus, string> = {
+        active: t('subscriptions.status.active'),
+        paused: t('subscriptions.status.paused'),
+        cancelled: t('subscriptions.status.cancelled'),
+    };
+
+    const categoryLabels: Record<string, string> = categoryKeys.reduce((acc, key) => {
+        acc[key] = t(`subscriptions.categories.${key}`);
+        return acc;
+    }, {} as Record<string, string>);
+
+    const categoryOptions = categoryKeys.map((key) => ({
+        value: key,
+        label: t(`subscriptions.categories.${key}`),
+    }));
+
+    const billingCycleOptions = billingCycleKeys.map((key) => ({
+        value: key,
+        label: t(`subscriptions.billingCycle.${key}`),
+    }));
 
     // Fetch subscriptions
     const {
@@ -139,8 +131,8 @@ export default function SubscriptionsPage() {
         method: 'POST',
         onSuccess: () => {
             notifications.show({
-                title: 'Erfolg',
-                message: 'Abonnement erfolgreich erstellt',
+                title: t('common.success'),
+                message: t('subscriptions.subscriptionCreated'),
                 color: 'green',
             });
             refetchSubscriptions();
@@ -149,8 +141,8 @@ export default function SubscriptionsPage() {
         },
         onError: (error) => {
             notifications.show({
-                title: 'Fehler',
-                message: error || 'Fehler beim Erstellen des Abonnements',
+                title: t('common.error'),
+                message: error || t('subscriptions.createError'),
                 color: 'red',
             });
         },
@@ -163,8 +155,8 @@ export default function SubscriptionsPage() {
             method: 'PATCH',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Abonnement erfolgreich aktualisiert',
+                    title: t('common.success'),
+                    message: t('subscriptions.subscriptionUpdated'),
                     color: 'green',
                 });
                 refetchSubscriptions();
@@ -173,8 +165,8 @@ export default function SubscriptionsPage() {
             },
             onError: (error) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Fehler beim Aktualisieren des Abonnements',
+                    title: t('common.error'),
+                    message: error || t('subscriptions.updateError'),
                     color: 'red',
                 });
             },
@@ -188,8 +180,8 @@ export default function SubscriptionsPage() {
             method: 'DELETE',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Abonnement erfolgreich gelöscht',
+                    title: t('common.success'),
+                    message: t('subscriptions.subscriptionDeleted'),
                     color: 'green',
                 });
                 refetchSubscriptions();
@@ -197,8 +189,8 @@ export default function SubscriptionsPage() {
             },
             onError: (error) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Fehler beim Löschen des Abonnements',
+                    title: t('common.error'),
+                    message: error || t('subscriptions.deleteError'),
                     color: 'red',
                 });
             },
@@ -212,8 +204,8 @@ export default function SubscriptionsPage() {
             method: 'POST',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Abonnement pausiert',
+                    title: t('common.success'),
+                    message: t('subscriptions.subscriptionPaused'),
                     color: 'green',
                 });
                 refetchSubscriptions();
@@ -221,8 +213,8 @@ export default function SubscriptionsPage() {
             },
             onError: (error) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Fehler beim Pausieren des Abonnements',
+                    title: t('common.error'),
+                    message: error || t('subscriptions.pauseError'),
                     color: 'red',
                 });
             },
@@ -236,8 +228,8 @@ export default function SubscriptionsPage() {
             method: 'POST',
             onSuccess: () => {
                 notifications.show({
-                    title: 'Erfolg',
-                    message: 'Abonnement fortgesetzt',
+                    title: t('common.success'),
+                    message: t('subscriptions.subscriptionResumed'),
                     color: 'green',
                 });
                 refetchSubscriptions();
@@ -245,8 +237,8 @@ export default function SubscriptionsPage() {
             },
             onError: (error) => {
                 notifications.show({
-                    title: 'Fehler',
-                    message: error || 'Fehler beim Fortsetzen des Abonnements',
+                    title: t('common.error'),
+                    message: error || t('subscriptions.resumeError'),
                     color: 'red',
                 });
             },
@@ -282,8 +274,8 @@ export default function SubscriptionsPage() {
     const handleSubmit = async () => {
         if (!formData.name || !formData.amount) {
             notifications.show({
-                title: 'Fehler',
-                message: 'Bitte füllen Sie alle Pflichtfelder aus',
+                title: t('common.error'),
+                message: t('subscriptions.requiredFields'),
                 color: 'red',
             });
             return;
@@ -297,7 +289,7 @@ export default function SubscriptionsPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (window.confirm('Möchten Sie dieses Abonnement wirklich löschen?')) {
+        if (window.confirm(t('subscriptions.deleteConfirm'))) {
             await deleteMutation.mutate({ id } as any);
         }
     };
@@ -329,13 +321,13 @@ export default function SubscriptionsPage() {
             <Stack gap="xl">
                 {/* Header */}
                 <Group justify="space-between" align="center">
-                    <PageTitle title="Abonnements" subtitle="Verwalten Sie Ihre wiederkehrenden Abonnements" />
+                    <PageTitle title={t('subscriptions.title')} subtitle={t('subscriptions.subtitle')} />
                     <Button
                         leftSection={<IconPlus size={16} />}
                         onClick={handleOpenCreateModal}
                         loading={createMutation.isLoading}
                     >
-                        Neues Abo
+                        {t('subscriptions.newSubscription')}
                     </Button>
                 </Group>
 
@@ -343,31 +335,31 @@ export default function SubscriptionsPage() {
                 <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="lg">
                     <CardStatistic
                         type="icon"
-                        title="Monatliche Kosten"
+                        title={t('subscriptions.stats.monthlyTotal')}
                         value={formatCurrency(stats?.totalMonthly || 0)}
                         icon={IconCoin}
                         color="blue"
-                        subtitle="Pro Monat"
+                        subtitle={t('subscriptions.stats.perMonth')}
                         isLoading={statsLoading}
                     />
 
                     <CardStatistic
                         type="icon"
-                        title="Jährliche Kosten"
+                        title={t('subscriptions.stats.yearlyTotal')}
                         value={formatCurrency(stats?.totalYearly || 0)}
                         icon={IconCalendar}
                         color="green"
-                        subtitle="Pro Jahr"
+                        subtitle={t('subscriptions.stats.perYear')}
                         isLoading={statsLoading}
                     />
 
                     <CardStatistic
                         type="icon"
-                        title="Aktive Abos"
+                        title={t('subscriptions.stats.activeCount')}
                         value={stats?.activeCount || 0}
                         icon={IconReceipt}
                         color="grape"
-                        subtitle="Abonnements"
+                        subtitle={t('subscriptions.stats.subscriptions')}
                         isLoading={statsLoading}
                     />
                 </SimpleGrid>
@@ -375,7 +367,7 @@ export default function SubscriptionsPage() {
                 {/* Subscriptions List */}
                 <Stack gap="md">
                     <Group justify="space-between" align="center">
-                        <Text fw={700} size="lg">Ihre Abonnements</Text>
+                        <Text fw={700} size="lg">{t('subscriptions.yourSubscriptions')}</Text>
                         <SegmentedControl
                             value={viewMode}
                             onChange={(value) => setViewMode(value as 'grid' | 'list')}
@@ -398,17 +390,17 @@ export default function SubscriptionsPage() {
                                 <IconReceipt size={48} style={{ opacity: 0.3 }} />
                                 <div style={{ textAlign: 'center' }}>
                                     <Text fw={500} size="lg">
-                                        Keine Abonnements vorhanden
+                                        {t('subscriptions.noSubscriptions')}
                                     </Text>
                                     <Text c="dimmed" size="sm" mt="xs">
-                                        Erstellen Sie Ihr erstes Abonnement, um loszulegen
+                                        {t('subscriptions.createFirstHint')}
                                     </Text>
                                 </div>
                                 <Button
                                     leftSection={<IconPlus size={16} />}
                                     onClick={handleOpenCreateModal}
                                 >
-                                    Neues Abo erstellen
+                                    {t('subscriptions.createFirst')}
                                 </Button>
                             </Stack>
                         </Paper>
@@ -417,13 +409,13 @@ export default function SubscriptionsPage() {
                             <Table striped highlightOnHover>
                                 <Table.Thead>
                                     <Table.Tr>
-                                        <Table.Th>Name</Table.Th>
-                                        <Table.Th>Betrag</Table.Th>
-                                        <Table.Th>Zyklus</Table.Th>
-                                        <Table.Th>Kategorie</Table.Th>
-                                        <Table.Th>Status</Table.Th>
-                                        <Table.Th>Nächste Abrechnung</Table.Th>
-                                        <Table.Th>Aktionen</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.name')}</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.amount')}</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.cycle')}</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.category')}</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.status')}</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.nextBilling')}</Table.Th>
+                                        <Table.Th>{t('subscriptions.table.actions')}</Table.Th>
                                     </Table.Tr>
                                 </Table.Thead>
                                 <Table.Tbody>
@@ -463,21 +455,21 @@ export default function SubscriptionsPage() {
                                                             leftSection={<IconEdit size={14} />}
                                                             onClick={() => handleOpenEditModal(subscription)}
                                                         >
-                                                            Bearbeiten
+                                                            {t('common.edit')}
                                                         </Menu.Item>
                                                         {subscription.status === 'active' ? (
                                                             <Menu.Item
                                                                 leftSection={<IconPlayerPause size={14} />}
                                                                 onClick={() => handlePause(subscription.id)}
                                                             >
-                                                                Pausieren
+                                                                {t('subscriptions.pause')}
                                                             </Menu.Item>
                                                         ) : subscription.status === 'paused' ? (
                                                             <Menu.Item
                                                                 leftSection={<IconPlayerPlay size={14} />}
                                                                 onClick={() => handleResume(subscription.id)}
                                                             >
-                                                                Fortsetzen
+                                                                {t('subscriptions.resume')}
                                                             </Menu.Item>
                                                         ) : null}
                                                         <Menu.Divider />
@@ -486,7 +478,7 @@ export default function SubscriptionsPage() {
                                                             leftSection={<IconTrash size={14} />}
                                                             onClick={() => handleDelete(subscription.id)}
                                                         >
-                                                            Löschen
+                                                            {t('common.delete')}
                                                         </Menu.Item>
                                                     </Menu.Dropdown>
                                                 </Menu>
@@ -516,21 +508,21 @@ export default function SubscriptionsPage() {
                                                         leftSection={<IconEdit size={14} />}
                                                         onClick={() => handleOpenEditModal(subscription)}
                                                     >
-                                                        Bearbeiten
+                                                        {t('common.edit')}
                                                     </Menu.Item>
                                                     {subscription.status === 'active' ? (
                                                         <Menu.Item
                                                             leftSection={<IconPlayerPause size={14} />}
                                                             onClick={() => handlePause(subscription.id)}
                                                         >
-                                                            Pausieren
+                                                            {t('subscriptions.pause')}
                                                         </Menu.Item>
                                                     ) : subscription.status === 'paused' ? (
                                                         <Menu.Item
                                                             leftSection={<IconPlayerPlay size={14} />}
                                                             onClick={() => handleResume(subscription.id)}
                                                         >
-                                                            Fortsetzen
+                                                            {t('subscriptions.resume')}
                                                         </Menu.Item>
                                                     ) : null}
                                                     <Menu.Divider />
@@ -539,7 +531,7 @@ export default function SubscriptionsPage() {
                                                         leftSection={<IconTrash size={14} />}
                                                         onClick={() => handleDelete(subscription.id)}
                                                     >
-                                                        Löschen
+                                                        {t('common.delete')}
                                                     </Menu.Item>
                                                 </Menu.Dropdown>
                                             </Menu>
@@ -565,7 +557,7 @@ export default function SubscriptionsPage() {
                                         <Stack gap="xs">
                                             <Flex justify="space-between" align="center">
                                                 <Text size="sm" c="dimmed">
-                                                    Abrechnungszyklus:
+                                                    {t('subscriptions.billingCycleLabel')}:
                                                 </Text>
                                                 <Text size="sm" fw={500}>
                                                     {billingCycleLabels[subscription.billingCycle]}
@@ -574,17 +566,17 @@ export default function SubscriptionsPage() {
 
                                             <Flex justify="space-between" align="center">
                                                 <Text size="sm" c="dimmed">
-                                                    Abrechnungstag:
+                                                    {t('subscriptions.billingDay')}:
                                                 </Text>
                                                 <Text size="sm" fw={500}>
-                                                    {subscription.billingDay}. des Monats
+                                                    {t('subscriptions.ofMonth', { day: subscription.billingDay })}
                                                 </Text>
                                             </Flex>
 
                                             {subscription.nextBillingDate && (
                                                 <Flex justify="space-between" align="center">
                                                     <Text size="sm" c="dimmed">
-                                                        Nächste Abrechnung:
+                                                        {t('subscriptions.nextBilling')}:
                                                     </Text>
                                                     <Text size="sm" fw={500}>
                                                         {formatDate(subscription.nextBillingDate)}
@@ -594,7 +586,7 @@ export default function SubscriptionsPage() {
 
                                             <Flex justify="space-between" align="center">
                                                 <Text size="sm" c="dimmed">
-                                                    Kategorie:
+                                                    {t('common.category')}:
                                                 </Text>
                                                 <Badge size="sm" variant="light">
                                                     {categoryLabels[subscription.category] || subscription.category}
@@ -604,7 +596,7 @@ export default function SubscriptionsPage() {
                                             {subscription.website && (
                                                 <Flex justify="space-between" align="center">
                                                     <Text size="sm" c="dimmed">
-                                                        Website:
+                                                        {t('subscriptions.website')}:
                                                     </Text>
                                                     <Text
                                                         size="sm"
@@ -615,7 +607,7 @@ export default function SubscriptionsPage() {
                                                         rel="noopener noreferrer"
                                                         style={{ textDecoration: 'none' }}
                                                     >
-                                                        Link
+                                                        {t('subscriptions.link')}
                                                     </Text>
                                                 </Flex>
                                             )}
@@ -634,30 +626,30 @@ export default function SubscriptionsPage() {
                 onClose={handleCloseModal}
                 title={
                     <Text size="lg" fw={600}>
-                        {editingSubscription ? 'Abonnement bearbeiten' : 'Neues Abonnement'}
+                        {editingSubscription ? t('subscriptions.editSubscription') : t('subscriptions.newSubscription')}
                     </Text>
                 }
                 size="lg"
             >
                 <Stack gap="md">
                     <TextInput
-                        label="Name"
-                        placeholder="z.B. Netflix, Spotify, etc."
+                        label={t('common.name')}
+                        placeholder={t('subscriptions.namePlaceholder')}
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
 
                     <Textarea
-                        label="Beschreibung"
-                        placeholder="Optionale Beschreibung des Abonnements"
+                        label={t('subscriptions.descriptionLabel')}
+                        placeholder={t('subscriptions.descriptionPlaceholder')}
                         minRows={3}
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
 
                     <NumberInput
-                        label="Betrag"
+                        label={t('subscriptions.amount')}
                         placeholder="0.00"
                         required
                         min={0}
@@ -669,8 +661,8 @@ export default function SubscriptionsPage() {
                     />
 
                     <Select
-                        label="Abrechnungszyklus"
-                        placeholder="Wählen Sie einen Zyklus"
+                        label={t('subscriptions.billingCycleLabel')}
+                        placeholder={t('subscriptions.selectCycle')}
                         required
                         data={billingCycleOptions}
                         value={formData.billingCycle}
@@ -680,8 +672,8 @@ export default function SubscriptionsPage() {
                     />
 
                     <NumberInput
-                        label="Abrechnungstag"
-                        placeholder="Tag des Monats"
+                        label={t('subscriptions.billingDay')}
+                        placeholder={t('subscriptions.billingDayPlaceholder')}
                         required
                         min={1}
                         max={31}
@@ -690,8 +682,8 @@ export default function SubscriptionsPage() {
                     />
 
                     <Select
-                        label="Kategorie"
-                        placeholder="Wählen Sie eine Kategorie"
+                        label={t('common.category')}
+                        placeholder={t('subscriptions.selectCategory')}
                         required
                         data={categoryOptions}
                         value={formData.category}
@@ -699,21 +691,21 @@ export default function SubscriptionsPage() {
                     />
 
                     <TextInput
-                        label="Website"
-                        placeholder="https://example.com"
+                        label={t('subscriptions.website')}
+                        placeholder={t('subscriptions.websitePlaceholder')}
                         value={formData.website}
                         onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                     />
 
                     <Group justify="flex-end" mt="md">
                         <Button variant="subtle" onClick={handleCloseModal}>
-                            Abbrechen
+                            {t('common.cancel')}
                         </Button>
                         <Button
                             onClick={handleSubmit}
                             loading={createMutation.isLoading || updateMutation.isLoading}
                         >
-                            {editingSubscription ? 'Aktualisieren' : 'Erstellen'}
+                            {editingSubscription ? t('common.save') : t('common.create')}
                         </Button>
                     </Group>
                 </Stack>
