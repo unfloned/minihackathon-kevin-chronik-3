@@ -24,14 +24,17 @@ COPY packages/core ./packages/core
 RUN pnpm --filter @ycmm/server exec deepkit-type-install && \
     echo "TypeScript patched for Deepkit reflection"
 
+# Build core package first (server depends on it)
+RUN pnpm turbo build --filter=@ycmm/core --force
+
 # Build server directly (not via turbo) to ensure patched TypeScript is used
 RUN cd apps/server && pnpm run build && cd ../..
 
 # Build web via turbo
-RUN pnpm turbo build --filter=@ycmm/web --filter=@ycmm/core --force
+RUN pnpm turbo build --filter=@ycmm/web --force
 
 # Deploy server with all dependencies (resolves pnpm symlink issues)
-RUN pnpm --filter=@ycmm/server deploy --prod --legacy /app/server-deploy
+RUN pnpm --filter=@ycmm/server deploy --prod /app/server-deploy
 
 # Stage 2: Backend only
 FROM node:20 AS backend
