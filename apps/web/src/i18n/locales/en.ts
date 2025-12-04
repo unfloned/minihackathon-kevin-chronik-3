@@ -147,7 +147,7 @@ export const en = {
             xp: "Earn XP & level up",
         },
         hotFeature: {
-            badge: "New Feature",
+            badge: "Hot Feature",
             voiceNotes: {
                 title: "Voice Notes",
                 description: "Create notes simply by speaking. Dictate naturally with punctuation like 'period' or 'new paragraph'.",

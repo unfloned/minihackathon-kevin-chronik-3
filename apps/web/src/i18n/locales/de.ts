@@ -147,7 +147,7 @@ export const de = {
             xp: "XP sammeln & Level aufsteigen",
         },
         hotFeature: {
-            badge: "Neues Feature",
+            badge: "Hot Feature",
             voiceNotes: {
                 title: "Voice Notes",
                 description: "Erstelle Notizen einfach per Sprache. Sprich natürlich und diktiere mit Satzzeichen wie 'Punkt' oder 'Neuer Absatz'.",

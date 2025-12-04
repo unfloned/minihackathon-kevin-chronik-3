@@ -183,7 +183,7 @@ export default function AuthPage() {
                             </ThemeIcon>
                             <Text size="sm" fw={500}>{t('landing.features.voiceNotes')}</Text>
                             <Badge size="xs" variant="gradient" gradient={{ from: 'red', to: 'grape' }}>
-                                {t('common.new')}
+                                {t('landing.hotFeature.badge')}
                             </Badge>
                         </Group>
                         {/* Wishlist Sharing - Hot Feature */}
@@ -193,7 +193,7 @@ export default function AuthPage() {
                             </ThemeIcon>
                             <Text size="sm" fw={500}>{t('landing.features.wishlistSharing')}</Text>
                             <Badge size="xs" variant="gradient" gradient={{ from: 'grape', to: 'pink' }}>
-                                {t('common.new')}
+                                {t('landing.hotFeature.badge')}
                             </Badge>
                         </Group>
                         {[
