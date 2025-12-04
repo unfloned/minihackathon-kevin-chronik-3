@@ -54,29 +54,51 @@ export interface UpdateInterviewDto {
     feedback?: string;
 }
 
+// Helper to fix dates in nested objects after database retrieval
+function fixApplicationDates(app: Application): Application {
+    // Fix statusHistory dates
+    if (app.statusHistory) {
+        app.statusHistory = app.statusHistory.map(sh => ({
+            ...sh,
+            date: sh.date instanceof Date ? sh.date : new Date(sh.date),
+        }));
+    }
+    // Fix interview dates
+    if (app.interviews) {
+        app.interviews = app.interviews.map(interview => ({
+            ...interview,
+            scheduledAt: interview.scheduledAt instanceof Date ? interview.scheduledAt : new Date(interview.scheduledAt),
+        }));
+    }
+    return app;
+}
+
 export class ApplicationService {
     constructor(private database: AppDatabase) {}
 
     async getAll(userId: string): Promise<Application[]> {
-        return this.database.query(Application)
+        const apps = await this.database.query(Application)
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('updatedAt', 'desc')
             .find();
+        return apps.map(fixApplicationDates);
     }
 
     async getByStatus(userId: string, status: ApplicationStatus): Promise<Application[]> {
-        return this.database.query(Application)
+        const apps = await this.database.query(Application)
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .filter({ status })
             .orderBy('updatedAt', 'desc')
             .find();
+        return apps.map(fixApplicationDates);
     }
 
     async getById(id: string, userId: string): Promise<Application | undefined> {
-        return this.database.query(Application)
+        const app = await this.database.query(Application)
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .filter({ id })
             .findOneOrUndefined();
+        return app ? fixApplicationDates(app) : undefined;
     }
 
     async create(userId: string, dto: CreateApplicationDto): Promise<Application> {
@@ -227,9 +249,10 @@ export class ApplicationService {
         offerRate: number;
         averageResponseDays: number | null;
     }> {
-        const all = await this.database.query(Application)
+        const allRaw = await this.database.query(Application)
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
+        const all = allRaw.map(fixApplicationDates);
 
         const byStatus: { status: ApplicationStatus; count: number }[] = [];
         const statusCounts: Record<string, number> = {};
