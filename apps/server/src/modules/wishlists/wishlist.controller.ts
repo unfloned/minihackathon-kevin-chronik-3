@@ -186,6 +186,38 @@ export class WishlistController {
         }
         return { success: true };
     }
+
+    @http.GET('default/sharing')
+    async getDefaultWishlistSharing(request: HttpRequest) {
+        const userId = await this.getUserId(request);
+        // Sync items first
+        await this.wishlistService.syncDefaultWishlistItems(userId);
+        const wishlist = await this.wishlistService.getOrCreateDefaultWishlist(userId);
+        return {
+            isPublic: wishlist.isPublic,
+            shareUrl: wishlist.isPublic ? `/shared/${wishlist.publicSlug}` : null,
+            publicSlug: wishlist.publicSlug,
+        };
+    }
+
+    @http.POST('default/sharing')
+    async toggleDefaultWishlistSharing(request: HttpRequest, body: HttpBody<{ isPublic: boolean }>) {
+        const userId = await this.getUserId(request);
+        // Sync items first
+        await this.wishlistService.syncDefaultWishlistItems(userId);
+        const wishlist = await this.wishlistService.getOrCreateDefaultWishlist(userId);
+        const updated = await this.wishlistService.updateWishlist(wishlist.id, userId, {
+            isPublic: body.isPublic,
+        });
+        if (!updated) {
+            throw new HttpNotFoundError('Wishlist not found');
+        }
+        return {
+            isPublic: updated.isPublic,
+            shareUrl: updated.isPublic ? `/shared/${updated.publicSlug}` : null,
+            publicSlug: updated.publicSlug,
+        };
+    }
 }
 
 // Public Wishlist Controller
@@ -200,5 +232,26 @@ export class PublicWishlistController {
             throw new HttpNotFoundError('Wishlist not found');
         }
         return result;
+    }
+
+    @http.POST(':slug/items/:itemId/reserve')
+    async reserveItem(slug: string, itemId: string, body: HttpBody<{ name: string }>) {
+        if (!body.name || body.name.trim().length === 0) {
+            throw new HttpNotFoundError('Name required');
+        }
+        const success = await this.wishlistService.reservePublicItem(slug, itemId, body.name.trim());
+        if (!success) {
+            throw new HttpNotFoundError('Item not found or already reserved');
+        }
+        return { success: true };
+    }
+
+    @http.DELETE(':slug/items/:itemId/reserve')
+    async unreserveItem(slug: string, itemId: string) {
+        const success = await this.wishlistService.unreservePublicItem(slug, itemId);
+        if (!success) {
+            throw new HttpNotFoundError('Item not found');
+        }
+        return { success: true };
     }
 }

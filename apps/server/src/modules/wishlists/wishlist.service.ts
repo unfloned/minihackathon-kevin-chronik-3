@@ -176,7 +176,8 @@ export class WishlistService {
 
     async getPublicWishlist(slug: string): Promise<{
         wishlist: Wishlist;
-        items: WishlistItem[];
+        items: (Omit<WishlistItem, 'notes'> & { isReserved: boolean })[];
+        ownerName: string;
     } | null> {
         const wishlist = await this.database.query(Wishlist)
             .filter({ publicSlug: slug, isPublic: true })
@@ -184,15 +185,98 @@ export class WishlistService {
 
         if (!wishlist) return null;
 
-        const items: WishlistItem[] = [];
+        // Get owner name
+        const owner = await this.database.query(User)
+            .filter({ id: (wishlist.user as any).id || wishlist.user })
+            .findOneOrUndefined();
+
+        const items: (Omit<WishlistItem, 'notes'> & { isReserved: boolean })[] = [];
         for (const itemId of wishlist.itemIds) {
             const item = await this.database.query(WishlistItem)
-                .filter({ id: itemId })
+                .filter({ id: itemId, isPurchased: false })
                 .findOneOrUndefined();
-            if (item) items.push(item);
+            if (item) {
+                // Don't expose notes or reservedBy name, just show if reserved
+                const { notes, reservedBy, ...itemWithoutPrivate } = item;
+                items.push({
+                    ...itemWithoutPrivate,
+                    isReserved: !!reservedBy,
+                });
+            }
         }
 
-        return { wishlist, items };
+        return {
+            wishlist,
+            items,
+            ownerName: owner?.displayName || 'Someone',
+        };
+    }
+
+    async reservePublicItem(slug: string, itemId: string, reserverName: string): Promise<boolean> {
+        const wishlist = await this.database.query(Wishlist)
+            .filter({ publicSlug: slug, isPublic: true })
+            .findOneOrUndefined();
+
+        if (!wishlist || !wishlist.itemIds.includes(itemId)) return false;
+
+        const item = await this.database.query(WishlistItem)
+            .filter({ id: itemId })
+            .findOneOrUndefined();
+
+        if (!item || item.reservedBy) return false; // Already reserved
+
+        item.reservedBy = reserverName;
+        item.reservedAt = new Date();
+        await this.database.persist(item);
+        return true;
+    }
+
+    async unreservePublicItem(slug: string, itemId: string): Promise<boolean> {
+        const wishlist = await this.database.query(Wishlist)
+            .filter({ publicSlug: slug, isPublic: true })
+            .findOneOrUndefined();
+
+        if (!wishlist || !wishlist.itemIds.includes(itemId)) return false;
+
+        const item = await this.database.query(WishlistItem)
+            .filter({ id: itemId })
+            .findOneOrUndefined();
+
+        if (!item) return false;
+
+        item.reservedBy = undefined;
+        item.reservedAt = undefined;
+        await this.database.persist(item);
+        return true;
+    }
+
+    async getOrCreateDefaultWishlist(userId: string): Promise<Wishlist> {
+        // Check for existing default wishlist
+        let wishlist = await this.database.query(Wishlist)
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .filter({ name: 'Meine Wunschliste' })
+            .findOneOrUndefined();
+
+        if (!wishlist) {
+            // Create default wishlist with all user's items
+            const allItems = await this.getAllItems(userId);
+            wishlist = await this.createWishlist(userId, {
+                name: 'Meine Wunschliste',
+                description: 'Meine persönliche Wunschliste',
+                isPublic: false,
+                itemIds: allItems.map(i => i.id),
+            });
+        }
+
+        return wishlist;
+    }
+
+    async syncDefaultWishlistItems(userId: string): Promise<void> {
+        const wishlist = await this.getOrCreateDefaultWishlist(userId);
+        const allItems = await this.getAllItems(userId);
+        wishlist.itemIds = allItems.filter(i => !i.isPurchased).map(i => i.id);
+        wishlist.updatedAt = new Date();
+        await this.database.persist(wishlist);
     }
 
     async createWishlist(userId: string, dto: CreateWishlistDto): Promise<Wishlist> {

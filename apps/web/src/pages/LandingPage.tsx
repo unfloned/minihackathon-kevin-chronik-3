@@ -32,6 +32,7 @@ import {
     IconCode,
     IconMicrophone,
     IconSparkles,
+    IconShare,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -193,6 +194,56 @@ export default function LandingPage() {
                             </Group>
                             <Group gap="xs">
                                 <Badge variant="light" color="grape">{t('landing.hotFeature.voiceNotes.feature3')}</Badge>
+                            </Group>
+                        </Stack>
+                    </Group>
+                </Paper>
+
+                {/* Wishlist Sharing Hot Feature */}
+                <Paper
+                    withBorder
+                    p="xl"
+                    radius="lg"
+                    mt="lg"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(190, 75, 219, 0.1) 0%, rgba(250, 82, 82, 0.1) 100%)',
+                        borderColor: 'var(--mantine-color-grape-4)',
+                    }}
+                >
+                    <Group justify="space-between" wrap="wrap" gap="lg">
+                        <Group gap="md">
+                            <ThemeIcon
+                                size={60}
+                                radius="xl"
+                                variant="gradient"
+                                gradient={{ from: 'grape', to: 'pink', deg: 135 }}
+                            >
+                                <IconShare size={30} />
+                            </ThemeIcon>
+                            <Stack gap={4}>
+                                <Group gap="xs">
+                                    <Badge
+                                        size="sm"
+                                        variant="gradient"
+                                        gradient={{ from: 'grape', to: 'pink' }}
+                                        leftSection={<IconSparkles size={12} />}
+                                    >
+                                        {t('landing.hotFeature.badge')}
+                                    </Badge>
+                                </Group>
+                                <Title order={3}>{t('landing.hotFeature.wishlistSharing.title')}</Title>
+                                <Text c="dimmed" size="sm" maw={400}>
+                                    {t('landing.hotFeature.wishlistSharing.description')}
+                                </Text>
+                            </Stack>
+                        </Group>
+                        <Stack gap="xs" align="flex-end">
+                            <Group gap="xs">
+                                <Badge variant="light" color="grape">{t('landing.hotFeature.wishlistSharing.feature1')}</Badge>
+                                <Badge variant="light" color="pink">{t('landing.hotFeature.wishlistSharing.feature2')}</Badge>
+                            </Group>
+                            <Group gap="xs">
+                                <Badge variant="light" color="violet">{t('landing.hotFeature.wishlistSharing.feature3')}</Badge>
                             </Group>
                         </Stack>
                     </Group>

@@ -46,6 +46,10 @@ export class WishlistItem {
     notes: string = '';
     store: string = '';
 
+    // Sharing: when someone reserves this item (hidden from owner)
+    reservedBy?: string;
+    reservedAt?: Date;
+
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }

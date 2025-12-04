@@ -7,6 +7,7 @@ import AppLayout from './layouts/AppLayout';
 // Public Pages (not in modules)
 import LandingPage from './pages/LandingPage';
 import ChangelogPage from './pages/ChangelogPage';
+import SharedWishlistPage from './pages/SharedWishlistPage';
 
 // Module Pages
 import { AuthPage, ForgotPasswordPage, ResetPasswordPage } from './modules/auth';
@@ -40,6 +41,7 @@ export default function App() {
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/changelog" element={<ChangelogPage />} />
+                <Route path="/shared/:slug" element={<SharedWishlistPage />} />
             </Route>
 
             {/* Protected App Routes */}

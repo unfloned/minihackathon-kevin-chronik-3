@@ -45,7 +45,11 @@ import {
     IconDots,
     IconLayoutGrid,
     IconList,
+    IconShare,
+    IconCopy,
+    IconLink,
 } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
@@ -67,6 +71,12 @@ function formatPrice(price?: PriceInfo): string {
     return `${price.amount.toFixed(2)} ${price.currency}`;
 }
 
+interface SharingInfo {
+    isPublic: boolean;
+    shareUrl: string | null;
+    publicSlug: string;
+}
+
 export default function WishlistsPage() {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<string | null>('all');
@@ -78,6 +88,36 @@ export default function WishlistsPage() {
     const [globalViewMode, setViewMode] = useViewMode();
     // Fallback to 'grid' if global viewMode is not supported by this page
     const viewMode = ['grid', 'list'].includes(globalViewMode) ? globalViewMode : 'grid';
+
+    // Sharing state
+    const { data: sharingInfo, refetch: refetchSharing } = useRequest<SharingInfo>('/wishlists/default/sharing');
+    const { mutate: toggleSharing, isLoading: togglingSharing } = useMutation<SharingInfo, { isPublic: boolean }>(
+        '/wishlists/default/sharing',
+        { method: 'POST' }
+    );
+
+    const handleToggleSharing = async () => {
+        const newState = !sharingInfo?.isPublic;
+        await toggleSharing({ isPublic: newState });
+        await refetchSharing();
+        notifications.show({
+            title: newState ? t('wishlists.sharing.enabled') : t('wishlists.sharing.disabled'),
+            message: newState ? t('wishlists.sharing.enabledDesc') : t('wishlists.sharing.disabledDesc'),
+            color: newState ? 'green' : 'gray',
+        });
+    };
+
+    const handleCopyLink = () => {
+        if (sharingInfo?.shareUrl) {
+            const fullUrl = `${window.location.origin}${sharingInfo.shareUrl}`;
+            navigator.clipboard.writeText(fullUrl);
+            notifications.show({
+                title: t('wishlists.sharing.linkCopied'),
+                message: t('wishlists.sharing.linkCopiedDesc'),
+                color: 'green',
+            });
+        }
+    };
 
     const categoryOptions: { value: WishlistCategory; label: string; icon: typeof IconDevices }[] = [
         { value: 'tech', label: t('wishlists.categories.tech'), icon: IconDevices },
@@ -258,6 +298,61 @@ export default function WishlistsPage() {
                     <PageTitle title={t('wishlists.title')} subtitle={t('wishlists.subtitle')} />
                     <Button onClick={openCreateModal}>{t('wishlists.newItem')}</Button>
                 </Group>
+
+                {/* Sharing Panel */}
+                <Paper
+                    withBorder
+                    p="md"
+                    radius="md"
+                    style={{
+                        background: sharingInfo?.isPublic
+                            ? 'linear-gradient(135deg, rgba(34, 139, 230, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)'
+                            : undefined,
+                        borderColor: sharingInfo?.isPublic ? 'var(--mantine-color-blue-4)' : undefined,
+                    }}
+                >
+                    <Group justify="space-between" wrap="wrap" gap="md">
+                        <Group gap="md">
+                            <ThemeIcon
+                                size={50}
+                                radius="xl"
+                                variant={sharingInfo?.isPublic ? 'gradient' : 'light'}
+                                gradient={{ from: 'blue', to: 'teal' }}
+                                color="gray"
+                            >
+                                <IconShare size={24} />
+                            </ThemeIcon>
+                            <Stack gap={2}>
+                                <Text fw={600}>{t('wishlists.sharing.title')}</Text>
+                                <Text size="sm" c="dimmed">
+                                    {sharingInfo?.isPublic
+                                        ? t('wishlists.sharing.publicDesc')
+                                        : t('wishlists.sharing.privateDesc')}
+                                </Text>
+                            </Stack>
+                        </Group>
+                        <Group gap="sm">
+                            {sharingInfo?.isPublic && (
+                                <Button
+                                    variant="light"
+                                    color="blue"
+                                    leftSection={<IconCopy size={16} />}
+                                    onClick={handleCopyLink}
+                                >
+                                    {t('wishlists.sharing.copyLink')}
+                                </Button>
+                            )}
+                            <Switch
+                                checked={sharingInfo?.isPublic || false}
+                                onChange={handleToggleSharing}
+                                disabled={togglingSharing}
+                                size="lg"
+                                onLabel={<IconLink size={14} />}
+                                offLabel={<IconLink size={14} />}
+                            />
+                        </Group>
+                    </Group>
+                </Paper>
 
                 {/* Stats */}
                 <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
