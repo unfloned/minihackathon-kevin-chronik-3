@@ -10,6 +10,8 @@ import {
     Paper,
     MultiSelect,
     Skeleton,
+    Switch,
+    Button,
 } from '@mantine/core';
 import {
     IconTrophy,
@@ -93,13 +95,24 @@ import {
     IconBolt,
     IconCalendarWeek,
     IconCalendarMonth,
+    IconShare,
+    IconCopy,
+    IconLink,
 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useRequest, useConfetti } from '../../../hooks';
+import { useRequest, useMutation, useConfetti } from '../../../hooks';
+import { notifications } from '@mantine/notifications';
 import type { AchievementPublic, GamificationStats } from '@ycmm/core';
+
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
+
+interface ProfileSharingStatus {
+    isPublic: boolean;
+    shareUrl: string | null;
+    profileSlug: string;
+}
 
 // Achievement interface extends AchievementPublic with additional fields for display
 interface Achievement extends AchievementPublic {
@@ -246,6 +259,46 @@ export default function AchievementsPage() {
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const confetti = useConfetti();
 
+    // Profile Sharing
+    const { data: sharingStatus, isLoading: loadingSharing, refetch: refetchSharingStatus } = useRequest<ProfileSharingStatus>(
+        '/gamification/profile/sharing'
+    );
+    const { mutate: toggleSharing, isLoading: togglingSharing } = useMutation<ProfileSharingStatus, { isPublic: boolean }>(
+        '/gamification/profile/sharing',
+        { method: 'POST' }
+    );
+
+    const handleToggleSharing = async () => {
+        const newState = !sharingStatus?.isPublic;
+        try {
+            await toggleSharing({ isPublic: newState });
+            await refetchSharingStatus();
+            notifications.show({
+                title: newState ? t('achievements.sharing.enabled') : t('achievements.sharing.disabled'),
+                message: newState ? t('achievements.sharing.enabledMessage') : t('achievements.sharing.disabledMessage'),
+                color: newState ? 'green' : 'gray',
+            });
+        } catch {
+            notifications.show({
+                title: t('notifications.error'),
+                message: t('achievements.sharing.error'),
+                color: 'red',
+            });
+        }
+    };
+
+    const handleCopyLink = () => {
+        if (sharingStatus?.shareUrl) {
+            const fullUrl = `${window.location.origin}${sharingStatus.shareUrl}`;
+            navigator.clipboard.writeText(fullUrl);
+            notifications.show({
+                title: t('achievements.sharing.linkCopied'),
+                message: t('achievements.sharing.linkCopiedDesc'),
+                color: 'green',
+            });
+        }
+    };
+
     const categoryLabels: Record<string, string> = {
         all: t('achievements.categories.all'),
         general: t('achievements.categories.general'),
@@ -308,6 +361,61 @@ export default function AchievementsPage() {
             <Stack gap="xl">
                 {/* Header */}
                 <PageTitle title={t('achievements.title')} subtitle={t('achievements.subtitle')} />
+
+                {/* Profile Sharing Section */}
+                <Paper
+                    withBorder
+                    p="md"
+                    radius="md"
+                    style={{
+                        background: sharingStatus?.isPublic
+                            ? 'linear-gradient(135deg, rgba(156, 39, 176, 0.1) 0%, rgba(233, 30, 99, 0.1) 100%)'
+                            : undefined,
+                        borderColor: sharingStatus?.isPublic ? 'var(--mantine-color-grape-4)' : undefined,
+                    }}
+                >
+                    <Group justify="space-between" wrap="wrap" gap="md">
+                        <Group gap="md">
+                            <ThemeIcon
+                                size={50}
+                                radius="xl"
+                                variant={sharingStatus?.isPublic ? 'gradient' : 'light'}
+                                gradient={{ from: 'grape', to: 'pink' }}
+                                color="gray"
+                            >
+                                <IconShare size={24} />
+                            </ThemeIcon>
+                            <Stack gap={2}>
+                                <Text fw={600}>{t('achievements.sharing.title')}</Text>
+                                <Text size="sm" c="dimmed">
+                                    {sharingStatus?.isPublic
+                                        ? t('achievements.sharing.publicDesc')
+                                        : t('achievements.sharing.privateDesc')}
+                                </Text>
+                            </Stack>
+                        </Group>
+                        <Group gap="sm">
+                            {sharingStatus?.isPublic && (
+                                <Button
+                                    variant="light"
+                                    color="grape"
+                                    leftSection={<IconCopy size={16} />}
+                                    onClick={handleCopyLink}
+                                >
+                                    {t('achievements.sharing.copyLink')}
+                                </Button>
+                            )}
+                            <Switch
+                                checked={sharingStatus?.isPublic || false}
+                                onChange={handleToggleSharing}
+                                disabled={loadingSharing || togglingSharing}
+                                size="lg"
+                                onLabel={<IconLink size={14} />}
+                                offLabel={<IconLink size={14} />}
+                            />
+                        </Group>
+                    </Group>
+                </Paper>
 
                 {/* Stats Overview */}
                 <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
