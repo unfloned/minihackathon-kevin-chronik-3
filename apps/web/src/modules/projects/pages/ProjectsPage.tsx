@@ -21,6 +21,7 @@ import {
     ThemeIcon,
     SegmentedControl,
     Container,
+    Table,
 } from '@mantine/core';
 import { DateInput, DateValue } from '@mantine/dates';
 
@@ -46,9 +47,11 @@ import {
     IconPlayerPause,
     IconCheck,
     IconX,
+    IconLayoutGrid,
+    IconList,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
-import { useRequest, useMutation } from '../../../hooks';
+import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import type { ProjectSimple, ProjectType, ProjectStatus } from '@ycmm/core';
 
@@ -111,6 +114,8 @@ export default function ProjectsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [view, setView] = useState<'active' | 'archived'>('active');
     const [filterType, setFilterType] = useState<ProjectType | 'all'>('all');
+    const [globalViewMode, setViewMode] = useViewMode();
+    const viewMode = globalViewMode === 'list' || globalViewMode === 'table' ? 'list' : 'grid';
 
     const { data: projects, isLoading, refetch } = useRequest<Project[]>('/projects');
     const { data: archivedProjects, refetch: refetchArchived } = useRequest<Project[]>('/projects/archived');
@@ -308,12 +313,23 @@ export default function ProjectsPage() {
                     />
                 </Group>
 
-                <TextInput
-                    placeholder="Projekte suchen..."
-                    leftSection={<IconSearch size={16} />}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <Group>
+                    <TextInput
+                        placeholder="Projekte suchen..."
+                        leftSection={<IconSearch size={16} />}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        style={{ flex: 1 }}
+                    />
+                    <SegmentedControl
+                        value={viewMode}
+                        onChange={(value) => setViewMode(value as 'grid' | 'list')}
+                        data={[
+                            { value: 'grid', label: <IconLayoutGrid size={16} /> },
+                            { value: 'list', label: <IconList size={16} /> },
+                        ]}
+                    />
+                </Group>
 
                 {isLoading ? (
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
@@ -337,7 +353,7 @@ export default function ProjectsPage() {
                             </Text>
                         </Stack>
                     </Paper>
-                ) : (
+                ) : viewMode === 'grid' ? (
                     <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
                         {filteredProjects.map((project) => {
                             const StatusIcon = getStatusIcon(project.status);
@@ -479,6 +495,136 @@ export default function ProjectsPage() {
                             );
                         })}
                     </SimpleGrid>
+                ) : (
+                    <Paper shadow="sm" withBorder radius="md">
+                        <Table striped highlightOnHover>
+                            <Table.Thead>
+                                <Table.Tr>
+                                    <Table.Th>Projekt</Table.Th>
+                                    <Table.Th>Typ</Table.Th>
+                                    <Table.Th>Status</Table.Th>
+                                    <Table.Th>Fortschritt</Table.Th>
+                                    <Table.Th>Zieldatum</Table.Th>
+                                    <Table.Th>Aktionen</Table.Th>
+                                </Table.Tr>
+                            </Table.Thead>
+                            <Table.Tbody>
+                                {filteredProjects.map((project) => {
+                                    const StatusIcon = getStatusIcon(project.status);
+                                    const statusLabel = statusOptions.find((opt) => opt.value === project.status)?.label;
+
+                                    return (
+                                        <Table.Tr
+                                            key={project.id}
+                                            style={{ cursor: 'pointer' }}
+                                            onClick={() => navigate(`/app/projects/${project.id}`)}
+                                        >
+                                            <Table.Td>
+                                                <Group gap="sm">
+                                                    <ThemeIcon
+                                                        size="sm"
+                                                        radius="md"
+                                                        variant="light"
+                                                        color={project.color}
+                                                    >
+                                                        {project.type === 'project' ? (
+                                                            <IconTarget size={14} />
+                                                        ) : (
+                                                            <IconFlag size={14} />
+                                                        )}
+                                                    </ThemeIcon>
+                                                    <Text fw={500} size="sm">{project.name}</Text>
+                                                </Group>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Badge variant="light" color={project.color} size="sm">
+                                                    {project.type === 'project' ? 'Projekt' : 'Ziel'}
+                                                </Badge>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Badge
+                                                    color={getStatusColor(project.status)}
+                                                    variant="light"
+                                                    size="sm"
+                                                    leftSection={<StatusIcon size={12} />}
+                                                >
+                                                    {statusLabel}
+                                                </Badge>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Group gap="xs">
+                                                    <Progress value={project.progress} color={project.color} size="sm" style={{ width: 80 }} />
+                                                    <Text size="xs" fw={500}>{project.progress}%</Text>
+                                                </Group>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Text size="sm" c="dimmed">
+                                                    {project.targetDate
+                                                        ? new Date(project.targetDate).toLocaleDateString('de-DE')
+                                                        : '-'}
+                                                </Text>
+                                            </Table.Td>
+                                            <Table.Td>
+                                                <Menu position="bottom-end" withArrow>
+                                                    <Menu.Target>
+                                                        <ActionIcon
+                                                            variant="subtle"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            <IconDotsVertical size={16} />
+                                                        </ActionIcon>
+                                                    </Menu.Target>
+                                                    <Menu.Dropdown>
+                                                        <Menu.Item
+                                                            leftSection={<IconEdit size={16} />}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleOpenEdit(project);
+                                                            }}
+                                                        >
+                                                            Bearbeiten
+                                                        </Menu.Item>
+                                                        {view === 'active' ? (
+                                                            <Menu.Item
+                                                                leftSection={<IconArchive size={16} />}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleArchive(project.id);
+                                                                }}
+                                                            >
+                                                                Archivieren
+                                                            </Menu.Item>
+                                                        ) : (
+                                                            <Menu.Item
+                                                                leftSection={<IconArchiveOff size={16} />}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleUnarchive(project.id);
+                                                                }}
+                                                            >
+                                                                Wiederherstellen
+                                                            </Menu.Item>
+                                                        )}
+                                                        <Menu.Divider />
+                                                        <Menu.Item
+                                                            color="red"
+                                                            leftSection={<IconTrash size={16} />}
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleDelete(project.id);
+                                                            }}
+                                                        >
+                                                            Löschen
+                                                        </Menu.Item>
+                                                    </Menu.Dropdown>
+                                                </Menu>
+                                            </Table.Td>
+                                        </Table.Tr>
+                                    );
+                                })}
+                            </Table.Tbody>
+                        </Table>
+                    </Paper>
                 )}
 
                 <Modal

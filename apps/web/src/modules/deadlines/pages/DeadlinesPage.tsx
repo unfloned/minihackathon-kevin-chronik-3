@@ -432,7 +432,7 @@ function DeadlinesPage() {
   const completedDeadlines = allDeadlines?.filter((d) => d.isCompleted) || [];
 
   return (
-    <Container size="lg" py="xl">
+    <Container size="xl" py="xl">
       <Group justify="space-between" mb="xl">
         <PageTitle title="Fristen" subtitle="Verwalte deine Fristen und Termine" />
         <Button leftSection={<IconPlus size={18} />} onClick={() => handleOpenModal()}>
