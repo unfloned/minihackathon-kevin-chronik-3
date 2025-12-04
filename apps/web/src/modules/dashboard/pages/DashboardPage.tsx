@@ -13,6 +13,7 @@ import {
     Progress,
     Skeleton,
     Anchor,
+    Alert,
 } from '@mantine/core';
 import {
     IconTrophy,
@@ -77,19 +78,16 @@ export default function DashboardPage() {
 
             {/* Demo Banner */}
             {user?.isDemo && (
-                <Paper withBorder p="md">
-                    <Group justify="space-between">
-                        <div>
-                            <Text fw={500}>Du nutzt einen Demo-Account</Text>
-                            <Text size="sm">
-                                Registriere dich um deine Daten zu speichern.
-                            </Text>
-                        </div>
+                <Alert variant="light" color="blue" title="Du nutzt einen Demo-Account mit Beispieldaten">
+                    <Group justify="space-between" align="center">
+                        <Text size="sm">
+                            Registriere dich für deinen eigenen Account mit deinen persönlichen Daten.
+                        </Text>
                         <Button variant="filled" size="sm" onClick={handleRegister}>
                             Jetzt registrieren
                         </Button>
                     </Group>
-                </Paper>
+                </Alert>
             )}
 
             {/* Top Stats */}

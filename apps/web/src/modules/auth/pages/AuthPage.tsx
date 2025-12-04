@@ -129,7 +129,7 @@ export default function AuthPage() {
             await createDemoAccount();
             notifications.show({
                 title: 'Demo gestartet!',
-                message: 'Du nutzt jetzt einen Demo-Account.',
+                message: 'Du nutzt jetzt einen Demo-Account mit Beispieldaten.',
                 color: 'blue',
             });
             navigate('/app');

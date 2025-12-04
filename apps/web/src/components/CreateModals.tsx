@@ -11,9 +11,16 @@ import {
     Button,
     SegmentedControl,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DateInput, DateValue } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
 import { useMutation } from '../hooks';
+
+// Helper to convert Mantine v8 DateValue to Date
+const toDate = (value: DateValue): Date => {
+    if (!value) return new Date();
+    if (value instanceof Date) return value;
+    return new Date(value);
+};
 
 // ============ HABIT CREATE MODAL ============
 interface HabitForm {
@@ -153,7 +160,7 @@ export function ExpenseCreateModal({ context, id, innerProps }: ContextModalProp
             <DateInput
                 label="Datum"
                 value={form.date}
-                onChange={(d) => setForm({ ...form, date: d || new Date() })}
+                onChange={(d) => setForm({ ...form, date: toDate(d) })}
             />
             <Button onClick={handleSubmit} loading={isLoading} fullWidth mt="md">
                 Erstellen
@@ -211,7 +218,7 @@ export function DeadlineCreateModal({ context, id, innerProps }: ContextModalPro
             <DateInput
                 label="Fällig am"
                 value={form.dueDate}
-                onChange={(d) => setForm({ ...form, dueDate: d || new Date() })}
+                onChange={(d) => setForm({ ...form, dueDate: toDate(d) })}
                 required
             />
             <Select
@@ -437,7 +444,7 @@ export function ProjectCreateModal({ context, id, innerProps }: ContextModalProp
                 label="Zieldatum"
                 placeholder="Optional"
                 value={form.targetDate}
-                onChange={(d) => setForm({ ...form, targetDate: d || undefined })}
+                onChange={(d) => setForm({ ...form, targetDate: d ? toDate(d) : undefined })}
                 clearable
             />
             <ColorInput

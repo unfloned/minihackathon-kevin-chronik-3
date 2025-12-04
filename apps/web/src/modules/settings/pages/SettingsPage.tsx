@@ -154,8 +154,8 @@ export default function SettingsPage() {
 
             {/* Demo Account Warning */}
             {user?.isDemo && (
-                <Alert icon={<IconInfoCircle size={16} />} color="orange">
-                    Du nutzt einen Demo-Account. Einstellungen können nicht gespeichert werden.
+                <Alert icon={<IconInfoCircle size={16} />} color="blue">
+                    Du nutzt einen Demo-Account mit Beispieldaten. Registriere dich für deinen eigenen Account.
                 </Alert>
             )}
 

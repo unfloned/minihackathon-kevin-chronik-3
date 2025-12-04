@@ -21,7 +21,14 @@ import {
     ThemeIcon,
     Progress,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DateInput, DateValue } from '@mantine/dates';
+
+// Helper to convert Mantine v8 DateValue to Date
+const toDateOrNull = (value: DateValue): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    return new Date(value);
+};
 import { useDisclosure } from '@mantine/hooks';
 import {
     IconPlus,
@@ -559,7 +566,7 @@ export default function ExpensesPage() {
                         placeholder="Datum auswählen"
                         required
                         value={formData.date}
-                        onChange={(value) => setFormData({ ...formData, date: value })}
+                        onChange={(value) => setFormData({ ...formData, date: toDateOrNull(value) })}
                         valueFormat="DD.MM.YYYY"
                         locale="de"
                     />

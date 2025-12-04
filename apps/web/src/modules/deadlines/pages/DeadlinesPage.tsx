@@ -18,7 +18,14 @@ import {
   Menu,
   SimpleGrid,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DateInput, DateValue } from '@mantine/dates';
+
+// Helper to convert Mantine v8 DateValue to Date
+const toDateOrNull = (value: DateValue): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    return new Date(value);
+};
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
@@ -489,7 +496,7 @@ function DeadlinesPage() {
             placeholder="Wählen Sie ein Datum"
             required
             value={formData.dueDate}
-            onChange={(date) => setFormData({ ...formData, dueDate: date })}
+            onChange={(date) => setFormData({ ...formData, dueDate: toDateOrNull(date) })}
             locale="de"
           />
 

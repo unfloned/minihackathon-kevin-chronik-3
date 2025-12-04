@@ -23,7 +23,14 @@ import {
     Modal,
     ColorInput,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DateInput, DateValue } from '@mantine/dates';
+
+// Helper to convert Mantine v8 DateValue to Date
+const toDateOrNull = (value: DateValue): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    return new Date(value);
+};
 import { useDisclosure } from '@mantine/hooks';
 import {
     IconArrowLeft,
@@ -539,7 +546,7 @@ export default function ProjectDetailPage() {
                                     <DateInput
                                         placeholder="Zieldatum"
                                         value={newMilestoneDate}
-                                        onChange={setNewMilestoneDate}
+                                        onChange={(v) => setNewMilestoneDate(toDateOrNull(v))}
                                         size="sm"
                                         style={{ flex: 1 }}
                                         leftSection={<IconCalendar size={14} />}
@@ -631,7 +638,7 @@ export default function ProjectDetailPage() {
                     <DateInput
                         label="Zieldatum"
                         value={editForm.targetDate}
-                        onChange={(date) => setEditForm({ ...editForm, targetDate: date })}
+                        onChange={(date) => setEditForm({ ...editForm, targetDate: toDateOrNull(date) })}
                         clearable
                     />
                     <ColorInput

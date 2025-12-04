@@ -22,7 +22,14 @@ import {
     SegmentedControl,
     Container,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DateInput, DateValue } from '@mantine/dates';
+
+// Helper to convert Mantine v8 DateValue to Date
+const toDateOrNull = (value: DateValue): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    return new Date(value);
+};
 import { useDisclosure } from '@mantine/hooks';
 import {
     IconPlus,
@@ -526,7 +533,7 @@ export default function ProjectsPage() {
                         label="Zieldatum"
                         placeholder="Zieldatum auswählen"
                         value={form.targetDate}
-                        onChange={(value) => setForm({ ...form, targetDate: value || undefined })}
+                        onChange={(value) => setForm({ ...form, targetDate: toDateOrNull(value) ?? undefined })}
                         clearable
                     />
 

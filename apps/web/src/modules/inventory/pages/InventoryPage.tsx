@@ -21,7 +21,14 @@ import {
     SegmentedControl,
     Container,
 } from '@mantine/core';
-import { DateInput } from '@mantine/dates';
+import { DateInput, DateValue } from '@mantine/dates';
+
+// Helper to convert Mantine v8 DateValue to Date
+const toDateOrNull = (value: DateValue): Date | null => {
+    if (!value) return null;
+    if (value instanceof Date) return value;
+    return new Date(value);
+};
 import { useDisclosure } from '@mantine/hooks';
 import {
     IconDotsVertical,
@@ -691,7 +698,7 @@ export default function InventoryPage() {
                         label="Erwartete Rückgabe"
                         placeholder="Datum auswählen"
                         value={lendReturn}
-                        onChange={setLendReturn}
+                        onChange={(v) => setLendReturn(toDateOrNull(v))}
                         clearable
                     />
 
