@@ -31,6 +31,7 @@ import {
     IconInfoCircle,
     IconMicrophone,
     IconShare,
+    IconTrophy,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -193,6 +194,16 @@ export default function AuthPage() {
                             </ThemeIcon>
                             <Text size="sm" fw={500}>{t('landing.features.wishlistSharing')}</Text>
                             <Badge size="xs" variant="gradient" gradient={{ from: 'grape', to: 'pink' }}>
+                                {t('landing.hotFeature.badge')}
+                            </Badge>
+                        </Group>
+                        {/* Achievement Showcase - Hot Feature */}
+                        <Group gap="xs">
+                            <ThemeIcon size="sm" variant="gradient" gradient={{ from: 'violet', to: 'cyan' }}>
+                                <IconTrophy size={14} />
+                            </ThemeIcon>
+                            <Text size="sm" fw={500}>{t('landing.features.achievementShowcase')}</Text>
+                            <Badge size="xs" variant="gradient" gradient={{ from: 'violet', to: 'cyan' }}>
                                 {t('landing.hotFeature.badge')}
                             </Badge>
                         </Group>
