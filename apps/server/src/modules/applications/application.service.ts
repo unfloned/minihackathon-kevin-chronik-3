@@ -54,23 +54,12 @@ export interface UpdateInterviewDto {
     feedback?: string;
 }
 
-// Helper to fix dates in nested objects after database retrieval
-function fixApplicationDates(app: Application): Application {
-    // Fix statusHistory dates
-    if (app.statusHistory) {
-        app.statusHistory = app.statusHistory.map(sh => ({
-            ...sh,
-            date: sh.date instanceof Date ? sh.date : new Date(sh.date),
-        }));
+// Helper to convert Date to ISO string for storage
+function toISOString(date: Date | string): string {
+    if (date instanceof Date) {
+        return date.toISOString();
     }
-    // Fix interview dates
-    if (app.interviews) {
-        app.interviews = app.interviews.map(interview => ({
-            ...interview,
-            scheduledAt: interview.scheduledAt instanceof Date ? interview.scheduledAt : new Date(interview.scheduledAt),
-        }));
-    }
-    return app;
+    return date;
 }
 
 export class ApplicationService {
@@ -81,7 +70,7 @@ export class ApplicationService {
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .orderBy('updatedAt', 'desc')
             .find();
-        return apps.map(fixApplicationDates);
+        return apps;
     }
 
     async getByStatus(userId: string, status: ApplicationStatus): Promise<Application[]> {
@@ -90,7 +79,7 @@ export class ApplicationService {
             .filter({ status })
             .orderBy('updatedAt', 'desc')
             .find();
-        return apps.map(fixApplicationDates);
+        return apps;
     }
 
     async getById(id: string, userId: string): Promise<Application | undefined> {
@@ -98,7 +87,7 @@ export class ApplicationService {
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .filter({ id })
             .findOneOrUndefined();
-        return app ? fixApplicationDates(app) : undefined;
+        return app;
     }
 
     async create(userId: string, dto: CreateApplicationDto): Promise<Application> {
@@ -118,7 +107,7 @@ export class ApplicationService {
         app.notes = dto.notes || '';
         app.source = dto.source || '';
         app.status = 'draft';
-        app.statusHistory = [{ status: 'draft', date: new Date() }];
+        app.statusHistory = [{ status: 'draft', date: new Date().toISOString() }];
         app.interviews = [];
         app.createdAt = new Date();
         app.updatedAt = new Date();
@@ -164,7 +153,7 @@ export class ApplicationService {
 
         const statusChange: StatusChange = {
             status,
-            date: new Date(),
+            date: new Date().toISOString(),
             note,
         };
 
@@ -190,7 +179,7 @@ export class ApplicationService {
         const interview: Interview = {
             id: crypto.randomUUID(),
             type: dto.type,
-            scheduledAt: dto.scheduledAt,
+            scheduledAt: toISOString(dto.scheduledAt),
             duration: dto.duration,
             location: dto.location,
             interviewers: dto.interviewers,
@@ -213,7 +202,7 @@ export class ApplicationService {
         if (!interview) return null;
 
         if (dto.type !== undefined) interview.type = dto.type;
-        if (dto.scheduledAt !== undefined) interview.scheduledAt = dto.scheduledAt;
+        if (dto.scheduledAt !== undefined) interview.scheduledAt = toISOString(dto.scheduledAt);
         if (dto.duration !== undefined) interview.duration = dto.duration;
         if (dto.location !== undefined) interview.location = dto.location;
         if (dto.interviewers !== undefined) interview.interviewers = dto.interviewers;
@@ -249,10 +238,9 @@ export class ApplicationService {
         offerRate: number;
         averageResponseDays: number | null;
     }> {
-        const allRaw = await this.database.query(Application)
+        const all = await this.database.query(Application)
             .useInnerJoinWith('user').filter({ id: userId }).end()
             .find();
-        const all = allRaw.map(fixApplicationDates);
 
         const byStatus: { status: ApplicationStatus; count: number }[] = [];
         const statusCounts: Record<string, number> = {};

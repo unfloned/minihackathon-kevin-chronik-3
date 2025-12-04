@@ -22,14 +22,14 @@ export interface SalaryRange {
 
 export interface StatusChange {
     status: ApplicationStatus;
-    date: Date;
+    date: string; // ISO date string - SQLite stores JSON dates as strings
     note?: string;
 }
 
 export interface Interview {
     id: string;
     type: 'phone' | 'video' | 'onsite' | 'technical' | 'hr';
-    scheduledAt: Date;
+    scheduledAt: string; // ISO date string - SQLite stores JSON dates as strings
     duration?: number;
     location?: string;
     interviewers?: string[];
