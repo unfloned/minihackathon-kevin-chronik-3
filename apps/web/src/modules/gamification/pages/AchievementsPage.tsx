@@ -8,7 +8,7 @@ import {
     Badge,
     ThemeIcon,
     Paper,
-    SegmentedControl,
+    MultiSelect,
     Skeleton,
 } from '@mantine/core';
 import {
@@ -260,7 +260,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function AchievementsPage() {
-    const [selectedCategory, setSelectedCategory] = useState('all');
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const confetti = useConfetti();
 
     const { data: allAchievements, isLoading: loadingAll } = useRequest<Achievement[]>(
@@ -290,10 +290,10 @@ export default function AchievementsPage() {
     }, [userAchievements?.length, confetti]);
 
     const filteredAchievements = allAchievements?.filter(
-        a => selectedCategory === 'all' || a.category === selectedCategory
+        a => selectedCategories.length === 0 || selectedCategories.includes(a.category)
     ) || [];
 
-    const categories = ['all', ...new Set(allAchievements?.map(a => a.category) || [])];
+    const categories = [...new Set(allAchievements?.map(a => a.category) || [])];
 
     const totalAchievements = allAchievements?.length || 0;
     const unlockedCount = userAchievements?.length || 0;
@@ -345,17 +345,17 @@ export default function AchievementsPage() {
                 </SimpleGrid>
 
                 {/* Category Filter */}
-                <Paper withBorder p="md">
-                    <SegmentedControl
-                        value={selectedCategory}
-                        onChange={setSelectedCategory}
-                        data={categories.map(cat => ({
-                            label: categoryLabels[cat] || cat,
-                            value: cat,
-                        }))}
-                        fullWidth
-                    />
-                </Paper>
+                <MultiSelect
+                    placeholder="Alle Kategorien"
+                    value={selectedCategories}
+                    onChange={setSelectedCategories}
+                    data={categories.map(cat => ({
+                        label: categoryLabels[cat] || cat,
+                        value: cat,
+                    }))}
+                    clearable
+                    searchable
+                />
 
                 {/* Achievements Grid */}
                 {isLoading ? (
