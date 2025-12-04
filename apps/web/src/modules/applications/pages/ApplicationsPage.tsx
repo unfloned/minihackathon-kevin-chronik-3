@@ -175,7 +175,8 @@ const sourceOptions = [
 const kanbanColumns: { status: ApplicationStatus; label: string }[] = [
     { status: 'draft', label: 'Entwürfe' },
     { status: 'applied', label: 'Beworben' },
-    { status: 'interview_scheduled', label: 'Interviews' },
+    { status: 'interview_scheduled', label: 'Interview geplant' },
+    { status: 'interviewed', label: 'Interview absolviert' },
     { status: 'offer_received', label: 'Angebote' },
     { status: 'rejected', label: 'Abgelehnt' },
 ];
