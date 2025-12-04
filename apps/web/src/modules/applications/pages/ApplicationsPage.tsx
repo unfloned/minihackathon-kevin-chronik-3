@@ -23,6 +23,7 @@ import {
     Table,
     SegmentedControl,
     Container,
+    Box,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
@@ -42,6 +43,17 @@ import {
     IconCalendarEvent,
     IconGift,
 } from '@tabler/icons-react';
+import {
+    DndContext,
+    DragOverlay,
+    useDraggable,
+    useDroppable,
+    DragEndEvent,
+    DragStartEvent,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
@@ -145,6 +157,61 @@ const statusColors: Record<ApplicationStatus, string> = {
     withdrawn: 'orange',
 };
 
+// Draggable Application Card
+function DraggableCard({
+    app,
+    children,
+}: {
+    app: Application;
+    children: React.ReactNode;
+}) {
+    const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+        id: app.id,
+        data: { app },
+    });
+
+    const style = transform
+        ? {
+              transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+              opacity: isDragging ? 0.5 : 1,
+              cursor: 'grab',
+          }
+        : { cursor: 'grab' };
+
+    return (
+        <Box ref={setNodeRef} style={style} {...listeners} {...attributes}>
+            {children}
+        </Box>
+    );
+}
+
+// Droppable Column
+function DroppableColumn({
+    status,
+    children,
+}: {
+    status: ApplicationStatus;
+    children: React.ReactNode;
+}) {
+    const { isOver, setNodeRef } = useDroppable({
+        id: status,
+    });
+
+    return (
+        <Box
+            ref={setNodeRef}
+            style={{
+                minHeight: 200,
+                backgroundColor: isOver ? 'var(--mantine-color-blue-light)' : undefined,
+                borderRadius: 'var(--mantine-radius-md)',
+                transition: 'background-color 0.2s ease',
+            }}
+        >
+            {children}
+        </Box>
+    );
+}
+
 export default function ApplicationsPage() {
     const { t } = useTranslation();
 
@@ -188,6 +255,41 @@ export default function ApplicationsPage() {
     // Map global viewMode to this page's supported modes (kanban/grid/list)
     const viewMode = globalViewMode === 'kanban' ? 'kanban'
         : (globalViewMode === 'list' || globalViewMode === 'table') ? 'list' : 'grid';
+
+    // Drag & Drop state
+    const [activeApp, setActiveApp] = useState<Application | null>(null);
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // 8px movement before drag starts
+            },
+        })
+    );
+
+    const handleDragStart = (event: DragStartEvent) => {
+        const { active } = event;
+        const app = applications?.find((a) => a.id === active.id);
+        if (app) {
+            setActiveApp(app);
+        }
+    };
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        setActiveApp(null);
+
+        if (!over) return;
+
+        const appId = active.id as string;
+        const newStatus = over.id as ApplicationStatus;
+
+        // Find the app and check if status changed
+        const app = applications?.find((a) => a.id === appId);
+        if (!app || app.status === newStatus) return;
+
+        // Update status
+        await handleStatusChange(appId, newStatus);
+    };
 
     const { data: applications, isLoading, refetch } = useRequest<Application[]>('/applications');
     const { data: stats } = useRequest<{
@@ -444,31 +546,50 @@ export default function ApplicationsPage() {
     );
 
     const renderKanbanView = () => (
-        <ScrollArea>
-            <Group align="flex-start" style={{ minWidth: 'max-content' }}>
-                {kanbanColumns.map((column) => {
-                    const apps = getApplicationsByStatus(column.status);
-                    return (
-                        <Paper key={column.status} shadow="sm" withBorder p="md" radius="md" style={{ minWidth: 300, maxWidth: 350 }}>
-                            <Stack gap="md">
-                                <Group justify="space-between">
-                                    <Text fw={600} size="sm">{column.label}</Text>
-                                    <Badge size="sm" variant="light">{apps.length}</Badge>
-                                </Group>
-                                <Stack gap="sm">
-                                    {apps.map((app) => renderApplicationCard(app))}
-                                    {apps.length === 0 && (
-                                        <Text size="xs" c="dimmed" ta="center" py="xl">
-                                            {t('applications.emptyState')}
-                                        </Text>
-                                    )}
+        <DndContext
+            sensors={sensors}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+        >
+            <ScrollArea>
+                <Group align="flex-start" style={{ minWidth: 'max-content' }}>
+                    {kanbanColumns.map((column) => {
+                        const apps = getApplicationsByStatus(column.status);
+                        return (
+                            <Paper key={column.status} shadow="sm" withBorder p="md" radius="md" style={{ minWidth: 300, maxWidth: 350 }}>
+                                <Stack gap="md">
+                                    <Group justify="space-between">
+                                        <Text fw={600} size="sm">{column.label}</Text>
+                                        <Badge size="sm" variant="light" color={statusColors[column.status]}>{apps.length}</Badge>
+                                    </Group>
+                                    <DroppableColumn status={column.status}>
+                                        <Stack gap="sm">
+                                            {apps.map((app) => (
+                                                <DraggableCard key={app.id} app={app}>
+                                                    {renderApplicationCard(app)}
+                                                </DraggableCard>
+                                            ))}
+                                            {apps.length === 0 && (
+                                                <Text size="xs" c="dimmed" ta="center" py="xl">
+                                                    {t('applications.emptyState')}
+                                                </Text>
+                                            )}
+                                        </Stack>
+                                    </DroppableColumn>
                                 </Stack>
-                            </Stack>
-                        </Paper>
-                    );
-                })}
-            </Group>
-        </ScrollArea>
+                            </Paper>
+                        );
+                    })}
+                </Group>
+            </ScrollArea>
+            <DragOverlay>
+                {activeApp ? (
+                    <Box style={{ opacity: 0.9, transform: 'rotate(3deg)' }}>
+                        {renderApplicationCard(activeApp)}
+                    </Box>
+                ) : null}
+            </DragOverlay>
+        </DndContext>
     );
 
     const renderCardsView = () => (
