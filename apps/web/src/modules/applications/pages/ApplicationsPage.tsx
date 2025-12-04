@@ -292,7 +292,7 @@ export default function ApplicationsPage() {
     };
 
     const { data: applications, isLoading, refetch } = useRequest<Application[]>('/applications');
-    const { data: stats } = useRequest<{
+    const { data: stats, refetch: refetchStats } = useRequest<{
         total: number;
         byStatus: { status: ApplicationStatus; count: number }[];
         responseRate: number;
@@ -379,6 +379,7 @@ export default function ApplicationsPage() {
                 });
             }
             refetch();
+            refetchStats();
             close();
         } catch (error) {
             notifications.show({
@@ -398,6 +399,7 @@ export default function ApplicationsPage() {
                 color: 'green',
             });
             refetch();
+            refetchStats();
             closeDetail();
         } catch (error) {
             notifications.show({
@@ -417,6 +419,7 @@ export default function ApplicationsPage() {
                 color: 'green',
             });
             refetch();
+            refetchStats();
         } catch (error) {
             notifications.show({
                 title: t('common.error'),
