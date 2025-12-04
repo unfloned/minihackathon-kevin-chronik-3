@@ -30,6 +30,8 @@ import {
     IconTrophy,
     IconArrowRight,
     IconCode,
+    IconMicrophone,
+    IconSparkles,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -144,6 +146,57 @@ export default function LandingPage() {
                         </Text>
                     </Group>
                 </Stack>
+            </Container>
+
+            {/* Voice Notes Hot Feature */}
+            <Container size="md" py={40}>
+                <Paper
+                    withBorder
+                    p="xl"
+                    radius="lg"
+                    style={{
+                        background: 'linear-gradient(135deg, rgba(250, 82, 82, 0.1) 0%, rgba(190, 75, 219, 0.1) 100%)',
+                        borderColor: 'var(--mantine-color-red-4)',
+                    }}
+                >
+                    <Group justify="space-between" wrap="wrap" gap="lg">
+                        <Group gap="md">
+                            <ThemeIcon
+                                size={60}
+                                radius="xl"
+                                variant="gradient"
+                                gradient={{ from: 'red', to: 'grape', deg: 135 }}
+                            >
+                                <IconMicrophone size={30} />
+                            </ThemeIcon>
+                            <Stack gap={4}>
+                                <Group gap="xs">
+                                    <Badge
+                                        size="sm"
+                                        variant="gradient"
+                                        gradient={{ from: 'red', to: 'grape' }}
+                                        leftSection={<IconSparkles size={12} />}
+                                    >
+                                        {t('landing.hotFeature.badge')}
+                                    </Badge>
+                                </Group>
+                                <Title order={3}>{t('landing.hotFeature.voiceNotes.title')}</Title>
+                                <Text c="dimmed" size="sm" maw={400}>
+                                    {t('landing.hotFeature.voiceNotes.description')}
+                                </Text>
+                            </Stack>
+                        </Group>
+                        <Stack gap="xs" align="flex-end">
+                            <Group gap="xs">
+                                <Badge variant="light" color="green">{t('landing.hotFeature.voiceNotes.feature1')}</Badge>
+                                <Badge variant="light" color="blue">{t('landing.hotFeature.voiceNotes.feature2')}</Badge>
+                            </Group>
+                            <Group gap="xs">
+                                <Badge variant="light" color="grape">{t('landing.hotFeature.voiceNotes.feature3')}</Badge>
+                            </Group>
+                        </Stack>
+                    </Group>
+                </Paper>
             </Container>
 
             {/* Features Section */}

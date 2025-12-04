@@ -17,6 +17,7 @@ import {
     SimpleGrid,
     ThemeIcon,
     Alert,
+    Badge,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
 import { notifications } from '@mantine/notifications';
@@ -28,6 +29,7 @@ import {
     IconRocket,
     IconCheck,
     IconInfoCircle,
+    IconMicrophone,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -173,6 +175,16 @@ export default function AuthPage() {
                     </Text>
 
                     <Stack gap="sm" mt="xl">
+                        {/* Voice Notes - Hot Feature */}
+                        <Group gap="xs">
+                            <ThemeIcon size="sm" color="red" variant="gradient" gradient={{ from: 'red', to: 'grape' }}>
+                                <IconMicrophone size={14} />
+                            </ThemeIcon>
+                            <Text size="sm" fw={500}>{t('landing.features.voiceNotes')}</Text>
+                            <Badge size="xs" variant="gradient" gradient={{ from: 'red', to: 'grape' }}>
+                                {t('common.new')}
+                            </Badge>
+                        </Group>
                         {[
                             t('landing.features.applications'),
                             t('landing.features.habits'),

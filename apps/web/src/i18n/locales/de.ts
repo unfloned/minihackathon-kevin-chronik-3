@@ -68,6 +68,7 @@ export const de = {
         active: "Aktiv",
         inactive: "Inaktiv",
         paused: "Pausiert",
+        new: "Neu",
     },
     auth: {
         login: "Anmelden",
@@ -138,10 +139,21 @@ export const de = {
         everythingYouNeed: "Alles was du brauchst",
         modulesDescription: "12+ Module um dein Leben zu organisieren - alles an einem Ort",
         features: {
+            voiceNotes: "Notizen per Sprache erstellen",
             applications: "Bewerbungen tracken",
             habits: "Gewohnheiten aufbauen",
             expenses: "Ausgaben im Blick",
             xp: "XP sammeln & Level aufsteigen",
+        },
+        hotFeature: {
+            badge: "Neues Feature",
+            voiceNotes: {
+                title: "Voice Notes",
+                description: "Erstelle Notizen einfach per Sprache. Sprich natürlich und diktiere mit Satzzeichen wie 'Punkt' oder 'Neuer Absatz'.",
+                feature1: "Speech-to-Text",
+                feature2: "Deutsch & Englisch",
+                feature3: "Intelligente Zeichensetzung",
+            },
         },
         featureList: {
             applications: { title: "Bewerbungstracker", description: "Behalte den Überblick über alle deine Bewerbungen" },

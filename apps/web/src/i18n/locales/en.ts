@@ -68,6 +68,7 @@ export const en = {
         active: "Active",
         inactive: "Inactive",
         paused: "Paused",
+        new: "New",
     },
     auth: {
         login: "Sign In",
@@ -138,10 +139,21 @@ export const en = {
         everythingYouNeed: "Everything you need",
         modulesDescription: "12+ modules to organize your life - all in one place",
         features: {
+            voiceNotes: "Create notes by voice",
             applications: "Track applications",
             habits: "Build habits",
             expenses: "Monitor expenses",
             xp: "Earn XP & level up",
+        },
+        hotFeature: {
+            badge: "New Feature",
+            voiceNotes: {
+                title: "Voice Notes",
+                description: "Create notes simply by speaking. Dictate naturally with punctuation like 'period' or 'new paragraph'.",
+                feature1: "Speech-to-Text",
+                feature2: "German & English",
+                feature3: "Smart Punctuation",
+            },
         },
         featureList: {
             applications: { title: "Application Tracker", description: "Keep track of all your applications" },
