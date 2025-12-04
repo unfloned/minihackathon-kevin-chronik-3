@@ -106,10 +106,18 @@ export default function NoteEditPage() {
     };
 
     const handleVoiceTranscript = (transcript: string) => {
-        // Append voice transcript to content
+        // Convert newlines to HTML paragraphs
+        // Split by double newlines (paragraphs), then handle single newlines as <br>
+        const htmlContent = transcript
+            .split('\n\n')
+            .map(para => para.trim())
+            .filter(para => para.length > 0)
+            .map(para => `<p>${para.replace(/\n/g, '<br>')}</p>`)
+            .join('');
+
         const newContent = form.content
-            ? `${form.content}<p>${transcript}</p>`
-            : `<p>${transcript}</p>`;
+            ? `${form.content}${htmlContent}`
+            : htmlContent;
         setForm({ ...form, content: newContent });
         setShowVoicePanel(false);
     };
