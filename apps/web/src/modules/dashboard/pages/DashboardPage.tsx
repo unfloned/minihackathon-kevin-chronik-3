@@ -28,6 +28,7 @@ import {
     IconStar,
     IconCode,
     IconChartBar,
+    IconBulb,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -37,6 +38,33 @@ import { CardStatistic } from '../../../components/CardStatistic';
 import { ExpenseChart } from '../../../components/ExpenseChart';
 import { StreakVisualization } from '../../../components/StreakVisualization';
 import type { DashboardStats } from '@ycmm/core';
+import { useMemo } from 'react';
+
+// Daily tips - index is selected based on day of year
+const DAILY_TIPS = [
+    'tips.trackHabitsDaily',
+    'tips.setDeadlinesEarly',
+    'tips.reviewExpensesWeekly',
+    'tips.breakdownProjects',
+    'tips.celebrateAchievements',
+    'tips.useKanban',
+    'tips.shareWishlists',
+    'tips.trackMedia',
+    'tips.organizeInventory',
+    'tips.createLists',
+    'tips.voiceNotes',
+    'tips.consistencyMatters',
+    'tips.smallSteps',
+    'tips.reduceChaos',
+];
+
+function getTipOfTheDay(): string {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 0);
+    const diff = now.getTime() - start.getTime();
+    const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
+    return DAILY_TIPS[dayOfYear % DAILY_TIPS.length];
+}
 
 // For Chaos: down = good (green), up = bad (red)
 function getChaosTrendIcon(trend: number) {
@@ -67,6 +95,9 @@ export default function DashboardPage() {
     const navigate = useNavigate();
     const { data: stats, isLoading } = useRequest<DashboardStats>('/dashboard/stats');
 
+    // Get the tip of the day
+    const tipKey = useMemo(() => getTipOfTheDay(), []);
+
     const handleRegister = async () => {
         await logout();
         navigate('/auth');
@@ -91,6 +122,24 @@ export default function DashboardPage() {
                     </Group>
                 </Alert>
             )}
+
+            {/* Tip of the Day */}
+            <Card withBorder padding="md" radius="md" bg="var(--mantine-color-yellow-light)">
+                <Group gap="md" wrap="nowrap">
+                    <ThemeIcon size={40} variant="gradient" gradient={{ from: 'yellow', to: 'orange' }} radius="xl">
+                        <IconBulb size={20} />
+                    </ThemeIcon>
+                    <div>
+                        <Group gap="xs" mb={4}>
+                            <Text fw={600} size="sm">{t('dashboard.tipOfTheDay')}</Text>
+                            <Badge size="xs" variant="gradient" gradient={{ from: 'yellow', to: 'orange' }}>
+                                {t('landing.hotFeature.badge')}
+                            </Badge>
+                        </Group>
+                        <Text size="sm">{t(tipKey)}</Text>
+                    </div>
+                </Group>
+            </Card>
 
             {/* Top Stats */}
             <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
