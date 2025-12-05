@@ -1,64 +1,38 @@
 import { useState } from 'react';
 import {
     Container,
-    Text,
-    Card,
     Group,
     Stack,
     Button,
-    ActionIcon,
-    Badge,
-    Modal,
-    TextInput,
-    NumberInput,
-    Select,
     SimpleGrid,
-    Table,
     Loader,
-    Menu,
     Paper,
     SegmentedControl,
+    Text,
     ThemeIcon,
-    Progress,
 } from '@mantine/core';
-import { DateInput, DateValue } from '@mantine/dates';
-
-// Helper to convert Mantine v8 DateValue to Date
-const toDateOrNull = (value: DateValue): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    return new Date(value);
-};
 import { useDisclosure } from '@mantine/hooks';
 import {
     IconPlus,
-    IconDotsVertical,
-    IconEdit,
-    IconTrash,
-    IconChartPie,
     IconReceipt,
     IconCategory,
+    IconChartPie,
     IconLayoutGrid,
     IconList,
-    IconCalendar,
 } from '@tabler/icons-react';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
-import type { ExpenseWithCategory, ExpenseStats, ExpenseCategorySimple } from '@ycmm/core';
-
-// Alias for component usage
-type Expense = ExpenseWithCategory;
-type ExpenseCategory = ExpenseCategorySimple;
-
-interface ExpenseFormData {
-    amount: number | string;
-    description: string;
-    categoryId: string;
-    date: Date | null;
-}
+import type { Expense, ExpenseCategory, ExpenseFormData, ExpenseStats } from '../types';
+import { defaultFormData } from '../types';
+import {
+    GridView,
+    TableView,
+    ExpenseFormModal,
+    CategoryBreakdown,
+} from '../components';
 
 export default function ExpensesPage() {
     const { t } = useTranslation();
@@ -74,12 +48,7 @@ export default function ExpensesPage() {
     const [selectedMonth] = useState(currentDate.getMonth() + 1);
 
     // Form state
-    const [formData, setFormData] = useState<ExpenseFormData>({
-        amount: '',
-        description: '',
-        categoryId: '',
-        date: new Date(),
-    });
+    const [formData, setFormData] = useState<ExpenseFormData>(defaultFormData);
 
     // Fetch categories - CORRECT pattern: string endpoint
     const { data: categories, isLoading: categoriesLoading } = useRequest<ExpenseCategory[]>(
@@ -195,24 +164,14 @@ export default function ExpensesPage() {
             });
         } else {
             setEditingExpense(null);
-            setFormData({
-                amount: '',
-                description: '',
-                categoryId: '',
-                date: new Date(),
-            });
+            setFormData(defaultFormData);
         }
         open();
     };
 
     const handleCloseModal = () => {
         setEditingExpense(null);
-        setFormData({
-            amount: '',
-            description: '',
-            categoryId: '',
-            date: new Date(),
-        });
+        setFormData(defaultFormData);
         close();
     };
 
@@ -327,45 +286,7 @@ export default function ExpensesPage() {
                 </SimpleGrid>
 
                 {/* Category Breakdown */}
-                {stats?.byCategory && stats.byCategory.length > 0 && (
-                    <Card shadow="sm" padding="lg" radius="md" withBorder>
-                        <Text size="lg" fw={600} mb="md">
-                            {t('expenses.byCategory')}
-                        </Text>
-                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-                            {stats.byCategory.map((cat) => {
-                                const percentage = ((cat.amount / (stats.total || 1)) * 100);
-                                return (
-                                    <Paper key={cat.categoryId} p="md" withBorder radius="md">
-                                        <Group justify="space-between" mb="sm">
-                                            <Group gap="sm">
-                                                <ThemeIcon size={36} variant="light" color={cat.categoryColor || 'gray'} radius="md">
-                                                    <Text size="lg">{cat.categoryIcon}</Text>
-                                                </ThemeIcon>
-                                                <div>
-                                                    <Text fw={500} size="sm">{cat.categoryName}</Text>
-                                                    <Text size="xs" c="dimmed">
-                                                        {t('expenses.transactions', { count: cat.count })}
-                                                    </Text>
-                                                </div>
-                                            </Group>
-                                            <Text fw={700} size="lg">{formatCurrency(cat.amount)}</Text>
-                                        </Group>
-                                        <Progress
-                                            value={percentage}
-                                            color={cat.categoryColor || 'blue'}
-                                            size="sm"
-                                            radius="xl"
-                                        />
-                                        <Text size="xs" c="dimmed" ta="right" mt={4}>
-                                            {t('expenses.percentOfTotal', { percent: percentage.toFixed(1) })}
-                                        </Text>
-                                    </Paper>
-                                );
-                            })}
-                        </SimpleGrid>
-                    </Card>
-                )}
+                <CategoryBreakdown stats={stats} formatCurrency={formatCurrency} />
 
                 {/* View Toggle */}
                 <Paper shadow="sm" withBorder p="md" radius="md">
@@ -396,196 +317,35 @@ export default function ExpensesPage() {
                         </Button>
                     </Paper>
                 ) : viewMode === 'grid' ? (
-                    <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-                        {expenses.map((expense) => (
-                            <Card key={expense.id} shadow="sm" padding="lg" radius="md" withBorder>
-                                <Group justify="space-between" mb="sm">
-                                    <Group gap="sm">
-                                        <ThemeIcon
-                                            size={40}
-                                            variant="light"
-                                            color={expense.categoryColor || 'gray'}
-                                            radius="md"
-                                        >
-                                            <Text size="lg">{expense.categoryIcon || '📦'}</Text>
-                                        </ThemeIcon>
-                                        <div>
-                                            <Text fw={500} lineClamp={1}>{expense.description}</Text>
-                                            <Text size="xs" c="dimmed">{expense.categoryName || 'Keine Kategorie'}</Text>
-                                        </div>
-                                    </Group>
-                                    <Menu shadow="md" width={200}>
-                                        <Menu.Target>
-                                            <ActionIcon variant="subtle" color="gray">
-                                                <IconDotsVertical size={16} />
-                                            </ActionIcon>
-                                        </Menu.Target>
-                                        <Menu.Dropdown>
-                                            <Menu.Item
-                                                leftSection={<IconEdit size={16} />}
-                                                onClick={() => handleOpenModal(expense)}
-                                            >
-                                                {t('common.edit')}
-                                            </Menu.Item>
-                                            <Menu.Divider />
-                                            <Menu.Item
-                                                color="red"
-                                                leftSection={<IconTrash size={16} />}
-                                                onClick={() => handleDelete(expense.id)}
-                                            >
-                                                {t('common.delete')}
-                                            </Menu.Item>
-                                        </Menu.Dropdown>
-                                    </Menu>
-                                </Group>
-                                <Group justify="space-between" mt="md">
-                                    <Group gap="xs">
-                                        <IconCalendar size={14} color="var(--mantine-color-dimmed)" />
-                                        <Text size="sm" c="dimmed">{formatDate(expense.date)}</Text>
-                                    </Group>
-                                    <Text fw={700} size="lg" c="blue">{formatCurrency(expense.amount)}</Text>
-                                </Group>
-                            </Card>
-                        ))}
-                    </SimpleGrid>
+                    <GridView
+                        expenses={expenses}
+                        onEdit={handleOpenModal}
+                        onDelete={handleDelete}
+                        formatCurrency={formatCurrency}
+                        formatDate={formatDate}
+                    />
                 ) : (
-                    <Paper shadow="sm" withBorder radius="md">
-                        <Table striped highlightOnHover>
-                            <Table.Thead>
-                                <Table.Tr>
-                                    <Table.Th>{t('common.date')}</Table.Th>
-                                    <Table.Th>{t('common.description')}</Table.Th>
-                                    <Table.Th>{t('common.category')}</Table.Th>
-                                    <Table.Th style={{ textAlign: 'right' }}>{t('expenses.amount')}</Table.Th>
-                                    <Table.Th style={{ textAlign: 'right' }}>{t('common.actions')}</Table.Th>
-                                </Table.Tr>
-                            </Table.Thead>
-                            <Table.Tbody>
-                                {expenses.map((expense) => (
-                                    <Table.Tr key={expense.id}>
-                                        <Table.Td>{formatDate(expense.date)}</Table.Td>
-                                        <Table.Td>{expense.description}</Table.Td>
-                                        <Table.Td>
-                                            {expense.categoryName ? (
-                                                <Badge
-                                                    color={expense.categoryColor || 'gray'}
-                                                    variant="light"
-                                                    leftSection={<span>{expense.categoryIcon}</span>}
-                                                >
-                                                    {expense.categoryName}
-                                                </Badge>
-                                            ) : (
-                                                <Text size="sm" c="dimmed">
-                                                    {t('expenses.uncategorized')}
-                                                </Text>
-                                            )}
-                                        </Table.Td>
-                                        <Table.Td style={{ textAlign: 'right' }}>
-                                            <Text fw={600}>{formatCurrency(expense.amount)}</Text>
-                                        </Table.Td>
-                                        <Table.Td style={{ textAlign: 'right' }}>
-                                            <Menu shadow="md" width={200}>
-                                                <Menu.Target>
-                                                    <ActionIcon variant="subtle" color="gray">
-                                                        <IconDotsVertical size={16} />
-                                                    </ActionIcon>
-                                                </Menu.Target>
-                                                <Menu.Dropdown>
-                                                    <Menu.Item
-                                                        leftSection={<IconEdit size={16} />}
-                                                        onClick={() => handleOpenModal(expense)}
-                                                    >
-                                                        {t('common.edit')}
-                                                    </Menu.Item>
-                                                    <Menu.Divider />
-                                                    <Menu.Item
-                                                        color="red"
-                                                        leftSection={<IconTrash size={16} />}
-                                                        onClick={() => handleDelete(expense.id)}
-                                                    >
-                                                        {t('common.delete')}
-                                                    </Menu.Item>
-                                                </Menu.Dropdown>
-                                            </Menu>
-                                        </Table.Td>
-                                    </Table.Tr>
-                                ))}
-                            </Table.Tbody>
-                        </Table>
-                    </Paper>
+                    <TableView
+                        expenses={expenses}
+                        onEdit={handleOpenModal}
+                        onDelete={handleDelete}
+                        formatCurrency={formatCurrency}
+                        formatDate={formatDate}
+                    />
                 )}
             </Stack>
 
             {/* Create/Edit Modal */}
-            <Modal
+            <ExpenseFormModal
                 opened={opened}
+                isEditing={!!editingExpense}
+                formData={formData}
+                categories={categories}
+                loading={createLoading || updateLoading}
                 onClose={handleCloseModal}
-                title={editingExpense ? t('expenses.editExpense') : t('expenses.newExpense')}
-                size="md"
-            >
-                <Stack gap="md">
-                    <NumberInput
-                        label={t('expenses.amount')}
-                        placeholder="0.00"
-                        required
-                        min={0}
-                        step={0.01}
-                        decimalScale={2}
-                        fixedDecimalScale
-                        prefix="€ "
-                        value={formData.amount}
-                        onChange={(value) => setFormData({ ...formData, amount: value })}
-                    />
-
-                    <TextInput
-                        label={t('common.description')}
-                        placeholder={t('expenses.descriptionPlaceholder')}
-                        required
-                        value={formData.description}
-                        onChange={(e) =>
-                            setFormData({ ...formData, description: e.currentTarget.value })
-                        }
-                    />
-
-                    <Select
-                        label={t('common.category')}
-                        placeholder={t('expenses.selectCategory')}
-                        required
-                        data={
-                            categories?.map((cat) => ({
-                                value: cat.id,
-                                label: `${cat.icon} ${cat.name}`,
-                            })) || []
-                        }
-                        value={formData.categoryId}
-                        onChange={(value) =>
-                            setFormData({ ...formData, categoryId: value || '' })
-                        }
-                    />
-
-                    <DateInput
-                        label={t('common.date')}
-                        placeholder={t('expenses.selectDate')}
-                        required
-                        value={formData.date}
-                        onChange={(value) => setFormData({ ...formData, date: toDateOrNull(value) })}
-                        valueFormat="DD.MM.YYYY"
-                        locale="de"
-                    />
-
-                    <Group justify="flex-end" mt="md">
-                        <Button variant="subtle" onClick={handleCloseModal}>
-                            {t('common.cancel')}
-                        </Button>
-                        <Button
-                            onClick={handleSubmit}
-                            loading={createLoading || updateLoading}
-                        >
-                            {editingExpense ? t('common.save') : t('common.create')}
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
+                onSubmit={handleSubmit}
+                onFormChange={(data) => setFormData({ ...formData, ...data })}
+            />
         </Container>
     );
 }

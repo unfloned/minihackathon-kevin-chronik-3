@@ -2,106 +2,37 @@ import { useState } from 'react';
 import {
     Text,
     SimpleGrid,
-    Card,
     Group,
     Stack,
     Button,
-    ActionIcon,
-    Badge,
-    Modal,
     TextInput,
-    Textarea,
-    NumberInput,
     Select,
-    Menu,
     Paper,
     Skeleton,
-    ThemeIcon,
-    Table,
     SegmentedControl,
     Container,
 } from '@mantine/core';
-import { DateInput, DateValue } from '@mantine/dates';
 import { useTranslation } from 'react-i18next';
-
-// Helper to convert Mantine v8 DateValue to Date
-const toDateOrNull = (value: DateValue): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    return new Date(value);
-};
 import { useDisclosure } from '@mantine/hooks';
 import {
-    IconDotsVertical,
-    IconEdit,
-    IconTrash,
     IconBox,
-    IconMapPin,
-    IconTag,
-    IconUser,
-    IconArrowBack,
     IconCurrencyEuro,
-    IconQrcode,
+    IconUser,
+    IconCategory,
     IconLayoutGrid,
     IconList,
-    IconCategory,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
-
-
-interface ItemLocation {
-    area: string;
-    container?: string;
-    details?: string;
-}
-
-interface ItemLent {
-    to: string;
-    since: string;
-    expectedReturn?: string;
-}
-
-interface InventoryItem {
-    id: string;
-    name: string;
-    description: string;
-    photos: string[];
-    category: string;
-    tags: string[];
-    location: ItemLocation;
-    quantity: number;
-    purchaseDate?: string;
-    purchasePrice?: number;
-    currentValue?: number;
-    serialNumber: string;
-    qrCode: string;
-    isLent?: ItemLent;
-    createdAt: string;
-    updatedAt: string;
-}
-
-interface CreateItemForm {
-    name: string;
-    description: string;
-    category: string;
-    location: ItemLocation;
-    quantity: number;
-    purchasePrice?: number;
-    currentValue?: number;
-    serialNumber: string;
-}
-
-const defaultForm: CreateItemForm = {
-    name: '',
-    description: '',
-    category: '',
-    location: { area: '' },
-    quantity: 1,
-    serialNumber: '',
-};
+import { InventoryItem, CreateItemForm, defaultForm } from '../types';
+import {
+    GridView,
+    TableView,
+    InventoryFormModal,
+    LendItemModal,
+} from '../components';
 
 export default function InventoryPage() {
     const { t } = useTranslation();
@@ -287,174 +218,6 @@ export default function InventoryPage() {
         return matchesSearch && matchesCategory && matchesLocation;
     }) || [];
 
-    // Render item card
-    const renderItemCard = (item: InventoryItem) => (
-        <Card key={item.id} shadow="sm" padding="lg" radius="md" withBorder>
-            <Group justify="space-between" mb="xs">
-                <Text fw={700} size="lg">{item.name}</Text>
-                <Menu shadow="md" width={200}>
-                    <Menu.Target>
-                        <ActionIcon variant="subtle">
-                            <IconDotsVertical size={16} />
-                        </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                        <Menu.Item
-                            leftSection={<IconEdit size={14} />}
-                            onClick={() => handleOpenEdit(item)}
-                        >
-                            {t('common.edit')}
-                        </Menu.Item>
-                        {!item.isLent ? (
-                            <Menu.Item
-                                leftSection={<IconUser size={14} />}
-                                onClick={() => handleOpenLend(item)}
-                            >
-                                {t('inventory.lend')}
-                            </Menu.Item>
-                        ) : (
-                            <Menu.Item
-                                leftSection={<IconArrowBack size={14} />}
-                                onClick={() => handleReturn(item.id)}
-                            >
-                                {t('inventory.return')}
-                            </Menu.Item>
-                        )}
-                        <Menu.Divider />
-                        <Menu.Item
-                            leftSection={<IconTrash size={14} />}
-                            color="red"
-                            onClick={() => handleDelete(item.id)}
-                        >
-                            {t('common.delete')}
-                        </Menu.Item>
-                    </Menu.Dropdown>
-                </Menu>
-            </Group>
-
-            <Text size="sm" c="dimmed" mb="md">
-                {item.description}
-            </Text>
-
-            <Stack gap="xs">
-                <Group>
-                    <ThemeIcon size="sm" variant="light">
-                        <IconTag size={14} />
-                    </ThemeIcon>
-                    <Text size="sm">{item.category}</Text>
-                </Group>
-
-                <Group>
-                    <ThemeIcon size="sm" variant="light">
-                        <IconMapPin size={14} />
-                    </ThemeIcon>
-                    <Text size="sm">
-                        {item.location.area}
-                        {item.location.container && ` / ${item.location.container}`}
-                    </Text>
-                </Group>
-
-                <Group>
-                    <ThemeIcon size="sm" variant="light">
-                        <IconBox size={14} />
-                    </ThemeIcon>
-                    <Text size="sm">{t('inventory.quantity')}: {item.quantity}</Text>
-                </Group>
-
-                {item.currentValue && (
-                    <Group>
-                        <ThemeIcon size="sm" variant="light">
-                            <IconCurrencyEuro size={14} />
-                        </ThemeIcon>
-                        <Text size="sm">{item.currentValue.toFixed(2)} EUR</Text>
-                    </Group>
-                )}
-
-                {item.serialNumber && (
-                    <Group>
-                        <ThemeIcon size="sm" variant="light">
-                            <IconQrcode size={14} />
-                        </ThemeIcon>
-                        <Text size="sm">{item.serialNumber}</Text>
-                    </Group>
-                )}
-
-                {item.isLent && (
-                    <Badge color="orange" variant="filled" mt="sm">
-                        {t('inventory.lentTo')} {item.isLent.to}
-                    </Badge>
-                )}
-            </Stack>
-        </Card>
-    );
-
-    // Render item table row
-    const renderTableRow = (item: InventoryItem) => (
-        <Table.Tr key={item.id}>
-            <Table.Td>{item.name}</Table.Td>
-            <Table.Td>{item.category}</Table.Td>
-            <Table.Td>
-                {item.location.area}
-                {item.location.container && ` / ${item.location.container}`}
-            </Table.Td>
-            <Table.Td>{item.quantity}</Table.Td>
-            <Table.Td>
-                {item.currentValue ? `${item.currentValue.toFixed(2)} EUR` : '-'}
-            </Table.Td>
-            <Table.Td>
-                {item.isLent ? (
-                    <Badge color="orange" variant="filled">
-                        {t('inventory.lentStatus.lent')}
-                    </Badge>
-                ) : (
-                    <Badge color="green" variant="light">
-                        {t('inventory.lentStatus.available')}
-                    </Badge>
-                )}
-            </Table.Td>
-            <Table.Td>
-                <Menu shadow="md" width={200}>
-                    <Menu.Target>
-                        <ActionIcon variant="subtle">
-                            <IconDotsVertical size={16} />
-                        </ActionIcon>
-                    </Menu.Target>
-                    <Menu.Dropdown>
-                        <Menu.Item
-                            leftSection={<IconEdit size={14} />}
-                            onClick={() => handleOpenEdit(item)}
-                        >
-                            {t('common.edit')}
-                        </Menu.Item>
-                        {!item.isLent ? (
-                            <Menu.Item
-                                leftSection={<IconUser size={14} />}
-                                onClick={() => handleOpenLend(item)}
-                            >
-                                {t('inventory.lend')}
-                            </Menu.Item>
-                        ) : (
-                            <Menu.Item
-                                leftSection={<IconArrowBack size={14} />}
-                                onClick={() => handleReturn(item.id)}
-                            >
-                                {t('inventory.return')}
-                            </Menu.Item>
-                        )}
-                        <Menu.Divider />
-                        <Menu.Item
-                            leftSection={<IconTrash size={14} />}
-                            color="red"
-                            onClick={() => handleDelete(item.id)}
-                        >
-                            {t('common.delete')}
-                        </Menu.Item>
-                    </Menu.Dropdown>
-                </Menu>
-            </Table.Td>
-        </Table.Tr>
-    );
-
     return (
         <Container size="xl" py="xl">
             <Stack gap="lg">
@@ -536,184 +299,56 @@ export default function InventoryPage() {
 
                 {/* Content */}
                 {isLoading ? (
-                <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
-                    {[...Array(6)].map((_, i) => (
-                        <Skeleton key={i} height={200} />
-                    ))}
-                </SimpleGrid>
-            ) : filteredItems.length === 0 ? (
-                <Paper withBorder p="xl" ta="center">
-                    <Text c="dimmed">{t('inventory.noItemsFound')}</Text>
-                </Paper>
-            ) : viewMode !== 'list' ? (
-                <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
-                    {filteredItems.map(renderItemCard)}
-                </SimpleGrid>
-            ) : (
-                <Paper withBorder>
-                    <Table striped highlightOnHover>
-                        <Table.Thead>
-                            <Table.Tr>
-                                <Table.Th>{t('inventory.table.name')}</Table.Th>
-                                <Table.Th>{t('inventory.table.category')}</Table.Th>
-                                <Table.Th>{t('inventory.table.location')}</Table.Th>
-                                <Table.Th>{t('inventory.table.quantity')}</Table.Th>
-                                <Table.Th>{t('inventory.table.value')}</Table.Th>
-                                <Table.Th>{t('inventory.table.status')}</Table.Th>
-                                <Table.Th>{t('inventory.table.actions')}</Table.Th>
-                            </Table.Tr>
-                        </Table.Thead>
-                        <Table.Tbody>
-                            {filteredItems.map(renderTableRow)}
-                        </Table.Tbody>
-                    </Table>
-                </Paper>
-            )}
-
-            {/* Create/Edit Modal */}
-            <Modal
-                opened={opened}
-                onClose={close}
-                title={editingItem ? t('inventory.editItem') : t('inventory.newItem')}
-                size="lg"
-            >
-                <Stack gap="md">
-                    <TextInput
-                        label={t('common.name')}
-                        placeholder={t('inventory.namePlaceholder')}
-                        value={form.name}
-                        onChange={(e) => setForm({ ...form, name: e.currentTarget.value })}
-                        required
+                    <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
+                        {[...Array(6)].map((_, i) => (
+                            <Skeleton key={i} height={200} />
+                        ))}
+                    </SimpleGrid>
+                ) : filteredItems.length === 0 ? (
+                    <Paper withBorder p="xl" ta="center">
+                        <Text c="dimmed">{t('inventory.noItemsFound')}</Text>
+                    </Paper>
+                ) : viewMode !== 'list' ? (
+                    <GridView
+                        items={filteredItems}
+                        onEdit={handleOpenEdit}
+                        onDelete={handleDelete}
+                        onLend={handleOpenLend}
+                        onReturn={handleReturn}
                     />
-
-                    <Textarea
-                        label={t('common.description')}
-                        placeholder={t('inventory.descriptionPlaceholder')}
-                        value={form.description}
-                        onChange={(e) => setForm({ ...form, description: e.currentTarget.value })}
-                        minRows={3}
+                ) : (
+                    <TableView
+                        items={filteredItems}
+                        onEdit={handleOpenEdit}
+                        onDelete={handleDelete}
+                        onLend={handleOpenLend}
+                        onReturn={handleReturn}
                     />
+                )}
 
-                    <Select
-                        label={t('common.category')}
-                        placeholder={t('inventory.selectCategory')}
-                        data={categories || []}
-                        value={form.category}
-                        onChange={(value) => setForm({ ...form, category: value || '' })}
-                        searchable
-                        allowDeselect={false}
-                        required
-                    />
+                {/* Create/Edit Modal */}
+                <InventoryFormModal
+                    opened={opened}
+                    onClose={close}
+                    editingItem={editingItem}
+                    form={form}
+                    setForm={setForm}
+                    onSubmit={handleSubmit}
+                    creating={creating}
+                    categories={categories ?? undefined}
+                />
 
-                    <TextInput
-                        label={t('inventory.locationArea')}
-                        placeholder={t('inventory.locationAreaPlaceholder')}
-                        value={form.location.area}
-                        onChange={(e) => setForm({
-                            ...form,
-                            location: { ...form.location, area: e.currentTarget.value }
-                        })}
-                        required
-                    />
-
-                    <TextInput
-                        label={t('inventory.locationContainer')}
-                        placeholder={t('inventory.locationContainerPlaceholder')}
-                        value={form.location.container || ''}
-                        onChange={(e) => setForm({
-                            ...form,
-                            location: { ...form.location, container: e.currentTarget.value }
-                        })}
-                    />
-
-                    <TextInput
-                        label={t('inventory.locationDetail')}
-                        placeholder={t('inventory.locationDetailPlaceholder')}
-                        value={form.location.details || ''}
-                        onChange={(e) => setForm({
-                            ...form,
-                            location: { ...form.location, details: e.currentTarget.value }
-                        })}
-                    />
-
-                    <NumberInput
-                        label={t('inventory.quantity')}
-                        placeholder="1"
-                        value={form.quantity}
-                        onChange={(value) => setForm({ ...form, quantity: Number(value) || 1 })}
-                        min={1}
-                        required
-                    />
-
-                    <NumberInput
-                        label={t('inventory.purchasePrice')}
-                        placeholder="0.00"
-                        value={form.purchasePrice}
-                        onChange={(value) => setForm({ ...form, purchasePrice: Number(value) })}
-                        decimalScale={2}
-                        min={0}
-                    />
-
-                    <NumberInput
-                        label={t('inventory.currentValue')}
-                        placeholder="0.00"
-                        value={form.currentValue}
-                        onChange={(value) => setForm({ ...form, currentValue: Number(value) })}
-                        decimalScale={2}
-                        min={0}
-                    />
-
-                    <TextInput
-                        label={t('inventory.serialNumber')}
-                        placeholder={t('inventory.serialNumberPlaceholder')}
-                        value={form.serialNumber}
-                        onChange={(e) => setForm({ ...form, serialNumber: e.currentTarget.value })}
-                    />
-
-                    <Group justify="flex-end">
-                        <Button variant="default" onClick={close}>
-                            {t('common.cancel')}
-                        </Button>
-                        <Button onClick={handleSubmit} loading={creating}>
-                            {editingItem ? t('common.save') : t('common.create')}
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
-
-            {/* Lend Modal */}
-            <Modal
-                opened={lendOpened}
-                onClose={closeLend}
-                title={`${t('inventory.lendItem')}: ${lendingItem?.name}`}
-            >
-                <Stack gap="md">
-                    <TextInput
-                        label={t('inventory.lentTo')}
-                        placeholder={t('inventory.lentToPlaceholder')}
-                        value={lendTo}
-                        onChange={(e) => setLendTo(e.currentTarget.value)}
-                        required
-                    />
-
-                    <DateInput
-                        label={t('inventory.expectedReturn')}
-                        placeholder={t('inventory.selectDate')}
-                        value={lendReturn}
-                        onChange={(v) => setLendReturn(toDateOrNull(v))}
-                        clearable
-                    />
-
-                    <Group justify="flex-end">
-                        <Button variant="default" onClick={closeLend}>
-                            {t('common.cancel')}
-                        </Button>
-                        <Button onClick={handleLendSubmit} disabled={!lendTo}>
-                            {t('inventory.lend')}
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
+                {/* Lend Modal */}
+                <LendItemModal
+                    opened={lendOpened}
+                    onClose={closeLend}
+                    lendingItem={lendingItem}
+                    lendTo={lendTo}
+                    setLendTo={setLendTo}
+                    lendReturn={lendReturn}
+                    setLendReturn={setLendReturn}
+                    onSubmit={handleLendSubmit}
+                />
             </Stack>
         </Container>
     );

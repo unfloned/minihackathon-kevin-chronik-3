@@ -2,33 +2,17 @@ import { useState } from 'react';
 import {
     Container,
     Text,
-    Card,
     Group,
     Stack,
     Button,
-    ActionIcon,
-    Badge,
-    Modal,
-    TextInput,
-    Textarea,
-    NumberInput,
-    Select,
     SimpleGrid,
     Skeleton,
-    Menu,
     Paper,
-    Flex,
-    Table,
     SegmentedControl,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import {
     IconPlus,
-    IconDotsVertical,
-    IconEdit,
-    IconTrash,
-    IconPlayerPause,
-    IconPlayerPlay,
     IconCoin,
     IconCalendar,
     IconReceipt,
@@ -40,39 +24,21 @@ import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { notifications } from '@mantine/notifications';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
-import type { SubscriptionSimple, SubscriptionStats, SubscriptionBillingCycle, SubscriptionStatus } from '@ycmm/core';
-
-// Alias for component usage
-type Subscription = SubscriptionSimple;
-
-interface CreateSubscriptionForm {
-    name: string;
-    description: string;
-    amount: number;
-    billingCycle: SubscriptionBillingCycle;
-    billingDay: number;
-    category: string;
-    website: string;
-}
-
-const statusColors: Record<SubscriptionStatus, string> = {
-    active: 'green',
-    paused: 'yellow',
-    cancelled: 'gray',
-};
-
-const categoryKeys = ['entertainment', 'productivity', 'utilities', 'health', 'education', 'finance', 'shopping', 'other'] as const;
-const billingCycleKeys: SubscriptionBillingCycle[] = ['weekly', 'monthly', 'quarterly', 'yearly'];
-
-const emptyForm: CreateSubscriptionForm = {
-    name: '',
-    description: '',
-    amount: 0,
-    billingCycle: 'monthly',
-    billingDay: 1,
-    category: 'other',
-    website: '',
-};
+import type { SubscriptionStats } from '@ycmm/core';
+import {
+    type Subscription,
+    type CreateSubscriptionForm,
+    type SubscriptionBillingCycle,
+    type SubscriptionStatus,
+    emptyForm,
+    categoryKeys,
+    billingCycleKeys,
+} from '../types';
+import {
+    ListView,
+    GridView,
+    SubscriptionFormModal,
+} from '../components';
 
 export default function SubscriptionsPage() {
     const { t } = useTranslation();
@@ -405,311 +371,47 @@ export default function SubscriptionsPage() {
                             </Stack>
                         </Paper>
                     ) : viewMode === 'list' ? (
-                        <Paper shadow="sm" withBorder radius="md">
-                            <Table striped highlightOnHover>
-                                <Table.Thead>
-                                    <Table.Tr>
-                                        <Table.Th>{t('subscriptions.table.name')}</Table.Th>
-                                        <Table.Th>{t('subscriptions.table.amount')}</Table.Th>
-                                        <Table.Th>{t('subscriptions.table.cycle')}</Table.Th>
-                                        <Table.Th>{t('subscriptions.table.category')}</Table.Th>
-                                        <Table.Th>{t('subscriptions.table.status')}</Table.Th>
-                                        <Table.Th>{t('subscriptions.table.nextBilling')}</Table.Th>
-                                        <Table.Th>{t('subscriptions.table.actions')}</Table.Th>
-                                    </Table.Tr>
-                                </Table.Thead>
-                                <Table.Tbody>
-                                    {subscriptions.map((subscription) => (
-                                        <Table.Tr key={subscription.id}>
-                                            <Table.Td>
-                                                <Text size="sm" fw={500}>{subscription.name}</Text>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Text size="sm" fw={700} c="blue">{formatCurrency(subscription.amount)}</Text>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Text size="sm">{billingCycleLabels[subscription.billingCycle]}</Text>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Badge size="sm" variant="light">
-                                                    {categoryLabels[subscription.category] || subscription.category}
-                                                </Badge>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Badge color={statusColors[subscription.status]} size="sm">
-                                                    {statusLabels[subscription.status]}
-                                                </Badge>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Text size="sm">{formatDate(subscription.nextBillingDate)}</Text>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Menu shadow="md" width={200}>
-                                                    <Menu.Target>
-                                                        <ActionIcon variant="subtle" color="gray">
-                                                            <IconDotsVertical size={16} />
-                                                        </ActionIcon>
-                                                    </Menu.Target>
-                                                    <Menu.Dropdown>
-                                                        <Menu.Item
-                                                            leftSection={<IconEdit size={14} />}
-                                                            onClick={() => handleOpenEditModal(subscription)}
-                                                        >
-                                                            {t('common.edit')}
-                                                        </Menu.Item>
-                                                        {subscription.status === 'active' ? (
-                                                            <Menu.Item
-                                                                leftSection={<IconPlayerPause size={14} />}
-                                                                onClick={() => handlePause(subscription.id)}
-                                                            >
-                                                                {t('subscriptions.pause')}
-                                                            </Menu.Item>
-                                                        ) : subscription.status === 'paused' ? (
-                                                            <Menu.Item
-                                                                leftSection={<IconPlayerPlay size={14} />}
-                                                                onClick={() => handleResume(subscription.id)}
-                                                            >
-                                                                {t('subscriptions.resume')}
-                                                            </Menu.Item>
-                                                        ) : null}
-                                                        <Menu.Divider />
-                                                        <Menu.Item
-                                                            color="red"
-                                                            leftSection={<IconTrash size={14} />}
-                                                            onClick={() => handleDelete(subscription.id)}
-                                                        >
-                                                            {t('common.delete')}
-                                                        </Menu.Item>
-                                                    </Menu.Dropdown>
-                                                </Menu>
-                                            </Table.Td>
-                                        </Table.Tr>
-                                    ))}
-                                </Table.Tbody>
-                            </Table>
-                        </Paper>
+                        <ListView
+                            subscriptions={subscriptions}
+                            onEdit={handleOpenEditModal}
+                            onDelete={handleDelete}
+                            onPause={handlePause}
+                            onResume={handleResume}
+                            formatCurrency={formatCurrency}
+                            formatDate={formatDate}
+                            billingCycleLabels={billingCycleLabels}
+                            statusLabels={statusLabels}
+                            categoryLabels={categoryLabels}
+                        />
                     ) : (
-                        <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="md">
-                            {subscriptions.map((subscription) => (
-                                <Card key={subscription.id} shadow="sm" padding="lg" radius="md" withBorder>
-                                    <Card.Section withBorder inheritPadding py="xs">
-                                        <Group justify="space-between">
-                                            <Text fw={600} size="lg">
-                                                {subscription.name}
-                                            </Text>
-                                            <Menu shadow="md" width={200}>
-                                                <Menu.Target>
-                                                    <ActionIcon variant="subtle" color="gray">
-                                                        <IconDotsVertical size={16} />
-                                                    </ActionIcon>
-                                                </Menu.Target>
-                                                <Menu.Dropdown>
-                                                    <Menu.Item
-                                                        leftSection={<IconEdit size={14} />}
-                                                        onClick={() => handleOpenEditModal(subscription)}
-                                                    >
-                                                        {t('common.edit')}
-                                                    </Menu.Item>
-                                                    {subscription.status === 'active' ? (
-                                                        <Menu.Item
-                                                            leftSection={<IconPlayerPause size={14} />}
-                                                            onClick={() => handlePause(subscription.id)}
-                                                        >
-                                                            {t('subscriptions.pause')}
-                                                        </Menu.Item>
-                                                    ) : subscription.status === 'paused' ? (
-                                                        <Menu.Item
-                                                            leftSection={<IconPlayerPlay size={14} />}
-                                                            onClick={() => handleResume(subscription.id)}
-                                                        >
-                                                            {t('subscriptions.resume')}
-                                                        </Menu.Item>
-                                                    ) : null}
-                                                    <Menu.Divider />
-                                                    <Menu.Item
-                                                        color="red"
-                                                        leftSection={<IconTrash size={14} />}
-                                                        onClick={() => handleDelete(subscription.id)}
-                                                    >
-                                                        {t('common.delete')}
-                                                    </Menu.Item>
-                                                </Menu.Dropdown>
-                                            </Menu>
-                                        </Group>
-                                    </Card.Section>
-
-                                    <Stack gap="md" mt="md">
-                                        {subscription.description && (
-                                            <Text size="sm" c="dimmed" lineClamp={2}>
-                                                {subscription.description}
-                                            </Text>
-                                        )}
-
-                                        <Group justify="space-between">
-                                            <Text size="xl" fw={700} c="blue">
-                                                {formatCurrency(subscription.amount)}
-                                            </Text>
-                                            <Badge color={statusColors[subscription.status]} variant="light">
-                                                {statusLabels[subscription.status]}
-                                            </Badge>
-                                        </Group>
-
-                                        <Stack gap="xs">
-                                            <Flex justify="space-between" align="center">
-                                                <Text size="sm" c="dimmed">
-                                                    {t('subscriptions.billingCycleLabel')}:
-                                                </Text>
-                                                <Text size="sm" fw={500}>
-                                                    {billingCycleLabels[subscription.billingCycle]}
-                                                </Text>
-                                            </Flex>
-
-                                            <Flex justify="space-between" align="center">
-                                                <Text size="sm" c="dimmed">
-                                                    {t('subscriptions.billingDay')}:
-                                                </Text>
-                                                <Text size="sm" fw={500}>
-                                                    {t('subscriptions.ofMonth', { day: subscription.billingDay })}
-                                                </Text>
-                                            </Flex>
-
-                                            {subscription.nextBillingDate && (
-                                                <Flex justify="space-between" align="center">
-                                                    <Text size="sm" c="dimmed">
-                                                        {t('subscriptions.nextBilling')}:
-                                                    </Text>
-                                                    <Text size="sm" fw={500}>
-                                                        {formatDate(subscription.nextBillingDate)}
-                                                    </Text>
-                                                </Flex>
-                                            )}
-
-                                            <Flex justify="space-between" align="center">
-                                                <Text size="sm" c="dimmed">
-                                                    {t('common.category')}:
-                                                </Text>
-                                                <Badge size="sm" variant="light">
-                                                    {categoryLabels[subscription.category] || subscription.category}
-                                                </Badge>
-                                            </Flex>
-
-                                            {subscription.website && (
-                                                <Flex justify="space-between" align="center">
-                                                    <Text size="sm" c="dimmed">
-                                                        {t('subscriptions.website')}:
-                                                    </Text>
-                                                    <Text
-                                                        size="sm"
-                                                        c="blue"
-                                                        component="a"
-                                                        href={subscription.website}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        style={{ textDecoration: 'none' }}
-                                                    >
-                                                        {t('subscriptions.link')}
-                                                    </Text>
-                                                </Flex>
-                                            )}
-                                        </Stack>
-                                    </Stack>
-                                </Card>
-                            ))}
-                        </SimpleGrid>
+                        <GridView
+                            subscriptions={subscriptions}
+                            onEdit={handleOpenEditModal}
+                            onDelete={handleDelete}
+                            onPause={handlePause}
+                            onResume={handleResume}
+                            formatCurrency={formatCurrency}
+                            formatDate={formatDate}
+                            billingCycleLabels={billingCycleLabels}
+                            statusLabels={statusLabels}
+                            categoryLabels={categoryLabels}
+                        />
                     )}
                 </Stack>
             </Stack>
 
             {/* Create/Edit Modal */}
-            <Modal
+            <SubscriptionFormModal
                 opened={opened}
                 onClose={handleCloseModal}
-                title={
-                    <Text size="lg" fw={600}>
-                        {editingSubscription ? t('subscriptions.editSubscription') : t('subscriptions.newSubscription')}
-                    </Text>
-                }
-                size="lg"
-            >
-                <Stack gap="md">
-                    <TextInput
-                        label={t('common.name')}
-                        placeholder={t('subscriptions.namePlaceholder')}
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    />
-
-                    <Textarea
-                        label={t('subscriptions.descriptionLabel')}
-                        placeholder={t('subscriptions.descriptionPlaceholder')}
-                        minRows={3}
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    />
-
-                    <NumberInput
-                        label={t('subscriptions.amount')}
-                        placeholder="0.00"
-                        required
-                        min={0}
-                        decimalScale={2}
-                        fixedDecimalScale
-                        prefix="€ "
-                        value={formData.amount}
-                        onChange={(value) => setFormData({ ...formData, amount: Number(value) || 0 })}
-                    />
-
-                    <Select
-                        label={t('subscriptions.billingCycleLabel')}
-                        placeholder={t('subscriptions.selectCycle')}
-                        required
-                        data={billingCycleOptions}
-                        value={formData.billingCycle}
-                        onChange={(value) =>
-                            setFormData({ ...formData, billingCycle: value as SubscriptionBillingCycle })
-                        }
-                    />
-
-                    <NumberInput
-                        label={t('subscriptions.billingDay')}
-                        placeholder={t('subscriptions.billingDayPlaceholder')}
-                        required
-                        min={1}
-                        max={31}
-                        value={formData.billingDay}
-                        onChange={(value) => setFormData({ ...formData, billingDay: Number(value) || 1 })}
-                    />
-
-                    <Select
-                        label={t('common.category')}
-                        placeholder={t('subscriptions.selectCategory')}
-                        required
-                        data={categoryOptions}
-                        value={formData.category}
-                        onChange={(value) => setFormData({ ...formData, category: value || 'other' })}
-                    />
-
-                    <TextInput
-                        label={t('subscriptions.website')}
-                        placeholder={t('subscriptions.websitePlaceholder')}
-                        value={formData.website}
-                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    />
-
-                    <Group justify="flex-end" mt="md">
-                        <Button variant="subtle" onClick={handleCloseModal}>
-                            {t('common.cancel')}
-                        </Button>
-                        <Button
-                            onClick={handleSubmit}
-                            loading={createMutation.isLoading || updateMutation.isLoading}
-                        >
-                            {editingSubscription ? t('common.save') : t('common.create')}
-                        </Button>
-                    </Group>
-                </Stack>
-            </Modal>
+                formData={formData}
+                onFormDataChange={setFormData}
+                onSubmit={handleSubmit}
+                isEditing={!!editingSubscription}
+                isLoading={createMutation.isLoading || updateMutation.isLoading}
+                billingCycleOptions={billingCycleOptions}
+                categoryOptions={categoryOptions}
+            />
         </Container>
     );
 }

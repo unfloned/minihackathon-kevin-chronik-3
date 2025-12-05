@@ -1,99 +1,43 @@
 import { useState } from 'react';
 import {
   Container,
-  Card,
-  Text,
   Button,
   Group,
-  Stack,
-  Modal,
-  TextInput,
-  Textarea,
-  Select,
-  Badge,
-  ActionIcon,
   Tabs,
-  Loader,
-  Center,
-  Menu,
   SimpleGrid,
 } from '@mantine/core';
-import { DateInput, DateValue } from '@mantine/dates';
-
-// Helper to convert Mantine v8 DateValue to Date
-const toDateOrNull = (value: DateValue): Date | null => {
-    if (!value) return null;
-    if (value instanceof Date) return value;
-    return new Date(value);
-};
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
 import {
   IconPlus,
-  IconCalendar,
-  IconCheck,
-  IconTrash,
-  IconEdit,
-  IconDots,
-  IconAlertTriangle,
   IconClock,
+  IconAlertTriangle,
   IconCircleCheck,
+  IconCalendar,
 } from '@tabler/icons-react';
-import { useRequest } from '../../../hooks';
-import { useMutation } from '../../../hooks';
+import { useRequest, useMutation } from '../../../hooks';
 import { useTranslation } from 'react-i18next';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
-import type { DeadlineSimple, DeadlineStats, DeadlinePriority } from '@ycmm/core';
-
-// Alias for component usage
-type Deadline = DeadlineSimple;
-
-interface DeadlineFormData {
-  title: string;
-  description: string;
-  dueDate: Date | null;
-  priority: DeadlinePriority;
-  category: string;
-}
-
-const priorityColors: Record<Deadline['priority'], string> = {
-  low: 'blue',
-  medium: 'yellow',
-  high: 'orange',
-  urgent: 'red',
-};
+import type { DeadlineStats } from '@ycmm/core';
+import type { Deadline, DeadlineFormData } from '../types';
+import { defaultFormData } from '../types';
+import { DeadlinesList, DeadlineFormModal } from '../components';
 
 function DeadlinesPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string | null>('upcoming');
   const [opened, { open, close }] = useDisclosure(false);
   const [editingDeadline, setEditingDeadline] = useState<Deadline | null>(null);
-  const [formData, setFormData] = useState<DeadlineFormData>({
-    title: '',
-    description: '',
-    dueDate: null,
-    priority: 'medium',
-    category: '',
-  });
+  const [formData, setFormData] = useState<DeadlineFormData>(defaultFormData);
 
-  const priorityLabels: Record<Deadline['priority'], string> = {
-    low: t('deadlines.priority.low'),
-    medium: t('deadlines.priority.medium'),
-    high: t('deadlines.priority.high'),
-    urgent: t('deadlines.priority.urgent'),
-  };
-
-  // Data fetching - using STRING endpoint
+  // Data fetching
   const { data: stats, isLoading: statsLoading } = useRequest<DeadlineStats>('/deadlines/stats');
-
   const { data: upcomingDeadlines, isLoading: upcomingLoading, refetch: refetchUpcoming } = useRequest<Deadline[]>('/deadlines/upcoming');
-
   const { data: overdueDeadlines, isLoading: overdueLoading, refetch: refetchOverdue } = useRequest<Deadline[]>('/deadlines/overdue');
-
   const { data: allDeadlines, isLoading: allLoading, refetch: refetchAll } = useRequest<Deadline[]>('/deadlines');
 
-  // Mutations - first param is string, second param is options
+  // Mutations
   const { mutate: createDeadline, isLoading: createLoading } = useMutation<Deadline, { title: string; description: string; dueDate: string; priority: Deadline['priority']; category: string }>(
     '/deadlines',
     {
@@ -204,13 +148,7 @@ function DeadlinesPage() {
       });
     } else {
       setEditingDeadline(null);
-      setFormData({
-        title: '',
-        description: '',
-        dueDate: null,
-        priority: 'medium',
-        category: '',
-      });
+      setFormData(defaultFormData);
     }
     open();
   };
@@ -218,13 +156,7 @@ function DeadlinesPage() {
   const handleCloseModal = () => {
     close();
     setEditingDeadline(null);
-    setFormData({
-      title: '',
-      description: '',
-      dueDate: null,
-      priority: 'medium',
-      category: '',
-    });
+    setFormData(defaultFormData);
   };
 
   const handleSubmit = async () => {
@@ -310,127 +242,6 @@ function DeadlinesPage() {
     );
   };
 
-  const renderDeadlineCard = (deadline: Deadline) => {
-    const dueDate = new Date(deadline.dueDate);
-    const isOverdue = !deadline.isCompleted && dueDate < new Date();
-
-    return (
-      <Card key={deadline.id} shadow="sm" withBorder radius="md" mb="md" p="md">
-        <Group justify="space-between" mb="xs">
-          <Group>
-            <Text fw={500} size="lg">
-              {deadline.title}
-            </Text>
-            <Badge color={priorityColors[deadline.priority]} variant="light">
-              {priorityLabels[deadline.priority]}
-            </Badge>
-            {deadline.category && (
-              <Badge color="gray" variant="outline">
-                {deadline.category}
-              </Badge>
-            )}
-            {isOverdue && (
-              <Badge color="red" variant="filled">
-                {t('deadlines.status.overdue')}
-              </Badge>
-            )}
-            {deadline.isCompleted && (
-              <Badge color="green" variant="filled" leftSection={<IconCheck size={12} />}>
-                {t('deadlines.status.completed')}
-              </Badge>
-            )}
-          </Group>
-
-          <Menu shadow="md" width={200}>
-            <Menu.Target>
-              <ActionIcon variant="subtle" color="gray">
-                <IconDots size={18} />
-              </ActionIcon>
-            </Menu.Target>
-
-            <Menu.Dropdown>
-              {!deadline.isCompleted && (
-                <Menu.Item
-                  leftSection={<IconCheck size={16} />}
-                  onClick={() => handleComplete(deadline.id)}
-                >
-                  {t('deadlines.markComplete')}
-                </Menu.Item>
-              )}
-              <Menu.Item
-                leftSection={<IconEdit size={16} />}
-                onClick={() => handleOpenModal(deadline)}
-              >
-                {t('common.edit')}
-              </Menu.Item>
-              <Menu.Item
-                leftSection={<IconTrash size={16} />}
-                color="red"
-                onClick={() => handleDelete(deadline.id)}
-              >
-                {t('common.delete')}
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
-        </Group>
-
-        {deadline.description && (
-          <Text size="sm" c="dimmed" mb="xs">
-            {deadline.description}
-          </Text>
-        )}
-
-        <Group gap="xs">
-          <IconCalendar size={16} style={{ opacity: 0.5 }} />
-          <Text size="sm" c={isOverdue ? 'red' : 'dimmed'}>
-            {t('deadlines.dueOn')}: {dueDate.toLocaleDateString('de-DE', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Text>
-        </Group>
-
-        {deadline.completedAt && (
-          <Group gap="xs" mt="xs">
-            <IconCircleCheck size={16} style={{ opacity: 0.5 }} />
-            <Text size="sm" c="green">
-              {t('deadlines.completedOn')}: {new Date(deadline.completedAt).toLocaleDateString('de-DE', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}
-            </Text>
-          </Group>
-        )}
-      </Card>
-    );
-  };
-
-  const renderDeadlinesList = (deadlines: Deadline[] | null, loading: boolean) => {
-    if (loading) {
-      return (
-        <Center p="xl">
-          <Loader />
-        </Center>
-      );
-    }
-
-    if (!deadlines || deadlines.length === 0) {
-      return (
-        <Center p="xl">
-          <Text c="dimmed">{t('deadlines.emptyState')}</Text>
-        </Center>
-      );
-    }
-
-    return (
-      <Stack gap="md">
-        {deadlines.map(renderDeadlineCard)}
-      </Stack>
-    );
-  };
-
   const completedDeadlines = allDeadlines?.filter((d) => d.isCompleted) || [];
 
   return (
@@ -458,83 +269,45 @@ function DeadlinesPage() {
         </Tabs.List>
 
         <Tabs.Panel value="upcoming" pt="md">
-          {renderDeadlinesList(upcomingDeadlines, upcomingLoading)}
+          <DeadlinesList
+            deadlines={upcomingDeadlines}
+            loading={upcomingLoading}
+            onComplete={handleComplete}
+            onEdit={handleOpenModal}
+            onDelete={handleDelete}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="overdue" pt="md">
-          {renderDeadlinesList(overdueDeadlines, overdueLoading)}
+          <DeadlinesList
+            deadlines={overdueDeadlines}
+            loading={overdueLoading}
+            onComplete={handleComplete}
+            onEdit={handleOpenModal}
+            onDelete={handleDelete}
+          />
         </Tabs.Panel>
 
         <Tabs.Panel value="completed" pt="md">
-          {renderDeadlinesList(completedDeadlines, allLoading)}
+          <DeadlinesList
+            deadlines={completedDeadlines}
+            loading={allLoading}
+            onComplete={handleComplete}
+            onEdit={handleOpenModal}
+            onDelete={handleDelete}
+          />
         </Tabs.Panel>
       </Tabs>
 
-      <Modal
+      <DeadlineFormModal
         opened={opened}
         onClose={handleCloseModal}
-        title={editingDeadline ? t('deadlines.editDeadline') : t('deadlines.newDeadline')}
-        size="md"
-      >
-        <Stack gap="md">
-          <TextInput
-            label={t('common.name')}
-            placeholder={t('deadlines.titlePlaceholder')}
-            required
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          />
-
-          <Textarea
-            label={t('common.description')}
-            placeholder={t('deadlines.descriptionPlaceholder')}
-            minRows={3}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
-
-          <DateInput
-            label={t('deadlines.dueDate')}
-            placeholder={t('deadlines.selectDate')}
-            required
-            value={formData.dueDate}
-            onChange={(date) => setFormData({ ...formData, dueDate: toDateOrNull(date) })}
-            locale="de"
-          />
-
-          <Select
-            label={t('common.priority')}
-            required
-            value={formData.priority}
-            onChange={(value) => setFormData({ ...formData, priority: value as Deadline['priority'] })}
-            data={[
-              { value: 'low', label: t('deadlines.priority.low') },
-              { value: 'medium', label: t('deadlines.priority.medium') },
-              { value: 'high', label: t('deadlines.priority.high') },
-              { value: 'urgent', label: t('deadlines.priority.urgent') },
-            ]}
-          />
-
-          <TextInput
-            label={t('common.category')}
-            placeholder={t('deadlines.categoryPlaceholder')}
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-          />
-
-          <Group justify="flex-end" mt="md">
-            <Button variant="subtle" onClick={handleCloseModal}>
-              {t('common.cancel')}
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              loading={createLoading || updateLoading}
-            >
-              {editingDeadline ? t('common.save') : t('common.create')}
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+        formData={formData}
+        setFormData={setFormData}
+        onSubmit={handleSubmit}
+        isEditing={!!editingDeadline}
+        isLoading={createLoading || updateLoading}
+      />
     </Container>
   );
 }

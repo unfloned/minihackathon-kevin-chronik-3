@@ -4,78 +4,37 @@ import {
     Button,
     Group,
     Stack,
-    Card,
-    Badge,
     TextInput,
     Select,
-    Textarea,
-    NumberInput,
-    Modal,
-    ActionIcon,
-    SimpleGrid,
-    Image,
     Tabs,
-    ThemeIcon,
-    Switch,
-    Menu,
-    Paper,
-    Anchor,
-    Table,
     SegmentedControl,
     Container,
+    SimpleGrid,
+    Paper,
 } from '@mantine/core';
-import { useForm } from '@mantine/form';
 import {
-    IconPlus,
     IconHeart,
     IconShoppingCart,
     IconGift,
-    IconCheck,
-    IconEdit,
-    IconTrash,
-    IconExternalLink,
     IconCurrencyEuro,
-    IconDevices,
-    IconShirt,
-    IconHome,
-    IconPalette,
-    IconBook,
-    IconPlane,
-    IconStar,
-    IconDots,
     IconLayoutGrid,
     IconList,
-    IconShare,
-    IconCopy,
-    IconLink,
 } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import { useRequest, useMutation, useViewMode } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
 import { CardStatistic } from '../../../components/CardStatistic';
-import type {
-    WishlistPriority,
-    WishlistCategory,
-    PriceInfo,
-    WishlistItemWithDetails,
-    WishlistStats,
-    CreateWishlistItemDto,
-} from '@ycmm/core';
-
-// Alias for component usage
-type WishlistItem = WishlistItemWithDetails;
-
-function formatPrice(price?: PriceInfo): string {
-    if (!price) return '-';
-    return `${price.amount.toFixed(2)} ${price.currency}`;
-}
-
-interface SharingInfo {
-    isPublic: boolean;
-    shareUrl: string | null;
-    publicSlug: string;
-}
+import type { CreateWishlistItemDto, WishlistStats } from '@ycmm/core';
+import type { WishlistItem, WishlistFormValues, SharingInfo } from '../types';
+import { categoryOptions, priorityOptions, priorityOrder, formatPrice } from '../types';
+import {
+    GridView,
+    ListView,
+    WishlistFormModal,
+    SharingPanel,
+    EmptyState,
+} from '../components';
 
 export default function WishlistsPage() {
     const { t } = useTranslation();
@@ -119,39 +78,6 @@ export default function WishlistsPage() {
         }
     };
 
-    const categoryOptions: { value: WishlistCategory; label: string; icon: typeof IconDevices }[] = [
-        { value: 'tech', label: t('wishlists.categories.tech'), icon: IconDevices },
-        { value: 'fashion', label: t('wishlists.categories.fashion'), icon: IconShirt },
-        { value: 'home', label: t('wishlists.categories.home'), icon: IconHome },
-        { value: 'hobby', label: t('wishlists.categories.hobby'), icon: IconPalette },
-        { value: 'books', label: t('wishlists.categories.books'), icon: IconBook },
-        { value: 'travel', label: t('wishlists.categories.travel'), icon: IconPlane },
-        { value: 'experience', label: t('wishlists.categories.experience'), icon: IconStar },
-        { value: 'other', label: t('wishlists.categories.other'), icon: IconDots },
-    ];
-
-    const priorityOptions: { value: WishlistPriority; label: string; color: string }[] = [
-        { value: 'low', label: t('wishlists.priority.low'), color: 'gray' },
-        { value: 'medium', label: t('wishlists.priority.medium'), color: 'blue' },
-        { value: 'high', label: t('wishlists.priority.high'), color: 'orange' },
-        { value: 'must_have', label: t('wishlists.priority.mustHave'), color: 'red' },
-    ];
-
-    const getCategoryIcon = (category: WishlistCategory) => {
-        const config = categoryOptions.find(c => c.value === category);
-        const Icon = config?.icon || IconDots;
-        return <Icon size={16} />;
-    };
-
-    const getPriorityBadge = (priority: WishlistPriority) => {
-        const config = priorityOptions.find(p => p.value === priority);
-        return (
-            <Badge size="xs" color={config?.color || 'gray'}>
-                {config?.label || priority}
-            </Badge>
-        );
-    };
-
     const { data: items, isLoading, refetch } = useRequest<WishlistItem[]>('/wishlist-items');
     const { data: stats } = useRequest<WishlistStats>('/wishlist-items/stats');
 
@@ -175,25 +101,6 @@ export default function WishlistsPage() {
         { method: 'POST' }
     );
 
-    const form = useForm({
-        initialValues: {
-            name: '',
-            description: '',
-            imageUrl: '',
-            productUrl: '',
-            category: 'other' as WishlistCategory,
-            priority: 'medium' as WishlistPriority,
-            priceAmount: undefined as number | undefined,
-            priceCurrency: 'EUR',
-            targetPrice: undefined as number | undefined,
-            isGiftIdea: false,
-            giftFor: '',
-            occasion: '',
-            notes: '',
-            store: '',
-        },
-    });
-
     const filteredItems = useMemo(() => {
         if (!items) return [];
         let filtered = items.filter(item => {
@@ -214,7 +121,6 @@ export default function WishlistsPage() {
         });
 
         // Sort by priority
-        const priorityOrder: Record<WishlistPriority, number> = { must_have: 0, high: 1, medium: 2, low: 3 };
         filtered.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
         return filtered;
@@ -222,32 +128,15 @@ export default function WishlistsPage() {
 
     const openCreateModal = () => {
         setEditingItem(null);
-        form.reset();
         setModalOpen(true);
     };
 
     const openEditModal = (item: WishlistItem) => {
         setEditingItem(item);
-        form.setValues({
-            name: item.name,
-            description: item.description || '',
-            imageUrl: item.imageUrl || '',
-            productUrl: item.productUrl || '',
-            category: item.category,
-            priority: item.priority,
-            priceAmount: item.price?.amount,
-            priceCurrency: item.price?.currency || 'EUR',
-            targetPrice: item.targetPrice,
-            isGiftIdea: item.isGiftIdea,
-            giftFor: item.giftFor || '',
-            occasion: item.occasion || '',
-            notes: item.notes || '',
-            store: item.store || '',
-        });
         setModalOpen(true);
     };
 
-    const handleSubmit = async (values: typeof form.values) => {
+    const handleSubmit = async (values: WishlistFormValues) => {
         const dto: CreateWishlistItemDto = {
             name: values.name,
             description: values.description || undefined,
@@ -275,7 +164,7 @@ export default function WishlistsPage() {
 
         await refetch();
         setModalOpen(false);
-        form.reset();
+        setEditingItem(null);
     };
 
     const handleDelete = async (id: string) => {
@@ -290,6 +179,43 @@ export default function WishlistsPage() {
         await refetch();
     };
 
+    const handleCloseModal = () => {
+        setModalOpen(false);
+        setEditingItem(null);
+    };
+
+    const renderTabContent = (showPurchaseButton: boolean = true) => {
+        if (isLoading) {
+            return <Text>{t('wishlists.loading')}</Text>;
+        }
+
+        if (filteredItems.length === 0) {
+            const variant = activeTab === 'gifts' ? 'gifts' : activeTab === 'purchased' ? 'purchased' : 'all';
+            return <EmptyState variant={variant} onCreateClick={activeTab === 'all' ? openCreateModal : undefined} />;
+        }
+
+        if (viewMode === 'grid') {
+            return (
+                <GridView
+                    items={filteredItems}
+                    onEdit={openEditModal}
+                    onDelete={handleDelete}
+                    onPurchase={handlePurchase}
+                    showPurchaseButton={showPurchaseButton}
+                />
+            );
+        }
+
+        return (
+            <ListView
+                items={filteredItems}
+                onEdit={openEditModal}
+                onDelete={handleDelete}
+                onPurchase={handlePurchase}
+            />
+        );
+    };
+
     return (
         <Container size="xl" py="xl">
             <Stack gap="lg">
@@ -300,59 +226,12 @@ export default function WishlistsPage() {
                 </Group>
 
                 {/* Sharing Panel */}
-                <Paper
-                    withBorder
-                    p="md"
-                    radius="md"
-                    style={{
-                        background: sharingInfo?.isPublic
-                            ? 'linear-gradient(135deg, rgba(34, 139, 230, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)'
-                            : undefined,
-                        borderColor: sharingInfo?.isPublic ? 'var(--mantine-color-blue-4)' : undefined,
-                    }}
-                >
-                    <Group justify="space-between" wrap="wrap" gap="md">
-                        <Group gap="md">
-                            <ThemeIcon
-                                size={50}
-                                radius="xl"
-                                variant={sharingInfo?.isPublic ? 'gradient' : 'light'}
-                                gradient={{ from: 'blue', to: 'teal' }}
-                                color="gray"
-                            >
-                                <IconShare size={24} />
-                            </ThemeIcon>
-                            <Stack gap={2}>
-                                <Text fw={600}>{t('wishlists.sharing.title')}</Text>
-                                <Text size="sm" c="dimmed">
-                                    {sharingInfo?.isPublic
-                                        ? t('wishlists.sharing.publicDesc')
-                                        : t('wishlists.sharing.privateDesc')}
-                                </Text>
-                            </Stack>
-                        </Group>
-                        <Group gap="sm">
-                            {sharingInfo?.isPublic && (
-                                <Button
-                                    variant="light"
-                                    color="blue"
-                                    leftSection={<IconCopy size={16} />}
-                                    onClick={handleCopyLink}
-                                >
-                                    {t('wishlists.sharing.copyLink')}
-                                </Button>
-                            )}
-                            <Switch
-                                checked={sharingInfo?.isPublic || false}
-                                onChange={handleToggleSharing}
-                                disabled={togglingSharing}
-                                size="lg"
-                                onLabel={<IconLink size={14} />}
-                                offLabel={<IconLink size={14} />}
-                            />
-                        </Group>
-                    </Group>
-                </Paper>
+                <SharingPanel
+                    sharingInfo={sharingInfo || undefined}
+                    onToggleSharing={handleToggleSharing}
+                    onCopyLink={handleCopyLink}
+                    isToggling={togglingSharing}
+                />
 
                 {/* Stats */}
                 <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
@@ -399,7 +278,7 @@ export default function WishlistsPage() {
                             placeholder={t('wishlists.form.category')}
                             data={[
                                 { value: 'all', label: t('wishlists.allCategories') },
-                                ...categoryOptions.map(c => ({ value: c.value, label: c.label })),
+                                ...categoryOptions.map(c => ({ value: c.value, label: t(c.label) })),
                             ]}
                             value={categoryFilter}
                             onChange={(value) => setCategoryFilter(value || 'all')}
@@ -409,7 +288,7 @@ export default function WishlistsPage() {
                             placeholder={t('wishlists.form.priority')}
                             data={[
                                 { value: 'all', label: t('wishlists.allPriorities') },
-                                ...priorityOptions.map(p => ({ value: p.value, label: p.label })),
+                                ...priorityOptions.map(p => ({ value: p.value, label: t(p.label) })),
                             ]}
                             value={priorityFilter}
                             onChange={(value) => setPriorityFilter(value || 'all')}
@@ -428,639 +307,38 @@ export default function WishlistsPage() {
 
                 {/* Content */}
                 <Tabs value={activeTab} onChange={setActiveTab}>
-                <Tabs.List>
-                    <Tabs.Tab value="all" leftSection={<IconHeart size={16} />}>
-                        {t('wishlists.tabs.all')}
-                    </Tabs.Tab>
-                    <Tabs.Tab value="gifts" leftSection={<IconGift size={16} />}>
-                        {t('wishlists.tabs.gifts')}
-                    </Tabs.Tab>
-                    <Tabs.Tab value="purchased" leftSection={<IconShoppingCart size={16} />}>
-                        {t('wishlists.tabs.purchased')}
-                    </Tabs.Tab>
-                </Tabs.List>
+                    <Tabs.List>
+                        <Tabs.Tab value="all" leftSection={<IconHeart size={16} />}>
+                            {t('wishlists.tabs.all')}
+                        </Tabs.Tab>
+                        <Tabs.Tab value="gifts" leftSection={<IconGift size={16} />}>
+                            {t('wishlists.tabs.gifts')}
+                        </Tabs.Tab>
+                        <Tabs.Tab value="purchased" leftSection={<IconShoppingCart size={16} />}>
+                            {t('wishlists.tabs.purchased')}
+                        </Tabs.Tab>
+                    </Tabs.List>
 
-                <Tabs.Panel value="all" pt="md">
-                    {isLoading ? (
-                        <Text>{t('wishlists.loading')}</Text>
-                    ) : filteredItems.length === 0 ? (
-                        <Paper shadow="sm" p="xl" radius="md" withBorder>
-                            <Stack align="center" gap="md">
-                                <ThemeIcon size={60} radius="xl" variant="light">
-                                    <IconHeart size={32} />
-                                </ThemeIcon>
-                                <Text size="lg" fw={500}>{t('wishlists.emptyState')}</Text>
-                                <Text c="dimmed" ta="center">
-                                    {t('wishlists.emptyStateDesc')}
-                                </Text>
-                                <Button onClick={openCreateModal} leftSection={<IconPlus size={18} />}>
-                                    {t('wishlists.newItem')}
-                                </Button>
-                            </Stack>
-                        </Paper>
-                    ) : viewMode === 'grid' ? (
-                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-                            {filteredItems.map((item) => (
-                                <Card key={item.id} shadow="sm" padding="lg" radius="md" withBorder>
-                                    <Card.Section>
-                                        {item.imageUrl ? (
-                                            <Image
-                                                src={item.imageUrl}
-                                                height={180}
-                                                alt={item.name}
-                                                fit="cover"
-                                            />
-                                        ) : (
-                                            <Group
-                                                h={180}
-                                                align="center"
-                                                justify="center"
-                                                style={{ background: 'var(--mantine-color-gray-1)' }}
-                                            >
-                                                <ThemeIcon size={60} variant="light" radius="xl">
-                                                    {getCategoryIcon(item.category)}
-                                                </ThemeIcon>
-                                            </Group>
-                                        )}
-                                    </Card.Section>
+                    <Tabs.Panel value="all" pt="md">
+                        {renderTabContent(true)}
+                    </Tabs.Panel>
 
-                                    <Stack gap="xs" mt="md">
-                                        <Group justify="space-between" align="flex-start">
-                                            <div style={{ flex: 1 }}>
-                                                <Text fw={500} lineClamp={1}>{item.name}</Text>
-                                                {item.store && (
-                                                    <Text size="xs" c="dimmed">{item.store}</Text>
-                                                )}
-                                            </div>
-                                            <Menu shadow="md" width={200}>
-                                                <Menu.Target>
-                                                    <ActionIcon variant="subtle" color="gray">
-                                                        <IconDots size={16} />
-                                                    </ActionIcon>
-                                                </Menu.Target>
-                                                <Menu.Dropdown>
-                                                    <Menu.Item
-                                                        leftSection={<IconEdit size={14} />}
-                                                        onClick={() => openEditModal(item)}
-                                                    >
-                                                        {t('wishlists.modal.edit')}
-                                                    </Menu.Item>
-                                                    <Menu.Item
-                                                        leftSection={<IconTrash size={14} />}
-                                                        color="red"
-                                                        onClick={() => handleDelete(item.id)}
-                                                    >
-                                                        {t('wishlists.modal.delete')}
-                                                    </Menu.Item>
-                                                </Menu.Dropdown>
-                                            </Menu>
-                                        </Group>
+                    <Tabs.Panel value="gifts" pt="md">
+                        {renderTabContent(true)}
+                    </Tabs.Panel>
 
-                                        {item.description && (
-                                            <Text size="sm" c="dimmed" lineClamp={2}>
-                                                {item.description}
-                                            </Text>
-                                        )}
+                    <Tabs.Panel value="purchased" pt="md">
+                        {renderTabContent(false)}
+                    </Tabs.Panel>
+                </Tabs>
 
-                                        <Group gap="xs">
-                                            {getPriorityBadge(item.priority)}
-                                            <Badge size="xs" variant="light" leftSection={getCategoryIcon(item.category)}>
-                                                {categoryOptions.find(c => c.value === item.category)?.label}
-                                            </Badge>
-                                            {item.isGiftIdea && (
-                                                <Badge size="xs" color="pink" leftSection={<IconGift size={12} />}>
-                                                    {t('wishlists.labels.gift')}
-                                                </Badge>
-                                            )}
-                                        </Group>
-
-                                        {item.price && (
-                                            <Group gap="xs">
-                                                <IconCurrencyEuro size={16} />
-                                                <Text fw={600}>{formatPrice(item.price)}</Text>
-                                            </Group>
-                                        )}
-
-                                        {item.giftFor && (
-                                            <Text size="xs" c="dimmed">
-                                                {t('wishlists.labels.for')} {item.giftFor}
-                                                {item.occasion && ` (${item.occasion})`}
-                                            </Text>
-                                        )}
-
-                                        <Group gap="xs" mt="xs">
-                                            {item.productUrl && (
-                                                <Anchor
-                                                    href={item.productUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    size="sm"
-                                                >
-                                                    <Group gap={4}>
-                                                        <IconExternalLink size={14} />
-                                                        {t('wishlists.actions.toProduct')}
-                                                    </Group>
-                                                </Anchor>
-                                            )}
-                                        </Group>
-
-                                        <Button
-                                            fullWidth
-                                            variant="light"
-                                            color="green"
-                                            leftSection={<IconCheck size={16} />}
-                                            onClick={() => handlePurchase(item.id)}
-                                            mt="xs"
-                                        >
-                                            {t('wishlists.actions.markPurchased')}
-                                        </Button>
-                                    </Stack>
-                                </Card>
-                            ))}
-                        </SimpleGrid>
-                    ) : (
-                        <Paper shadow="sm" withBorder radius="md">
-                            <Table striped highlightOnHover>
-                                <Table.Thead>
-                                    <Table.Tr>
-                                        <Table.Th>{t('wishlists.table.item')}</Table.Th>
-                                        <Table.Th>{t('wishlists.table.category')}</Table.Th>
-                                        <Table.Th>{t('wishlists.table.priority')}</Table.Th>
-                                        <Table.Th>{t('wishlists.table.price')}</Table.Th>
-                                        <Table.Th>{t('wishlists.table.shop')}</Table.Th>
-                                        <Table.Th>{t('wishlists.table.actions')}</Table.Th>
-                                    </Table.Tr>
-                                </Table.Thead>
-                                <Table.Tbody>
-                                    {filteredItems.map((item) => (
-                                        <Table.Tr key={item.id}>
-                                            <Table.Td>
-                                                <Group gap="sm">
-                                                    {item.imageUrl ? (
-                                                        <Image src={item.imageUrl} width={40} height={40} radius="sm" fit="cover" />
-                                                    ) : (
-                                                        <ThemeIcon size={40} variant="light" radius="sm">
-                                                            {getCategoryIcon(item.category)}
-                                                        </ThemeIcon>
-                                                    )}
-                                                    <div>
-                                                        <Text fw={500} size="sm">{item.name}</Text>
-                                                        {item.isGiftIdea && (
-                                                            <Badge size="xs" color="pink" leftSection={<IconGift size={10} />}>
-                                                                Geschenk
-                                                            </Badge>
-                                                        )}
-                                                    </div>
-                                                </Group>
-                                            </Table.Td>
-                                            <Table.Td>
-                                                <Badge size="xs" variant="light" leftSection={getCategoryIcon(item.category)}>
-                                                    {categoryOptions.find(c => c.value === item.category)?.label}
-                                                </Badge>
-                                            </Table.Td>
-                                            <Table.Td>{getPriorityBadge(item.priority)}</Table.Td>
-                                            <Table.Td>{item.price ? formatPrice(item.price) : '-'}</Table.Td>
-                                            <Table.Td>{item.store || '-'}</Table.Td>
-                                            <Table.Td>
-                                                <Group gap="xs">
-                                                    <ActionIcon
-                                                        variant="light"
-                                                        color="green"
-                                                        size="sm"
-                                                        onClick={() => handlePurchase(item.id)}
-                                                    >
-                                                        <IconCheck size={14} />
-                                                    </ActionIcon>
-                                                    <Menu shadow="md" position="bottom-end">
-                                                        <Menu.Target>
-                                                            <ActionIcon variant="subtle" size="sm">
-                                                                <IconDots size={16} />
-                                                            </ActionIcon>
-                                                        </Menu.Target>
-                                                        <Menu.Dropdown>
-                                                            {item.productUrl && (
-                                                                <Menu.Item
-                                                                    leftSection={<IconExternalLink size={14} />}
-                                                                    component="a"
-                                                                    href={item.productUrl}
-                                                                    target="_blank"
-                                                                >
-                                                                    {t('wishlists.actions.toProduct')}
-                                                                </Menu.Item>
-                                                            )}
-                                                            <Menu.Item
-                                                                leftSection={<IconEdit size={14} />}
-                                                                onClick={() => openEditModal(item)}
-                                                            >
-                                                                Bearbeiten
-                                                            </Menu.Item>
-                                                            <Menu.Item
-                                                                leftSection={<IconTrash size={14} />}
-                                                                color="red"
-                                                                onClick={() => handleDelete(item.id)}
-                                                            >
-                                                                Löschen
-                                                            </Menu.Item>
-                                                        </Menu.Dropdown>
-                                                    </Menu>
-                                                </Group>
-                                            </Table.Td>
-                                        </Table.Tr>
-                                    ))}
-                                </Table.Tbody>
-                            </Table>
-                        </Paper>
-                    )}
-                </Tabs.Panel>
-
-                <Tabs.Panel value="gifts" pt="md">
-                    {isLoading ? (
-                        <Text>{t('wishlists.loading')}</Text>
-                    ) : filteredItems.length === 0 ? (
-                        <Paper shadow="sm" p="xl" radius="md" withBorder>
-                            <Stack align="center" gap="md">
-                                <ThemeIcon size={60} radius="xl" variant="light" color="pink">
-                                    <IconGift size={32} />
-                                </ThemeIcon>
-                                <Text size="lg" fw={500}>{t('wishlists.emptyGifts')}</Text>
-                                <Text c="dimmed" ta="center">
-                                    {t('wishlists.emptyGiftsDesc')}
-                                </Text>
-                            </Stack>
-                        </Paper>
-                    ) : (
-                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-                            {filteredItems.map((item) => (
-                                <Card key={item.id} shadow="sm" padding="lg" radius="md" withBorder>
-                                    <Card.Section>
-                                        {item.imageUrl ? (
-                                            <Image
-                                                src={item.imageUrl}
-                                                height={180}
-                                                alt={item.name}
-                                                fit="cover"
-                                            />
-                                        ) : (
-                                            <Group
-                                                h={180}
-                                                align="center"
-                                                justify="center"
-                                                style={{ background: 'var(--mantine-color-gray-1)' }}
-                                            >
-                                                <ThemeIcon size={60} variant="light" radius="xl">
-                                                    {getCategoryIcon(item.category)}
-                                                </ThemeIcon>
-                                            </Group>
-                                        )}
-                                    </Card.Section>
-
-                                    <Stack gap="xs" mt="md">
-                                        <Group justify="space-between" align="flex-start">
-                                            <div style={{ flex: 1 }}>
-                                                <Text fw={500} lineClamp={1}>{item.name}</Text>
-                                                {item.store && (
-                                                    <Text size="xs" c="dimmed">{item.store}</Text>
-                                                )}
-                                            </div>
-                                            <Menu shadow="md" width={200}>
-                                                <Menu.Target>
-                                                    <ActionIcon variant="subtle" color="gray">
-                                                        <IconDots size={16} />
-                                                    </ActionIcon>
-                                                </Menu.Target>
-                                                <Menu.Dropdown>
-                                                    <Menu.Item
-                                                        leftSection={<IconEdit size={14} />}
-                                                        onClick={() => openEditModal(item)}
-                                                    >
-                                                        {t('wishlists.modal.edit')}
-                                                    </Menu.Item>
-                                                    <Menu.Item
-                                                        leftSection={<IconTrash size={14} />}
-                                                        color="red"
-                                                        onClick={() => handleDelete(item.id)}
-                                                    >
-                                                        {t('wishlists.modal.delete')}
-                                                    </Menu.Item>
-                                                </Menu.Dropdown>
-                                            </Menu>
-                                        </Group>
-
-                                        {item.description && (
-                                            <Text size="sm" c="dimmed" lineClamp={2}>
-                                                {item.description}
-                                            </Text>
-                                        )}
-
-                                        <Group gap="xs">
-                                            {getPriorityBadge(item.priority)}
-                                            <Badge size="xs" variant="light" leftSection={getCategoryIcon(item.category)}>
-                                                {categoryOptions.find(c => c.value === item.category)?.label}
-                                            </Badge>
-                                        </Group>
-
-                                        {item.price && (
-                                            <Group gap="xs">
-                                                <IconCurrencyEuro size={16} />
-                                                <Text fw={600}>{formatPrice(item.price)}</Text>
-                                            </Group>
-                                        )}
-
-                                        {item.giftFor && (
-                                            <Text size="xs" c="dimmed">
-                                                {t('wishlists.labels.for')} {item.giftFor}
-                                                {item.occasion && ` (${item.occasion})`}
-                                            </Text>
-                                        )}
-
-                                        {item.productUrl && (
-                                            <Anchor
-                                                href={item.productUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                size="sm"
-                                            >
-                                                <Group gap={4}>
-                                                    <IconExternalLink size={14} />
-                                                    Zum Produkt
-                                                </Group>
-                                            </Anchor>
-                                        )}
-
-                                        <Button
-                                            fullWidth
-                                            variant="light"
-                                            color="green"
-                                            leftSection={<IconCheck size={16} />}
-                                            onClick={() => handlePurchase(item.id)}
-                                            mt="xs"
-                                        >
-                                            {t('wishlists.actions.markPurchased')}
-                                        </Button>
-                                    </Stack>
-                                </Card>
-                            ))}
-                        </SimpleGrid>
-                    )}
-                </Tabs.Panel>
-
-                <Tabs.Panel value="purchased" pt="md">
-                    {isLoading ? (
-                        <Text>{t('wishlists.loading')}</Text>
-                    ) : filteredItems.length === 0 ? (
-                        <Paper shadow="sm" p="xl" radius="md" withBorder>
-                            <Stack align="center" gap="md">
-                                <ThemeIcon size={60} radius="xl" variant="light" color="green">
-                                    <IconShoppingCart size={32} />
-                                </ThemeIcon>
-                                <Text size="lg" fw={500}>{t('wishlists.emptyPurchased')}</Text>
-                                <Text c="dimmed" ta="center">
-                                    {t('wishlists.emptyPurchasedDesc')}
-                                </Text>
-                            </Stack>
-                        </Paper>
-                    ) : (
-                        <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="md">
-                            {filteredItems.map((item) => (
-                                <Card key={item.id} shadow="sm" padding="lg" radius="md" withBorder>
-                                    <Card.Section>
-                                        {item.imageUrl ? (
-                                            <Image
-                                                src={item.imageUrl}
-                                                height={180}
-                                                alt={item.name}
-                                                fit="cover"
-                                            />
-                                        ) : (
-                                            <Group
-                                                h={180}
-                                                align="center"
-                                                justify="center"
-                                                style={{ background: 'var(--mantine-color-gray-1)' }}
-                                            >
-                                                <ThemeIcon size={60} variant="light" radius="xl">
-                                                    {getCategoryIcon(item.category)}
-                                                </ThemeIcon>
-                                            </Group>
-                                        )}
-                                    </Card.Section>
-
-                                    <Stack gap="xs" mt="md">
-                                        <Group justify="space-between" align="flex-start">
-                                            <div style={{ flex: 1 }}>
-                                                <Text fw={500} lineClamp={1}>{item.name}</Text>
-                                                {item.store && (
-                                                    <Text size="xs" c="dimmed">{item.store}</Text>
-                                                )}
-                                            </div>
-                                            <Menu shadow="md" width={200}>
-                                                <Menu.Target>
-                                                    <ActionIcon variant="subtle" color="gray">
-                                                        <IconDots size={16} />
-                                                    </ActionIcon>
-                                                </Menu.Target>
-                                                <Menu.Dropdown>
-                                                    <Menu.Item
-                                                        leftSection={<IconEdit size={14} />}
-                                                        onClick={() => openEditModal(item)}
-                                                    >
-                                                        {t('wishlists.modal.edit')}
-                                                    </Menu.Item>
-                                                    <Menu.Item
-                                                        leftSection={<IconTrash size={14} />}
-                                                        color="red"
-                                                        onClick={() => handleDelete(item.id)}
-                                                    >
-                                                        {t('wishlists.modal.delete')}
-                                                    </Menu.Item>
-                                                </Menu.Dropdown>
-                                            </Menu>
-                                        </Group>
-
-                                        {item.description && (
-                                            <Text size="sm" c="dimmed" lineClamp={2}>
-                                                {item.description}
-                                            </Text>
-                                        )}
-
-                                        <Group gap="xs">
-                                            {getPriorityBadge(item.priority)}
-                                            <Badge size="xs" variant="light" leftSection={getCategoryIcon(item.category)}>
-                                                {categoryOptions.find(c => c.value === item.category)?.label}
-                                            </Badge>
-                                            {item.isGiftIdea && (
-                                                <Badge size="xs" color="pink" leftSection={<IconGift size={12} />}>
-                                                    {t('wishlists.labels.gift')}
-                                                </Badge>
-                                            )}
-                                        </Group>
-
-                                        {item.price && (
-                                            <Group gap="xs">
-                                                <IconCurrencyEuro size={16} />
-                                                <Text fw={600}>{formatPrice(item.price)}</Text>
-                                            </Group>
-                                        )}
-
-                                        {item.giftFor && (
-                                            <Text size="xs" c="dimmed">
-                                                {t('wishlists.labels.for')} {item.giftFor}
-                                                {item.occasion && ` (${item.occasion})`}
-                                            </Text>
-                                        )}
-
-                                        {item.purchasedAt && (
-                                            <Badge size="xs" color="green" leftSection={<IconCheck size={12} />}>
-                                                {t('wishlists.labels.purchasedOn')} {new Date(item.purchasedAt).toLocaleDateString('de-DE')}
-                                            </Badge>
-                                        )}
-
-                                        {item.productUrl && (
-                                            <Anchor
-                                                href={item.productUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                size="sm"
-                                            >
-                                                <Group gap={4}>
-                                                    <IconExternalLink size={14} />
-                                                    Zum Produkt
-                                                </Group>
-                                            </Anchor>
-                                        )}
-                                    </Stack>
-                                </Card>
-                            ))}
-                        </SimpleGrid>
-                    )}
-                </Tabs.Panel>
-            </Tabs>
-
-            <Modal
-                opened={modalOpen}
-                onClose={() => {
-                    setModalOpen(false);
-                    setEditingItem(null);
-                    form.reset();
-                }}
-                title={editingItem ? t('wishlists.form.editTitle') : t('wishlists.form.newTitle')}
-                size="lg"
-            >
-                <form onSubmit={form.onSubmit(handleSubmit)}>
-                    <Stack gap="md">
-                        <TextInput
-                            label={t('wishlists.form.name')}
-                            placeholder={t('wishlists.form.namePlaceholder')}
-                            required
-                            {...form.getInputProps('name')}
-                        />
-
-                        <Textarea
-                            label={t('wishlists.form.description')}
-                            placeholder={t('wishlists.form.descriptionPlaceholder')}
-                            minRows={3}
-                            {...form.getInputProps('description')}
-                        />
-
-                        <TextInput
-                            label={t('wishlists.form.imageUrl')}
-                            placeholder={t('wishlists.form.imageUrlPlaceholder')}
-                            {...form.getInputProps('imageUrl')}
-                        />
-
-                        <TextInput
-                            label={t('wishlists.form.productUrl')}
-                            placeholder={t('wishlists.form.productUrlPlaceholder')}
-                            {...form.getInputProps('productUrl')}
-                        />
-
-                        <Group grow>
-                            <Select
-                                label={t('wishlists.form.category')}
-                                data={categoryOptions.map(c => ({ value: c.value, label: c.label }))}
-                                {...form.getInputProps('category')}
-                            />
-
-                            <Select
-                                label={t('wishlists.form.priority')}
-                                data={priorityOptions.map(p => ({ value: p.value, label: p.label }))}
-                                {...form.getInputProps('priority')}
-                            />
-                        </Group>
-
-                        <Group grow>
-                            <NumberInput
-                                label={t('wishlists.form.price')}
-                                placeholder={t('wishlists.form.pricePlaceholder')}
-                                decimalScale={2}
-                                fixedDecimalScale
-                                min={0}
-                                {...form.getInputProps('priceAmount')}
-                            />
-
-                            <Select
-                                label={t('wishlists.form.currency')}
-                                data={[
-                                    { value: 'EUR', label: 'EUR' },
-                                    { value: 'USD', label: 'USD' },
-                                    { value: 'GBP', label: 'GBP' },
-                                ]}
-                                {...form.getInputProps('priceCurrency')}
-                            />
-                        </Group>
-
-                        <TextInput
-                            label={t('wishlists.form.store')}
-                            placeholder={t('wishlists.form.storePlaceholder')}
-                            {...form.getInputProps('store')}
-                        />
-
-                        <Switch
-                            label={t('wishlists.form.isGiftIdea')}
-                            {...form.getInputProps('isGiftIdea', { type: 'checkbox' })}
-                        />
-
-                        {form.values.isGiftIdea && (
-                            <>
-                                <TextInput
-                                    label={t('wishlists.form.giftFor')}
-                                    placeholder={t('wishlists.form.giftForPlaceholder')}
-                                    {...form.getInputProps('giftFor')}
-                                />
-
-                                <TextInput
-                                    label={t('wishlists.form.occasionLabel')}
-                                    placeholder={t('wishlists.form.occasionPlaceholder')}
-                                    {...form.getInputProps('occasion')}
-                                />
-                            </>
-                        )}
-
-                        <Textarea
-                            label={t('wishlists.form.notes')}
-                            placeholder={t('wishlists.form.notesPlaceholder')}
-                            minRows={2}
-                            {...form.getInputProps('notes')}
-                        />
-
-                        <Group justify="flex-end" mt="md">
-                            <Button
-                                variant="subtle"
-                                onClick={() => {
-                                    setModalOpen(false);
-                                    setEditingItem(null);
-                                    form.reset();
-                                }}
-                            >
-                                {t('common.cancel')}
-                            </Button>
-                            <Button type="submit">
-                                {editingItem ? t('common.save') : t('common.create')}
-                            </Button>
-                        </Group>
-                    </Stack>
-                </form>
-            </Modal>
+                {/* Form Modal */}
+                <WishlistFormModal
+                    opened={modalOpen}
+                    onClose={handleCloseModal}
+                    onSubmit={handleSubmit}
+                    editingItem={editingItem}
+                />
             </Stack>
         </Container>
     );
