@@ -25,7 +25,7 @@ export class AppConfig {
     // Web Push VAPID Keys
     vapidPublicKey: string = process.env.VAPID_PUBLIC_KEY || '';
     vapidPrivateKey: string = process.env.VAPID_PRIVATE_KEY || '';
-    vapidEmail: string = process.env.VAPID_EMAIL || 'mailto:admin@ycmm.app';
+    vapidEmail: string = process.env.VAPID_EMAIL || 'mailto:mail@florian-chiorean.de';
 
     constructor() {
         if (this.environment === 'production') {
