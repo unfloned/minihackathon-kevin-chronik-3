@@ -1,9 +1,21 @@
 {
-    "version": "0.3.0",
+    "version": "0.4.0",
     "name": "Your Chaos, My Mission",
     "description": "Dein Chaos, meine Mission - Die All-in-One App für dein Leben",
     "released": "2025-12-05",
     "changelog": [
+        {
+            "version": "0.4.0",
+            "date": "2025-12-05",
+            "title": "Cinematic Experience Update",
+            "changes": [
+                "Cinematisches Intro: Filmreife Animation beim ersten Besuch",
+                "Dynamische Partikel-Effekte auf der Landing Page",
+                "Epische Soundkulisse mit Bass-Hits und Hintergrundmusik",
+                "Curtain-Effekt beim Übergang zur Website",
+                "PWA Push-Benachrichtigungen für Habits, Deadlines und Abos"
+            ]
+        },
         {
             "version": "0.3.0",
             "date": "2025-12-05",
