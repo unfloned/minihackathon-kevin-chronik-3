@@ -3,8 +3,10 @@ export { de, en } from './i18n/index.js';
 export type { TranslationKeys } from './i18n/index.js';
 
 // ===== Entities =====
-export { User } from './entities/user.entity.js';
-export type { UserPublic } from './entities/user.entity.js';
+export { User, defaultNotificationPreferences } from './entities/user.entity.js';
+export type { UserPublic, NotificationPreferences } from './entities/user.entity.js';
+
+export { PushSubscription } from './entities/push-subscription.entity.js';
 
 export { RefreshToken } from './entities/refresh-token.entity.js';
 export type { RefreshTokenFrontend } from './entities/refresh-token.entity.js';

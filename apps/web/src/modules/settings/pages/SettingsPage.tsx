@@ -14,6 +14,7 @@ import {
     Select,
     Alert,
     Badge,
+    Loader,
     useMantineColorScheme,
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
@@ -23,20 +24,35 @@ import {
     IconUser,
     IconLock,
     IconBell,
+    IconBellOff,
+    IconBellRinging,
     IconPalette,
     IconLanguage,
     IconTrash,
     IconInfoCircle,
+    IconCheck,
+    IconX,
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../../contexts/AuthContext';
-import { useMutation } from '../../../hooks';
+import { useMutation, usePushNotifications } from '../../../hooks';
 
 export default function SettingsPage() {
     const { t, i18n } = useTranslation();
     const { user, refreshUser } = useAuth();
     const { colorScheme, setColorScheme } = useMantineColorScheme();
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+    const {
+        isSupported: pushSupported,
+        isEnabled: pushEnabled,
+        permission: pushPermission,
+        isLoading: pushLoading,
+        error: pushError,
+        subscribe: subscribePush,
+        unsubscribe: unsubscribePush,
+        sendTestNotification,
+    } = usePushNotifications();
 
     const profileForm = useForm({
         initialValues: {
@@ -275,7 +291,7 @@ export default function SettingsPage() {
                 />
             </Card>
 
-            {/* Notification Settings */}
+            {/* Push Notification Settings */}
             <Card withBorder padding="lg">
                 <Group gap="xs" mb="md">
                     <IconBell size={20} />
@@ -283,9 +299,109 @@ export default function SettingsPage() {
                 </Group>
 
                 <Stack gap="md">
+                    {pushLoading ? (
+                        <Group>
+                            <Loader size="sm" />
+                            <Text size="sm" c="dimmed">Lade Push-Status...</Text>
+                        </Group>
+                    ) : !pushSupported ? (
+                        <Alert icon={<IconBellOff size={16} />} color="gray">
+                            Push-Benachrichtigungen werden von diesem Browser nicht unterstützt.
+                        </Alert>
+                    ) : pushPermission === 'denied' ? (
+                        <Alert icon={<IconX size={16} />} color="red">
+                            Push-Benachrichtigungen wurden im Browser blockiert.
+                            Bitte aktiviere sie in den Browser-Einstellungen.
+                        </Alert>
+                    ) : (
+                        <>
+                            <Group justify="space-between" align="flex-start">
+                                <div>
+                                    <Text fw={500}>Push-Benachrichtigungen</Text>
+                                    <Text size="sm" c="dimmed">
+                                        Erhalte Erinnerungen für Habits, Deadlines und mehr
+                                    </Text>
+                                </div>
+                                <Group gap="xs">
+                                    {pushEnabled ? (
+                                        <Badge color="green" leftSection={<IconCheck size={12} />}>
+                                            Aktiv
+                                        </Badge>
+                                    ) : (
+                                        <Badge color="gray" leftSection={<IconBellOff size={12} />}>
+                                            Inaktiv
+                                        </Badge>
+                                    )}
+                                </Group>
+                            </Group>
+
+                            {pushError && (
+                                <Alert icon={<IconInfoCircle size={16} />} color="red">
+                                    {pushError}
+                                </Alert>
+                            )}
+
+                            <Group>
+                                {pushEnabled ? (
+                                    <>
+                                        <Button
+                                            variant="light"
+                                            color="red"
+                                            leftSection={<IconBellOff size={16} />}
+                                            onClick={unsubscribePush}
+                                            loading={pushLoading}
+                                        >
+                                            Deaktivieren
+                                        </Button>
+                                        <Button
+                                            variant="light"
+                                            leftSection={<IconBellRinging size={16} />}
+                                            onClick={async () => {
+                                                const success = await sendTestNotification();
+                                                if (success) {
+                                                    notifications.show({
+                                                        title: 'Test gesendet',
+                                                        message: 'Eine Test-Benachrichtigung wurde gesendet',
+                                                        color: 'green',
+                                                    });
+                                                } else {
+                                                    notifications.show({
+                                                        title: 'Fehler',
+                                                        message: 'Test-Benachrichtigung konnte nicht gesendet werden',
+                                                        color: 'red',
+                                                    });
+                                                }
+                                            }}
+                                        >
+                                            Test senden
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Button
+                                        leftSection={<IconBell size={16} />}
+                                        onClick={subscribePush}
+                                        loading={pushLoading}
+                                    >
+                                        Push aktivieren
+                                    </Button>
+                                )}
+                            </Group>
+                        </>
+                    )}
+                </Stack>
+            </Card>
+
+            {/* In-App Notification Settings */}
+            <Card withBorder padding="lg">
+                <Group gap="xs" mb="md">
+                    <IconBellRinging size={20} />
+                    <Title order={4}>In-App Benachrichtigungen</Title>
+                </Group>
+
+                <Stack gap="md">
                     <Switch
-                        label={t('settings.notifications')}
-                        description={`${t('deadlines.title')}, ${t('deadlines.reminder')} und mehr`}
+                        label="Benachrichtigungen aktivieren"
+                        description="Zeige Benachrichtigungen in der App an"
                         checked={notificationsEnabled}
                         onChange={(e) => setNotificationsEnabled(e.currentTarget.checked)}
                     />

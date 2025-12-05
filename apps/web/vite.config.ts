@@ -8,13 +8,14 @@ export default defineConfig({
         react(),
         VitePWA({
             registerType: 'autoUpdate',
-            includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+            injectRegister: 'auto',
+            includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
             manifest: {
-                name: 'YCMM - You Can Manage More',
+                name: 'Your Chaos, My Mission',
                 short_name: 'YCMM',
-                description: 'Dein persönlicher Life-Manager für Habits, Finanzen, Projekte und mehr',
+                description: 'Dein Chaos, meine Mission - Die All-in-One App für dein Leben',
                 theme_color: '#228be6',
-                background_color: '#ffffff',
+                background_color: '#1a1b1e',
                 display: 'standalone',
                 orientation: 'portrait',
                 scope: '/',
@@ -55,39 +56,11 @@ export default defineConfig({
             },
             workbox: {
                 globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
-                runtimeCaching: [
-                    {
-                        urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'google-fonts-cache',
-                            expiration: {
-                                maxEntries: 10,
-                                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                    {
-                        urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-                        handler: 'CacheFirst',
-                        options: {
-                            cacheName: 'gstatic-fonts-cache',
-                            expiration: {
-                                maxEntries: 10,
-                                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
-                            },
-                            cacheableResponse: {
-                                statuses: [0, 200],
-                            },
-                        },
-                    },
-                ],
+                // Import push notification handler
+                importScripts: ['/push-sw.js'],
             },
             devOptions: {
-                enabled: true,
+                enabled: false,
             },
         }),
     ],

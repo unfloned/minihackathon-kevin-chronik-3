@@ -1,5 +1,8 @@
 import { Routes, Route } from 'react-router-dom';
 
+// Components
+import { InstallPrompt } from './components/InstallPrompt';
+
 // Layouts
 import PublicLayout from './layouts/PublicLayout';
 import AppLayout from './layouts/AppLayout';
@@ -34,6 +37,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 export default function App() {
     return (
+        <>
+        <InstallPrompt />
         <Routes>
             {/* Public Routes */}
             <Route element={<PublicLayout />}>
@@ -78,5 +83,6 @@ export default function App() {
                 <Route path="admin" element={<AdminPage />} />
             </Route>
         </Routes>
+        </>
     );
 }

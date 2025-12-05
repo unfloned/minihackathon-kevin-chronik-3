@@ -22,6 +22,11 @@ export class AppConfig {
     tmdbApiKey?: string = process.env.TMDB_API_KEY;
     omdbApiKey?: string = process.env.OMDB_API_KEY;
 
+    // Web Push VAPID Keys
+    vapidPublicKey: string = process.env.VAPID_PUBLIC_KEY || '';
+    vapidPrivateKey: string = process.env.VAPID_PRIVATE_KEY || '';
+    vapidEmail: string = process.env.VAPID_EMAIL || 'mailto:admin@ycmm.app';
+
     constructor() {
         if (this.environment === 'production') {
             if (this.jwtSecret.includes('dev-only')) {

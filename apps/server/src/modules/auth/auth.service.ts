@@ -201,6 +201,7 @@ export class AuthService {
             locale: user.locale,
             profilePublic: user.profilePublic,
             profileSlug: user.profileSlug,
+            notificationPreferences: user.notificationPreferences,
             createdAt: user.createdAt,
             updatedAt: user.updatedAt,
         };

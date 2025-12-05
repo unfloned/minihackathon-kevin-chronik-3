@@ -14,6 +14,7 @@ import {
     Note,
     Notification,
     Project,
+    PushSubscription,
     RefreshToken,
     Subscription,
     UserAchievement,
@@ -58,6 +59,14 @@ export class DemoCleanupService {
             .find();
         for (const token of refreshTokens) {
             await this.db.remove(token);
+        }
+
+        // Delete push subscriptions
+        const pushSubscriptions = await this.db.query(PushSubscription)
+            .useInnerJoinWith('user').filter({ id: userId }).end()
+            .find();
+        for (const pushSub of pushSubscriptions) {
+            await this.db.remove(pushSub);
         }
 
         // Delete notifications

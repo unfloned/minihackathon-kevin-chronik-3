@@ -37,6 +37,7 @@ import { MediaModule } from './modules/media';
 import { MealsModule } from './modules/meals';
 import { WishlistsModule } from './modules/wishlists';
 import { AdminModule } from './modules/admin';
+import { PushModule } from './modules/push';
 
 // Standalone Controllers
 import { VersionController } from './controllers/version.controller';
@@ -87,6 +88,7 @@ new App({
         MealsModule,
         WishlistsModule,
         AdminModule,
+        PushModule,
     ],
 })
     .loadConfigFromEnv({ prefix: '' })

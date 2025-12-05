@@ -1,5 +1,25 @@
 import { entity, PrimaryKey, Unique, uuid, UUID } from '@deepkit/type';
 
+export interface NotificationPreferences {
+    enabled: boolean;
+    habitReminders: boolean;
+    habitReminderTime: string; // "20:00"
+    deadlineWarnings: boolean;
+    deadlineDaysBefore: number[]; // [3, 1, 0]
+    subscriptionReminders: boolean;
+    streakWarnings: boolean;
+}
+
+export const defaultNotificationPreferences: NotificationPreferences = {
+    enabled: true,
+    habitReminders: true,
+    habitReminderTime: '20:00',
+    deadlineWarnings: true,
+    deadlineDaysBefore: [3, 1, 0],
+    subscriptionReminders: true,
+    streakWarnings: true,
+};
+
 @entity.name('users')
 export class User {
     id: UUID & PrimaryKey = uuid();
@@ -15,6 +35,9 @@ export class User {
     // Public profile / Achievement Showcase
     profilePublic: boolean = false;
     profileSlug: string = '';
+
+    // Push Notification preferences
+    notificationPreferences: NotificationPreferences = { ...defaultNotificationPreferences };
 
     // Demo account expiration (for cleanup of abandoned sessions)
     demoExpiresAt?: Date;
