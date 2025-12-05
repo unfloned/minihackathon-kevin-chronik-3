@@ -26,13 +26,27 @@ export default function PublicLayout() {
                         <Link to="/" style={{ textDecoration: 'none' }}>
                             <Group gap="xs">
                                 <IconTarget size={28} color="var(--mantine-color-blue-6)" />
-                                <Text
-                                    size="lg"
-                                    fw={700}
-                                    variant="gradient"
-                                    gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
-                                >
-                                    Your Chaos, My Mission
+                                <Text size="lg" fw={700}>
+                                    <Text component="span" c="dimmed" inherit>Your </Text>
+                                    <Text
+                                        component="span"
+                                        inherit
+                                        style={{
+                                            color: '#ff4444',
+                                            textShadow: '0 0 10px rgba(255, 68, 68, 0.5), 0 0 20px rgba(255, 68, 68, 0.3)',
+                                        }}
+                                    >
+                                        Chaos
+                                    </Text>
+                                    <Text component="span" c="dimmed" inherit>, My </Text>
+                                    <Text
+                                        component="span"
+                                        variant="gradient"
+                                        gradient={{ from: 'cyan', to: 'teal', deg: 90 }}
+                                        inherit
+                                    >
+                                        Mission
+                                    </Text>
                                 </Text>
                             </Group>
                         </Link>

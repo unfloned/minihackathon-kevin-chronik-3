@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Container,
@@ -36,6 +37,8 @@ import {
 } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import { CinematicIntro } from '../components/CinematicIntro';
+import { Particles } from '../components/Particles';
 
 const featureIcons = [
     { icon: IconBriefcase, key: 'applications', color: 'blue' },
@@ -52,9 +55,25 @@ const featureIcons = [
     { icon: IconGift, key: 'wishlists', color: 'grape' },
 ];
 
+const INTRO_STORAGE_KEY = 'ycmm-intro-seen';
+
 export default function LandingPage() {
     const { t } = useTranslation();
     const { isAuthenticated } = useAuth();
+    const [showIntro, setShowIntro] = useState(false);
+
+    useEffect(() => {
+        // Check if user has seen the intro before
+        const hasSeenIntro = localStorage.getItem(INTRO_STORAGE_KEY);
+        if (!hasSeenIntro) {
+            setShowIntro(true);
+        }
+    }, []);
+
+    const handleIntroComplete = () => {
+        localStorage.setItem(INTRO_STORAGE_KEY, 'true');
+        setShowIntro(false);
+    };
 
     const features = featureIcons.map((f) => ({
         icon: f.icon,
@@ -65,6 +84,14 @@ export default function LandingPage() {
 
     return (
         <>
+            {/* Background Particles */}
+            {!showIntro && <Particles count={30} />}
+
+            {/* Cinematic Intro */}
+            {showIntro && (
+                <CinematicIntro onComplete={handleIntroComplete} />
+            )}
+
             {/* Hero Section */}
             <Container size="lg" py={80}>
                 <Stack align="center" gap="xl">
@@ -79,9 +106,11 @@ export default function LandingPage() {
                         {t('landing.heroYour')}{' '}
                         <Text
                             component="span"
-                            variant="gradient"
-                            gradient={{ from: 'blue', to: 'cyan', deg: 90 }}
                             inherit
+                            style={{
+                                color: '#ff4444',
+                                textShadow: '0 0 20px rgba(255, 68, 68, 0.5), 0 0 40px rgba(255, 68, 68, 0.3)',
+                            }}
                         >
                             {t('landing.heroChaos')}
                         </Text>
