@@ -5,6 +5,7 @@ import { AppDatabase } from '../database';
 import { AppConfig } from '../config';
 import { GamificationService } from '../../modules/gamification/index';
 import { DemoCleanupService } from '../../modules/auth/demo-cleanup.service';
+import { NotificationSchedulerService } from '../../modules/scheduler/notification-scheduler.service';
 
 export class StartupListener {
     private cleanupInterval: NodeJS.Timeout | null = null;
@@ -14,7 +15,8 @@ export class StartupListener {
         private logger: Logger,
         private config: AppConfig,
         private gamificationService: GamificationService,
-        private demoCleanupService: DemoCleanupService
+        private demoCleanupService: DemoCleanupService,
+        private notificationScheduler: NotificationSchedulerService
     ) {}
 
     @eventDispatcher.listen(onAppExecute)
@@ -46,6 +48,14 @@ export class StartupListener {
             }
         } catch (err) {
             this.logger.error('Failed to run initial demo cleanup:', err);
+        }
+
+        // Start notification scheduler
+        try {
+            this.notificationScheduler.start();
+            this.logger.log('Notification scheduler started.');
+        } catch (err) {
+            this.logger.error('Failed to start notification scheduler:', err);
         }
     }
 
