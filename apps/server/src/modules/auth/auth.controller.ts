@@ -1,7 +1,9 @@
 import { http, HttpBody, HttpRequest, HttpResponse, HttpQuery, HttpUnauthorizedError } from '@deepkit/http';
 import { AuthService } from './auth.service';
+import { DemoCleanupService } from './demo-cleanup.service';
 import { NotificationService } from '../notifications/notification.service';
 import { GamificationService } from '../gamification/gamification.service';
+import { AdminService } from '../admin/admin.service';
 import { AppConfig } from '../../app/config';
 
 interface RegisterBody {
@@ -32,8 +34,10 @@ interface ValidateResetTokenQuery {
 export class AuthController {
     constructor(
         private authService: AuthService,
+        private demoCleanupService: DemoCleanupService,
         private notificationService: NotificationService,
         private gamificationService: GamificationService,
+        private adminService: AdminService,
         private config: AppConfig
     ) {}
 
@@ -101,12 +105,15 @@ export class AuthController {
 
         this.setTokenCookies(response, tokens.accessToken, tokens.refreshToken);
 
+        // Seed demo data for this new demo account
+        await this.adminService.seedDemoData(user);
+
         // Create demo welcome notification
         await this.notificationService.create(
             user.id,
             'info',
             'Demo-Modus aktiv',
-            'Du verwendest einen temporären Demo-Account. Deine Daten werden nicht gespeichert.'
+            'Du verwendest einen temporären Demo-Account. Deine Daten werden nach dem Logout gelöscht.'
         );
 
         // Unlock first_login achievement for demo
@@ -135,7 +142,21 @@ export class AuthController {
 
     @http.POST('/logout')
     async logout(request: HttpRequest, response: HttpResponse) {
+        const accessToken = this.getCookie(request, 'access_token');
         const refreshToken = this.getCookie(request, 'refresh_token');
+
+        // Check if this is a demo user and delete the account
+        if (accessToken) {
+            try {
+                const payload = await this.authService.validateAccessToken(accessToken);
+                if (payload.isDemo) {
+                    console.log(`[Demo] Demo user ${payload.userId} logging out, deleting account...`);
+                    await this.demoCleanupService.deleteDemoUser(payload.userId);
+                }
+            } catch {
+                // Token invalid, continue with normal logout
+            }
+        }
 
         if (refreshToken) {
             await this.authService.revokeRefreshToken(refreshToken);

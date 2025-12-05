@@ -4,18 +4,17 @@ import { Logger } from '@deepkit/logger';
 import { AppDatabase } from '../database';
 import { AppConfig } from '../config';
 import { GamificationService } from '../../modules/gamification/index';
-import { AdminService } from '../../modules/admin';
-import { AuthService } from '../../modules/auth';
-import { Habit } from '@ycmm/core';
+import { DemoCleanupService } from '../../modules/auth/demo-cleanup.service';
 
 export class StartupListener {
+    private cleanupInterval: NodeJS.Timeout | null = null;
+
     constructor(
         private database: AppDatabase,
         private logger: Logger,
         private config: AppConfig,
         private gamificationService: GamificationService,
-        private adminService: AdminService,
-        private authService: AuthService
+        private demoCleanupService: DemoCleanupService
     ) {}
 
     @eventDispatcher.listen(onAppExecute)
@@ -35,25 +34,34 @@ export class StartupListener {
             this.logger.error('Failed to initialize achievements:', err);
         }
 
-        // Initialize demo account and seed data if needed
+        // Start demo cleanup scheduler (runs every hour)
+        this.startDemoCleanupScheduler();
+        this.logger.log('Demo cleanup scheduler started (runs every hour).');
+
+        // Run initial cleanup on startup
         try {
-            const demoUser = await this.authService.createDemoUser();
-            this.logger.log(`Demo user ready: ${demoUser.email}`);
-
-            // Check if demo data exists
-            const demoHabits = await this.database.query(Habit)
-                .useInnerJoinWith('user').filter({ id: AuthService.DEMO_USER_ID }).end()
-                .count();
-
-            if (demoHabits === 0) {
-                this.logger.log('Seeding demo data...');
-                await this.adminService.seedDemoData(demoUser);
-                this.logger.log('Demo data seeded successfully.');
-            } else {
-                this.logger.log('Demo data already exists, skipping seed.');
+            const cleaned = await this.demoCleanupService.cleanupExpiredDemoAccounts();
+            if (cleaned > 0) {
+                this.logger.log(`Cleaned up ${cleaned} expired demo accounts on startup.`);
             }
         } catch (err) {
-            this.logger.error('Failed to initialize demo account:', err);
+            this.logger.error('Failed to run initial demo cleanup:', err);
         }
+    }
+
+    private startDemoCleanupScheduler() {
+        // Run cleanup every hour
+        const ONE_HOUR = 60 * 60 * 1000;
+
+        this.cleanupInterval = setInterval(async () => {
+            try {
+                const cleaned = await this.demoCleanupService.cleanupExpiredDemoAccounts();
+                if (cleaned > 0) {
+                    this.logger.log(`[Scheduled] Cleaned up ${cleaned} expired demo accounts.`);
+                }
+            } catch (err) {
+                this.logger.error('[Scheduled] Demo cleanup failed:', err);
+            }
+        }, ONE_HOUR);
     }
 }

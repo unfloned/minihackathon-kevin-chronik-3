@@ -66,42 +66,40 @@ export class AuthService {
         return user;
     }
 
-    // Fixed demo account credentials (using a valid UUID)
-    static readonly DEMO_USER_ID = '00000000-0000-0000-0000-000000000001';
-    static readonly DEMO_EMAIL = 'demo@ycmm.app';
-    static readonly DEMO_PASSWORD = 'demo';
+    // Demo account settings
+    static readonly DEMO_EXPIRY_HOURS = 24; // Demo accounts expire after 24 hours
 
     async createDemoUser(): Promise<User> {
-        // Check if demo user already exists
-        let user = await this.db.query(User)
-            .filter({ id: AuthService.DEMO_USER_ID })
-            .findOneOrUndefined();
+        // Generate unique demo user for this session
+        const uniqueId = crypto.randomUUID().substring(0, 8);
+        const timestamp = Date.now();
 
-        if (user) {
-            return user;
-        }
+        // Set expiration time
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + AuthService.DEMO_EXPIRY_HOURS);
 
-        // Create fixed demo user
-        user = new User();
-        user.id = AuthService.DEMO_USER_ID;
-        user.email = AuthService.DEMO_EMAIL;
-        user.password = await bcrypt.hash(AuthService.DEMO_PASSWORD, 12);
+        const user = new User();
+        user.email = `demo-${uniqueId}-${timestamp}@ycmm.app`;
+        user.password = await bcrypt.hash(crypto.randomUUID(), 12); // Random password
         user.displayName = 'Demo User';
         user.isDemo = true;
         user.isAdmin = false;
-        user.level = 5;
-        user.xp = 1250;
+        user.level = 1;
+        user.xp = 0;
+        user.demoExpiresAt = expiresAt;
         user.createdAt = new Date();
         user.updatedAt = new Date();
 
         await this.db.persist(user);
 
+        console.log(`[Demo] Created new demo account: ${user.id} (expires: ${expiresAt.toISOString()})`);
+
         return user;
     }
 
-    async getDemoUser(): Promise<User | undefined> {
+    async getDemoUser(userId: string): Promise<User | undefined> {
         return this.db.query(User)
-            .filter({ id: AuthService.DEMO_USER_ID })
+            .filter({ id: userId, isDemo: true })
             .findOneOrUndefined();
     }
 

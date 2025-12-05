@@ -16,6 +16,9 @@ export class User {
     profilePublic: boolean = false;
     profileSlug: string = '';
 
+    // Demo account expiration (for cleanup of abandoned sessions)
+    demoExpiresAt?: Date;
+
     createdAt: Date = new Date();
     updatedAt: Date = new Date();
 }

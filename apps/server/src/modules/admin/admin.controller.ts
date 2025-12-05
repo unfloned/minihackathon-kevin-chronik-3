@@ -29,13 +29,6 @@ export class AdminController {
         return this.authService.toPublicUser(updatedUser);
     }
 
-    @http.POST('/demo/reset')
-    async resetDemoData(user: User) {
-        await this.adminService.checkAdminAccess(user);
-        await this.adminService.resetDemoData();
-        return { success: true, message: 'Demo-Daten wurden zurückgesetzt' };
-    }
-
     @http.DELETE('/users/:userId/data')
     async deleteUserData(user: User, userId: string) {
         await this.adminService.checkAdminAccess(user);

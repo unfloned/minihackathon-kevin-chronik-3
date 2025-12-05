@@ -110,22 +110,6 @@ export class AdminService {
         for (const item of notifications) await this.db.remove(item);
     }
 
-    async resetDemoData(): Promise<void> {
-        const demoUserId = AuthService.DEMO_USER_ID;
-
-        // First delete all existing demo data
-        await this.deleteUserData(demoUserId);
-
-        // Ensure demo user exists
-        await this.authService.createDemoUser();
-
-        // Fetch demo user for References
-        const user = await this.db.query(User).filter({ id: demoUserId }).findOne();
-
-        // Seed fresh demo data
-        await this.seedDemoData(user);
-    }
-
     async seedDemoData(user: User): Promise<void> {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
