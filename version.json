@@ -1,17 +1,52 @@
 {
-    "version": "0.1.0",
+    "version": "0.3.0",
     "name": "Your Chaos, My Mission",
-    "description": "Dein Chaos, meine Mission - Eine persönliche Verwaltungs-Web-App",
-    "released": "2024-12-02",
+    "description": "Dein Chaos, meine Mission - Die All-in-One App für dein Leben",
+    "released": "2025-12-05",
     "changelog": [
         {
-            "version": "0.1.0",
-            "date": "2024-12-02",
+            "version": "0.3.0",
+            "date": "2025-12-05",
+            "title": "Demo & Performance Update",
             "changes": [
-                "Initial Release",
-                "Projekt Setup mit Turbo Monorepo",
-                "React + Vite Frontend",
-                "Deepkit Backend"
+                "Neues Demo-System: Jeder Demo-Zugang erstellt einen eigenen temporären Account",
+                "Automatische Löschung von Demo-Daten nach Logout oder 24 Stunden",
+                "Komplette Code-Optimierung: Alle Seiten in kleinere Komponenten aufgeteilt",
+                "Verbesserte Ladezeiten durch modulare Architektur"
+            ]
+        },
+        {
+            "version": "0.2.0",
+            "date": "2025-12-04",
+            "title": "Social & Voice Update",
+            "changes": [
+                "Sprachnotizen: Notizen per Spracheingabe erstellen",
+                "Achievement Showcase: Errungenschaften öffentlich teilen",
+                "Wunschliste teilen: Öffentliche Wunschlisten mit Geschenk-Reservierung",
+                "Drag & Drop für Bewerbungen im Kanban-Board",
+                "Vollständige Mehrsprachigkeit (Deutsch/Englisch)",
+                "Tipp des Tages Widget im Dashboard"
+            ]
+        },
+        {
+            "version": "0.1.0",
+            "date": "2025-12-02",
+            "title": "Initial Release",
+            "changes": [
+                "Dashboard mit Übersicht aller Module",
+                "Habits: Gewohnheiten mit Streaks und Timer",
+                "Ausgaben: Budget-Tracking mit Kategorien",
+                "Deadlines: Termine mit Erinnerungen",
+                "Abos: Subscription-Verwaltung",
+                "Medien: Film-, Serien- und Bücherliste",
+                "Notizen: Rich-Text Editor mit Tags",
+                "Listen: Einkaufs- und Packlisten",
+                "Projekte: Aufgaben und Meilensteine",
+                "Inventar: Gegenstände mit Verleih-Funktion",
+                "Bewerbungen: Job-Tracker mit Kanban",
+                "Rezepte: Mahlzeiten-Planung",
+                "Wunschliste: Geschenkideen verwalten",
+                "Gamification: XP, Level und Achievements"
             ]
         }
     ]
