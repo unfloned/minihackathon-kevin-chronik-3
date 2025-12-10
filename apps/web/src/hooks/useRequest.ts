@@ -156,6 +156,14 @@ export function useMutation<T, TVariables = unknown>(
 
             const url = typeof endpoint === 'function' ? endpoint(variables as TVariables) : endpoint;
 
+            // When using a dynamic URL function with a { id, data } pattern, extract only the data as body
+            const body = typeof endpoint === 'function' &&
+                         variables &&
+                         typeof variables === 'object' &&
+                         'data' in variables
+                ? (variables as { data: unknown }).data
+                : variables;
+
             try {
                 let data: T;
 
@@ -164,14 +172,14 @@ export function useMutation<T, TVariables = unknown>(
                         data = await api.delete<T>(url, { auth });
                         break;
                     case 'PATCH':
-                        data = await api.patch<T>(url, variables, { auth });
+                        data = await api.patch<T>(url, body, { auth });
                         break;
                     case 'PUT':
-                        data = await api.request<T>(url, { method: 'PUT', body: JSON.stringify(variables), auth });
+                        data = await api.request<T>(url, { method: 'PUT', body: JSON.stringify(body), auth });
                         break;
                     case 'POST':
                     default:
-                        data = await api.post<T>(url, variables, { auth });
+                        data = await api.post<T>(url, body, { auth });
                         break;
                 }
 
