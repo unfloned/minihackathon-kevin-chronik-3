@@ -5,6 +5,7 @@ import { NotificationService } from '../notifications/notification.service';
 import { GamificationService } from '../gamification/gamification.service';
 import { AdminService } from '../admin/admin.service';
 import { AppConfig } from '../../app/config';
+import { parseExpiresInToSeconds } from '../../shared/utils/token';
 
 interface RegisterBody {
     email: string;
@@ -43,10 +44,12 @@ export class AuthController {
 
     private setTokenCookies(response: HttpResponse, accessToken: string, refreshToken: string) {
         const isProduction = process.env.NODE_ENV === 'production';
+        const accessMaxAge = parseExpiresInToSeconds(this.config.jwtExpiresIn);
+        const refreshMaxAge = parseExpiresInToSeconds(this.config.jwtRefreshExpiresIn);
 
         response.setHeader('Set-Cookie', [
-            `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=900${isProduction ? '; Secure' : ''}`,
-            `refresh_token=${refreshToken}; HttpOnly; Path=/api/auth; SameSite=Strict; Max-Age=604800${isProduction ? '; Secure' : ''}`,
+            `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${accessMaxAge}${isProduction ? '; Secure' : ''}`,
+            `refresh_token=${refreshToken}; HttpOnly; Path=/api/auth; SameSite=Strict; Max-Age=${refreshMaxAge}${isProduction ? '; Secure' : ''}`,
         ]);
     }
 

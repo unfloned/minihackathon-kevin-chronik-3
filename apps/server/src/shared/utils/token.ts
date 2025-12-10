@@ -1,6 +1,29 @@
 import jwt, { SignOptions } from 'jsonwebtoken';
 import { AppConfig } from '../../app/config';
 
+/**
+ * Parse JWT expiresIn string (e.g., "7d", "15m", "1h") to seconds
+ */
+export function parseExpiresInToSeconds(expiresIn: string): number {
+    const match = expiresIn.match(/^(\d+)(s|m|h|d|w)$/);
+    if (!match) {
+        // Default to 15 minutes if format is invalid
+        return 900;
+    }
+
+    const value = parseInt(match[1], 10);
+    const unit = match[2];
+
+    switch (unit) {
+        case 's': return value;
+        case 'm': return value * 60;
+        case 'h': return value * 60 * 60;
+        case 'd': return value * 60 * 60 * 24;
+        case 'w': return value * 60 * 60 * 24 * 7;
+        default: return 900;
+    }
+}
+
 export interface TokenPayload {
     userId: string;
     email: string;
