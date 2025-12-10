@@ -47,6 +47,8 @@ export class AuthController {
         const accessMaxAge = parseExpiresInToSeconds(this.config.jwtExpiresIn);
         const refreshMaxAge = parseExpiresInToSeconds(this.config.jwtRefreshExpiresIn);
 
+        console.log(`[Auth] Setting cookies - jwtExpiresIn: ${this.config.jwtExpiresIn} (${accessMaxAge}s), jwtRefreshExpiresIn: ${this.config.jwtRefreshExpiresIn} (${refreshMaxAge}s)`);
+
         response.setHeader('Set-Cookie', [
             `access_token=${accessToken}; HttpOnly; Path=/; SameSite=Strict; Max-Age=${accessMaxAge}${isProduction ? '; Secure' : ''}`,
             `refresh_token=${refreshToken}; HttpOnly; Path=/api/auth; SameSite=Strict; Max-Age=${refreshMaxAge}${isProduction ? '; Secure' : ''}`,
