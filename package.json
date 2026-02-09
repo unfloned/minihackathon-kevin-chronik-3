@@ -1,6 +1,6 @@
 {
     "name": "your-chaos-my-mission",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "packageManager": "pnpm@9.14.4",
     "private": true,
     "scripts": {
