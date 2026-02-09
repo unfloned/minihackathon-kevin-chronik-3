@@ -27,6 +27,7 @@ import { ListsPage, ListDetailPage } from './modules/lists';
 import { ProjectsPage, ProjectDetailPage } from './modules/projects';
 import { InventoryPage } from './modules/inventory';
 import { ApplicationsPage } from './modules/applications';
+import { ProfilePage } from './modules/profile';
 import { MediaPage } from './modules/media';
 import { MealsPage } from './modules/meals';
 import { WishlistsPage } from './modules/wishlists';
@@ -76,6 +77,7 @@ export default function App() {
                 <Route path="projects/:id" element={<ProjectDetailPage />} />
                 <Route path="inventory" element={<InventoryPage />} />
                 <Route path="applications" element={<ApplicationsPage />} />
+                <Route path="applications/cv" element={<ProfilePage />} />
                 <Route path="media" element={<MediaPage />} />
                 <Route path="meals" element={<MealsPage />} />
                 <Route path="wishlists" element={<WishlistsPage />} />

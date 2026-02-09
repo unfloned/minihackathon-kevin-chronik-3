@@ -227,7 +227,7 @@ export default function AppLayout() {
                         to={item.path}
                         label={t(item.labelKey)}
                         leftSection={<item.icon size={18} />}
-                        active={location.pathname === item.path}
+                        active={item.path === '/app' ? location.pathname === '/app' : location.pathname.startsWith(item.path)}
                         mb={4}
                         data-tour={item.tourId}
                     />

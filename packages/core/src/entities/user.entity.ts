@@ -20,6 +20,57 @@ export const defaultNotificationPreferences: NotificationPreferences = {
     streakWarnings: true,
 };
 
+export interface WorkExperience {
+    id: string;
+    company: string;
+    position: string;
+    startDate: string;
+    endDate?: string;
+    description: string;
+}
+
+export interface Education {
+    id: string;
+    institution: string;
+    degree: string;
+    field: string;
+    startDate: string;
+    endDate?: string;
+}
+
+export interface Language {
+    language: string;
+    level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' | 'C2' | 'native';
+}
+
+export interface CvProject {
+    id: string;
+    title: string;
+    description: string;
+    url?: string;
+    technologies?: string[];
+}
+
+export interface CvCertification {
+    id: string;
+    name: string;
+    issuer: string;
+    date?: string;
+    url?: string;
+}
+
+export type CvSectionId = 'experience' | 'education' | 'skills' | 'languages' | 'projects' | 'certifications' | 'hobbies';
+
+export interface CvSectionConfig {
+    id: CvSectionId;
+    visible: boolean;
+    order: number;
+}
+
+export interface CvConfig {
+    sections: CvSectionConfig[];
+}
+
 @entity.name('users')
 export class User {
     id: UUID & PrimaryKey = uuid();
@@ -35,6 +86,19 @@ export class User {
     // Public profile / Achievement Showcase
     profilePublic: boolean = false;
     profileSlug: string = '';
+
+    // CV / Profile fields
+    profileBio: string = '';
+    profilePhone: string = '';
+    profileAddress: string = '';
+    profileSkills: string[] = [];
+    profileExperience: WorkExperience[] = [];
+    profileEducation: Education[] = [];
+    profileLanguages: Language[] = [];
+    profileProjects: CvProject[] = [];
+    profileCertifications: CvCertification[] = [];
+    profileHobbies: string[] = [];
+    profileCvConfig: CvConfig | null = null;
 
     // Push Notification preferences
     notificationPreferences: NotificationPreferences = { ...defaultNotificationPreferences };

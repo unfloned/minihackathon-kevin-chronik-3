@@ -4,7 +4,7 @@ export type { TranslationKeys } from './i18n/index.js';
 
 // ===== Entities =====
 export { User, defaultNotificationPreferences } from './entities/user.entity.js';
-export type { UserPublic, NotificationPreferences } from './entities/user.entity.js';
+export type { UserPublic, NotificationPreferences, WorkExperience, Education, Language, CvProject, CvCertification, CvSectionId, CvSectionConfig, CvConfig } from './entities/user.entity.js';
 
 export { PushSubscription } from './entities/push-subscription.entity.js';
 
@@ -54,7 +54,7 @@ export { InventoryItem } from './entities/inventory-item.entity.js';
 export type { ItemLocation, ItemWarranty, ItemLent, InventoryItemFrontend } from './entities/inventory-item.entity.js';
 
 export { Application } from './entities/application.entity.js';
-export type { ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview, ApplicationFrontend } from './entities/application.entity.js';
+export type { ApplicationStatus, RemoteType, ApplicationPriority, SalaryRange, StatusChange, Interview, ApplicationFrontend } from './entities/application.entity.js';
 
 export { MediaItem } from './entities/media-item.entity.js';
 export type { MediaType, MediaStatus, MediaProgress, SeriesSeason, ExternalIds, MediaItemFrontend } from './entities/media-item.entity.js';
