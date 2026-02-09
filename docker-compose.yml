@@ -9,7 +9,7 @@ services:
       - "8080:80"
     environment:
       - NODE_ENV=production
-      - DATABASE_PATH=/app/data/ycmm.sqlite
+      - DATABASE_URL=sqlite:///app/data/ycmm.db
       - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-change-me-in-production}
       - JWT_EXPIRES_IN=2h
