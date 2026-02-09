@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
     Modal,
     Stack,
@@ -9,6 +10,9 @@ import {
     Paper,
     ThemeIcon,
     Avatar,
+    Menu,
+    Box,
+    Textarea,
 } from '@mantine/core';
 import {
     IconEdit,
@@ -19,10 +23,17 @@ import {
     IconExternalLink,
     IconUser,
     IconBriefcase,
+    IconCircleFilled,
+    IconPhone,
+    IconMail,
+    IconSend,
+    IconTag,
 } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
 import type { Application, ApplicationStatus, SalaryRange } from '../types';
-import { statusColors, sourceOptions } from '../types';
+import { statusColors, sourceOptions, priorityColors } from '../types';
+import { useMutation } from '../../../hooks';
 
 interface ApplicationDetailModalProps {
     opened: boolean;
@@ -31,6 +42,7 @@ interface ApplicationDetailModalProps {
     statusLabels: Record<ApplicationStatus, string>;
     onEdit: (app: Application) => void;
     onDelete: (id: string) => void;
+    onStatusChange: (appId: string, status: ApplicationStatus) => void;
 }
 
 export function ApplicationDetailModal({
@@ -40,8 +52,16 @@ export function ApplicationDetailModal({
     statusLabels,
     onEdit,
     onDelete,
+    onStatusChange,
 }: ApplicationDetailModalProps) {
     const { t } = useTranslation();
+    const [showEmailPreview, setShowEmailPreview] = useState(false);
+    const [emailBody, setEmailBody] = useState('');
+
+    const { mutate: sendApplication, isLoading: sending } = useMutation<void, { id: string; emailBody: string }>(
+        (vars) => `/applications/${vars.id}/apply`,
+        { method: 'POST' }
+    );
 
     const formatSalary = (salary?: SalaryRange) => {
         if (!salary) return null;
@@ -57,7 +77,35 @@ export function ApplicationDetailModal({
         return null;
     };
 
+    const handleApplyByEmail = () => {
+        if (!application) return;
+        setEmailBody(application.notes || '');
+        setShowEmailPreview(true);
+    };
+
+    const handleSendEmail = async () => {
+        if (!application) return;
+        try {
+            await sendApplication({ id: application.id, emailBody });
+            notifications.show({
+                title: t('common.success'),
+                message: t('applications.emailSent'),
+                color: 'green',
+            });
+            setShowEmailPreview(false);
+            onStatusChange(application.id, 'applied');
+        } catch {
+            notifications.show({
+                title: t('common.error'),
+                message: t('errors.generic'),
+                color: 'red',
+            });
+        }
+    };
+
     if (!application) return null;
+
+    const canApplyByEmail = application.contactEmail && application.status === 'draft';
 
     return (
         <Modal
@@ -86,9 +134,36 @@ export function ApplicationDetailModal({
                 <Group grow>
                     <Stack gap={4}>
                         <Text size="xs" c="dimmed">{t('common.status')}</Text>
-                        <Badge color={statusColors[application.status]}>
-                            {statusLabels[application.status]}
-                        </Badge>
+                        <Menu shadow="md" width={220}>
+                            <Menu.Target>
+                                <Box style={{ cursor: 'pointer', display: 'inline-block' }}>
+                                    <Badge
+                                        color={statusColors[application.status]}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {statusLabels[application.status]}
+                                    </Badge>
+                                </Box>
+                            </Menu.Target>
+                            <Menu.Dropdown>
+                                <Menu.Label>{t('common.status')}</Menu.Label>
+                                {(Object.keys(statusLabels) as ApplicationStatus[]).map((status) => (
+                                    <Menu.Item
+                                        key={status}
+                                        disabled={status === application.status}
+                                        leftSection={
+                                            <IconCircleFilled
+                                                size={8}
+                                                style={{ color: `var(--mantine-color-${statusColors[status]}-filled)` }}
+                                            />
+                                        }
+                                        onClick={() => onStatusChange(application.id, status)}
+                                    >
+                                        {statusLabels[status]}
+                                    </Menu.Item>
+                                ))}
+                            </Menu.Dropdown>
+                        </Menu>
                     </Stack>
                     <Stack gap={4}>
                         <Text size="xs" c="dimmed">Remote</Text>
@@ -96,7 +171,29 @@ export function ApplicationDetailModal({
                             {application.remote === 'onsite' ? t('applications.interviewType.onsite') : application.remote === 'hybrid' ? 'Hybrid' : 'Remote'}
                         </Badge>
                     </Stack>
+                    {application.priority && (
+                        <Stack gap={4}>
+                            <Text size="xs" c="dimmed">{t('common.priority')}</Text>
+                            <Badge color={priorityColors[application.priority]} variant="light">
+                                {t(`applications.priority.${application.priority}`)}
+                            </Badge>
+                        </Stack>
+                    )}
                 </Group>
+
+                {application.tags && application.tags.length > 0 && (
+                    <Stack gap={4}>
+                        <Group gap={4}>
+                            <IconTag size={16} />
+                            <Text size="sm" fw={500}>{t('common.tags')}</Text>
+                        </Group>
+                        <Group gap="xs" pl="lg">
+                            {application.tags.map((tag) => (
+                                <Badge key={tag} variant="outline" size="sm">{tag}</Badge>
+                            ))}
+                        </Group>
+                    </Stack>
+                )}
 
                 <Stack gap={4}>
                     <Group gap={4}>
@@ -163,15 +260,26 @@ export function ApplicationDetailModal({
                     </Stack>
                 )}
 
-                {application.contactName && (
+                {(application.contactName || application.contactEmail || application.contactPhone) && (
                     <Stack gap={4}>
                         <Group gap={4}>
                             <IconUser size={16} />
                             <Text size="sm" fw={500}>{t('applications.contactPerson')}</Text>
                         </Group>
-                        <Text size="sm" pl="lg">{application.contactName}</Text>
+                        {application.contactName && (
+                            <Text size="sm" pl="lg">{application.contactName}</Text>
+                        )}
                         {application.contactEmail && (
-                            <Text size="sm" pl="lg" c="blue">{application.contactEmail}</Text>
+                            <Group gap={4} pl="lg">
+                                <IconMail size={14} />
+                                <Text size="sm" c="blue">{application.contactEmail}</Text>
+                            </Group>
+                        )}
+                        {application.contactPhone && (
+                            <Group gap={4} pl="lg">
+                                <IconPhone size={14} />
+                                <Text size="sm">{application.contactPhone}</Text>
+                            </Group>
                         )}
                     </Stack>
                 )}
@@ -225,17 +333,60 @@ export function ApplicationDetailModal({
                     </>
                 )}
 
+                {/* Email Preview Section */}
+                {showEmailPreview && (
+                    <>
+                        <Divider />
+                        <Stack gap="sm">
+                            <Text size="sm" fw={500}>{t('applications.emailPreview')}</Text>
+                            <Paper withBorder p="sm">
+                                <Text size="xs" c="dimmed">{t('applications.emailTo')}: {application.contactEmail}</Text>
+                                <Text size="xs" c="dimmed">{t('applications.emailSubject')}: Bewerbung als {application.jobTitle}</Text>
+                            </Paper>
+                            <Textarea
+                                label={t('applications.coverLetter')}
+                                value={emailBody}
+                                onChange={(e) => setEmailBody(e.currentTarget.value)}
+                                minRows={5}
+                            />
+                            <Group justify="flex-end">
+                                <Button variant="subtle" onClick={() => setShowEmailPreview(false)}>
+                                    {t('common.cancel')}
+                                </Button>
+                                <Button
+                                    leftSection={<IconSend size={16} />}
+                                    onClick={handleSendEmail}
+                                    loading={sending}
+                                >
+                                    {t('applications.sendEmail')}
+                                </Button>
+                            </Group>
+                        </Stack>
+                    </>
+                )}
+
                 <Divider />
 
                 <Group justify="space-between">
-                    <Button
-                        variant="subtle"
-                        color="red"
-                        leftSection={<IconTrash size={16} />}
-                        onClick={() => onDelete(application.id)}
-                    >
-                        {t('common.delete')}
-                    </Button>
+                    <Group>
+                        <Button
+                            variant="subtle"
+                            color="red"
+                            leftSection={<IconTrash size={16} />}
+                            onClick={() => onDelete(application.id)}
+                        >
+                            {t('common.delete')}
+                        </Button>
+                        {canApplyByEmail && !showEmailPreview && (
+                            <Button
+                                variant="light"
+                                leftSection={<IconMail size={16} />}
+                                onClick={handleApplyByEmail}
+                            >
+                                {t('applications.applyByEmail')}
+                            </Button>
+                        )}
+                    </Group>
                     <Group>
                         <Button variant="default" onClick={onClose}>
                             {t('common.close')}

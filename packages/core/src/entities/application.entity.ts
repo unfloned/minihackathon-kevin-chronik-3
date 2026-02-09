@@ -14,6 +14,8 @@ export type ApplicationStatus =
 
 export type RemoteType = 'onsite' | 'hybrid' | 'remote';
 
+export type ApplicationPriority = 'low' | 'medium' | 'high';
+
 export interface SalaryRange {
     min?: number;
     max?: number;
@@ -62,6 +64,8 @@ export class Application {
     contactPhone: string = '';
 
     notes: string = '';
+    tags: string[] = [];
+    priority: ApplicationPriority = 'medium';
 
     interviews: Interview[] = [];
 

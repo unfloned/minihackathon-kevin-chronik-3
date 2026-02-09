@@ -33,6 +33,8 @@ import { ListsModule } from './modules/lists';
 import { ProjectsModule } from './modules/projects';
 import { InventoryModule } from './modules/inventory';
 import { ApplicationsModule } from './modules/applications';
+import { ProfileModule } from './modules/profile';
+import { EmailModule } from './modules/email';
 import { MediaModule } from './modules/media';
 import { MealsModule } from './modules/meals';
 import { WishlistsModule } from './modules/wishlists';
@@ -85,6 +87,8 @@ new App({
         ProjectsModule,
         InventoryModule,
         ApplicationsModule,
+        ProfileModule,
+        EmailModule,
         MediaModule,
         MealsModule,
         WishlistsModule,

@@ -11,6 +11,8 @@ export type ApplicationStatus =
 
 export type RemoteType = 'onsite' | 'hybrid' | 'remote';
 
+export type ApplicationPriority = 'low' | 'medium' | 'high';
+
 export interface SalaryRange {
     min?: number;
     max?: number;
@@ -45,6 +47,8 @@ export interface Application {
     contactEmail: string;
     contactPhone: string;
     notes: string;
+    tags: string[];
+    priority: ApplicationPriority;
     interviews: Interview[];
     appliedAt?: string;
     source: string;
@@ -64,8 +68,12 @@ export interface CreateApplicationForm {
     salaryMax?: number;
     contactName: string;
     contactEmail: string;
+    contactPhone: string;
     notes: string;
     source: string;
+    tags: string[];
+    priority: ApplicationPriority;
+    appliedAt: string;
 }
 
 export const defaultForm: CreateApplicationForm = {
@@ -78,8 +86,12 @@ export const defaultForm: CreateApplicationForm = {
     remote: 'onsite',
     contactName: '',
     contactEmail: '',
+    contactPhone: '',
     notes: '',
     source: '',
+    tags: [],
+    priority: 'medium',
+    appliedAt: '',
 };
 
 export const statusColors: Record<ApplicationStatus, string> = {
@@ -93,6 +105,18 @@ export const statusColors: Record<ApplicationStatus, string> = {
     rejected: 'red',
     withdrawn: 'orange',
 };
+
+export const priorityColors: Record<ApplicationPriority, string> = {
+    low: 'gray',
+    medium: 'yellow',
+    high: 'red',
+};
+
+export const priorityOptions = [
+    { value: 'low', label: 'Niedrig' },
+    { value: 'medium', label: 'Mittel' },
+    { value: 'high', label: 'Hoch' },
+];
 
 export const sourceOptions = [
     { value: 'linkedin', label: 'LinkedIn' },

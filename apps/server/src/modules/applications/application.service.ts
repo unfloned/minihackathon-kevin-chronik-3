@@ -1,4 +1,4 @@
-import { Application, ApplicationStatus, RemoteType, SalaryRange, StatusChange, Interview, User } from '@ycmm/core';
+import { Application, ApplicationStatus, ApplicationPriority, RemoteType, SalaryRange, StatusChange, Interview, User } from '@ycmm/core';
 import { AppDatabase } from '../../app/database';
 import crypto from 'crypto';
 
@@ -16,6 +16,9 @@ export interface CreateApplicationDto {
     contactPhone?: string;
     notes?: string;
     source?: string;
+    tags?: string[];
+    priority?: ApplicationPriority;
+    appliedAt?: Date;
 }
 
 export interface UpdateApplicationDto {
@@ -32,6 +35,9 @@ export interface UpdateApplicationDto {
     contactPhone?: string;
     notes?: string;
     source?: string;
+    tags?: string[];
+    priority?: ApplicationPriority;
+    appliedAt?: Date;
 }
 
 export interface AddInterviewDto {
@@ -106,9 +112,12 @@ export class ApplicationService {
         app.contactPhone = dto.contactPhone || '';
         app.notes = dto.notes || '';
         app.source = dto.source || '';
+        app.tags = dto.tags || [];
+        app.priority = dto.priority || 'medium';
         app.status = 'draft';
         app.statusHistory = [{ status: 'draft', date: new Date().toISOString() }];
         app.interviews = [];
+        if (dto.appliedAt) app.appliedAt = new Date(dto.appliedAt);
         app.createdAt = new Date();
         app.updatedAt = new Date();
 
@@ -133,6 +142,9 @@ export class ApplicationService {
         if (dto.contactPhone !== undefined) app.contactPhone = dto.contactPhone;
         if (dto.notes !== undefined) app.notes = dto.notes;
         if (dto.source !== undefined) app.source = dto.source;
+        if (dto.tags !== undefined) app.tags = dto.tags;
+        if (dto.priority !== undefined) app.priority = dto.priority;
+        if (dto.appliedAt !== undefined) app.appliedAt = new Date(dto.appliedAt);
         app.updatedAt = new Date();
 
         await this.database.persist(app);

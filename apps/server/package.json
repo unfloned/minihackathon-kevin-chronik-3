@@ -32,6 +32,8 @@
         "bcrypt": "^5.1.1",
         "dotenv": "^16.4.5",
         "jsonwebtoken": "^9.0.2",
+        "nodemailer": "^8.0.1",
+        "pdfkit": "^0.17.2",
         "uuid": "^11.0.3",
         "web-push": "^3.6.7"
     },
@@ -40,6 +42,8 @@
         "@types/bcrypt": "^5.0.2",
         "@types/jsonwebtoken": "^9.0.7",
         "@types/node": "^22.10.1",
+        "@types/nodemailer": "^7.0.9",
+        "@types/pdfkit": "^0.17.4",
         "@types/uuid": "^10.0.0",
         "@types/web-push": "^3.6.4",
         "ts-node": "^10.9.2",

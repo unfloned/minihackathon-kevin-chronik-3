@@ -1,39 +1,34 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
-    SimpleGrid,
     Group,
     Stack,
     Button,
-    TextInput,
-    Paper,
     Skeleton,
-    SegmentedControl,
     Container,
+    Text,
+    Select,
 } from '@mantine/core';
+import { modals } from '@mantine/modals';
 import { useDisclosure } from '@mantine/hooks';
-import {
-    IconBriefcase,
-    IconLayoutGrid,
-    IconLayoutKanban,
-    IconList,
-    IconMessageCircle,
-    IconCalendarEvent,
-    IconGift,
-} from '@tabler/icons-react';
+import { IconUser } from '@tabler/icons-react';
+import { Link } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { useTranslation } from 'react-i18next';
-import { useRequest, useMutation, useViewMode } from '../../../hooks';
+import { useRequest, useMutation } from '../../../hooks';
 import { PageTitle } from '../../../components/PageTitle';
-import { CardStatistic } from '../../../components/CardStatistic';
 import type { Application, ApplicationStatus, CreateApplicationForm, SalaryRange } from '../types';
 import { defaultForm } from '../types';
 import {
-    KanbanView,
-    CardsView,
     TableView,
     ApplicationFormModal,
     ApplicationDetailModal,
+    FilterBar,
+    AnalyticsDashboard,
 } from '../components';
+import { applyFilters, defaultFilters } from '../components/FilterBar';
+import type { ApplicationFilters } from '../components/FilterBar';
+import { sortApplications } from '../components/TableView';
+import type { SortState } from '../components/TableView';
 
 export default function ApplicationsPage() {
     const { t } = useTranslation();
@@ -55,21 +50,11 @@ export default function ApplicationsPage() {
     const [editingApp, setEditingApp] = useState<Application | null>(null);
     const [selectedApp, setSelectedApp] = useState<Application | null>(null);
     const [form, setForm] = useState<CreateApplicationForm>(defaultForm);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [globalViewMode, setViewMode] = useViewMode();
-
-    const viewMode = globalViewMode === 'kanban' ? 'kanban'
-        : (globalViewMode === 'list' || globalViewMode === 'table') ? 'list' : 'grid';
+    const [filters, setFilters] = useState<ApplicationFilters>({ ...defaultFilters });
+    const [sort, setSort] = useState<SortState>({ field: 'appliedAt', direction: 'desc' });
+    const [groupBy, setGroupBy] = useState<'none' | 'status' | 'priority'>('none');
 
     const { data: applications, isLoading, refetch } = useRequest<Application[]>('/applications');
-    const { data: stats, refetch: refetchStats } = useRequest<{
-        total: number;
-        byStatus: { status: ApplicationStatus; count: number }[];
-        responseRate: number;
-        interviewRate: number;
-        offerRate: number;
-        averageResponseDays: number | null;
-    }>('/applications/stats');
 
     const { mutate: createApp, isLoading: creating } = useMutation<Application, CreateApplicationForm & { salary?: SalaryRange }>(
         '/applications',
@@ -91,6 +76,24 @@ export default function ApplicationsPage() {
         { method: 'POST' }
     );
 
+    // Derive unique sources and tags from data
+    const allSources = useMemo(() => {
+        if (!applications) return [];
+        return [...new Set(applications.map((a) => a.source).filter(Boolean))];
+    }, [applications]);
+
+    const allTags = useMemo(() => {
+        if (!applications) return [];
+        return [...new Set(applications.flatMap((a) => a.tags))];
+    }, [applications]);
+
+    // Pipeline: filter -> sort
+    const processedApplications = useMemo(() => {
+        const raw = applications || [];
+        const filtered = applyFilters(raw, filters);
+        return sortApplications(filtered, sort);
+    }, [applications, filters, sort]);
+
     const handleOpenCreate = () => {
         setEditingApp(null);
         setForm(defaultForm);
@@ -111,8 +114,12 @@ export default function ApplicationsPage() {
             salaryMax: app.salary?.max,
             contactName: app.contactName,
             contactEmail: app.contactEmail,
+            contactPhone: app.contactPhone || '',
             notes: app.notes,
             source: app.source,
+            tags: app.tags || [],
+            priority: app.priority || 'medium',
+            appliedAt: app.appliedAt || '',
         });
         open();
     };
@@ -123,6 +130,15 @@ export default function ApplicationsPage() {
     };
 
     const handleSubmit = async () => {
+        if (!form.companyName.trim() || !form.jobTitle.trim()) {
+            notifications.show({
+                title: t('common.error'),
+                message: t('applications.validation.requiredFields'),
+                color: 'red',
+            });
+            return;
+        }
+
         const payload: CreateApplicationForm & { salary?: SalaryRange } = {
             ...form,
             salary: form.salaryMin || form.salaryMax ? {
@@ -149,7 +165,6 @@ export default function ApplicationsPage() {
                 });
             }
             refetch();
-            refetchStats();
             close();
         } catch {
             notifications.show({
@@ -160,24 +175,33 @@ export default function ApplicationsPage() {
         }
     };
 
-    const handleDelete = async (id: string) => {
-        try {
-            await deleteApp({ id });
-            notifications.show({
-                title: t('common.success'),
-                message: t('applications.applicationDeleted'),
-                color: 'green',
-            });
-            refetch();
-            refetchStats();
-            closeDetail();
-        } catch {
-            notifications.show({
-                title: t('common.error'),
-                message: t('errors.generic'),
-                color: 'red',
-            });
-        }
+    const handleDelete = (id: string) => {
+        modals.openConfirmModal({
+            title: t('applications.deleteApplication'),
+            children: (
+                <Text size="sm">{t('applications.deleteConfirm')}</Text>
+            ),
+            labels: { confirm: t('common.delete'), cancel: t('common.cancel') },
+            confirmProps: { color: 'red' },
+            onConfirm: async () => {
+                try {
+                    await deleteApp({ id });
+                    notifications.show({
+                        title: t('common.success'),
+                        message: t('applications.applicationDeleted'),
+                        color: 'green',
+                    });
+                    refetch();
+                    closeDetail();
+                } catch {
+                    notifications.show({
+                        title: t('common.error'),
+                        message: t('errors.generic'),
+                        color: 'red',
+                    });
+                }
+            },
+        });
     };
 
     const handleStatusChange = async (appId: string, newStatus: ApplicationStatus) => {
@@ -189,7 +213,6 @@ export default function ApplicationsPage() {
                 color: 'green',
             });
             refetch();
-            refetchStats();
         } catch {
             notifications.show({
                 title: t('common.error'),
@@ -199,23 +222,18 @@ export default function ApplicationsPage() {
         }
     };
 
-    const filteredApplications = applications?.filter((app) => {
-        if (!searchQuery) return true;
-        const query = searchQuery.toLowerCase();
-        return (
-            app.companyName.toLowerCase().includes(query) ||
-            app.jobTitle.toLowerCase().includes(query) ||
-            app.location.toLowerCase().includes(query)
-        );
-    }) || [];
-
     if (isLoading) {
         return (
             <Container size="xl" py="xl">
                 <Stack gap="md">
                     <Group justify="space-between">
                         <PageTitle title={t('applications.title')} subtitle={t('applications.subtitle')} />
-                        <Button onClick={handleOpenCreate}>{t('applications.newApplication')}</Button>
+                        <Group>
+                            <Button variant="light" leftSection={<IconUser size={16} />} component={Link} to="/app/applications/cv">
+                                {t('nav.cvGenerator')}
+                            </Button>
+                            <Button onClick={handleOpenCreate}>{t('applications.newApplication')}</Button>
+                        </Group>
                     </Group>
                     <Skeleton height={100} />
                     <Skeleton height={400} />
@@ -230,94 +248,58 @@ export default function ApplicationsPage() {
                 {/* Header */}
                 <Group justify="space-between">
                     <PageTitle title={t('applications.title')} subtitle={t('applications.subtitle')} />
-                    <Button onClick={handleOpenCreate}>{t('applications.newApplication')}</Button>
+                    <Group>
+                        <Button variant="light" leftSection={<IconUser size={16} />} component={Link} to="/app/applications/cv">
+                            {t('nav.cvGenerator')}
+                        </Button>
+                        <Button onClick={handleOpenCreate}>{t('applications.newApplication')}</Button>
+                    </Group>
                 </Group>
 
-                {/* Stats */}
-                {stats && (
-                    <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="lg">
-                        <CardStatistic
-                            type="icon"
-                            title={t('applications.stats.total')}
-                            value={stats.total}
-                            icon={IconBriefcase}
-                            color="blue"
-                        />
-                        <CardStatistic
-                            type="icon"
-                            title={t('dashboard.stats.responseRate', { defaultValue: 'Rücklaufquote' })}
-                            value={`${Math.round(stats.responseRate)}%`}
-                            icon={IconMessageCircle}
-                            color="cyan"
-                        />
-                        <CardStatistic
-                            type="icon"
-                            title={t('dashboard.stats.interviewRate', { defaultValue: 'Interview-Quote' })}
-                            value={`${Math.round(stats.interviewRate)}%`}
-                            icon={IconCalendarEvent}
-                            color="violet"
-                        />
-                        <CardStatistic
-                            type="icon"
-                            title={t('dashboard.stats.offerRate', { defaultValue: 'Angebots-Quote' })}
-                            value={`${Math.round(stats.offerRate)}%`}
-                            icon={IconGift}
-                            color="green"
-                        />
-                    </SimpleGrid>
-                )}
+                {/* Analytics Dashboard */}
+                <AnalyticsDashboard applications={applications || []} />
 
-                {/* Search Bar */}
-                <Paper shadow="sm" withBorder p="md" radius="md">
-                    <Group>
-                        <TextInput
-                            placeholder={t('common.search')}
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.currentTarget.value)}
-                            style={{ flex: 1 }}
-                        />
-                        <SegmentedControl
-                            value={viewMode}
-                            onChange={(value) => setViewMode(value as 'kanban' | 'grid' | 'list')}
-                            data={[
-                                { value: 'kanban', label: <IconLayoutKanban size={16} /> },
-                                { value: 'grid', label: <IconLayoutGrid size={16} /> },
-                                { value: 'list', label: <IconList size={16} /> },
-                            ]}
-                        />
-                    </Group>
-                </Paper>
+                {/* Filter Bar */}
+                <FilterBar
+                    filters={filters}
+                    onFiltersChange={setFilters}
+                    statusLabels={statusLabels}
+                    allSources={allSources}
+                    allTags={allTags}
+                />
 
-                {/* Content */}
-                {viewMode === 'kanban' && (
-                    <KanbanView
-                        applications={filteredApplications}
-                        statusLabels={statusLabels}
-                        onStatusChange={handleStatusChange}
-                        onView={handleViewDetail}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleDelete}
+                {/* Results count + GroupBy */}
+                <Group justify="space-between">
+                    <Text size="sm" c="dimmed">
+                        {t('applications.filter.resultsCount', { count: processedApplications.length })}
+                    </Text>
+                    <Select
+                        size="xs"
+                        w={180}
+                        value={groupBy}
+                        onChange={(val) => setGroupBy((val as 'none' | 'status' | 'priority') || 'none')}
+                        data={[
+                            { value: 'none', label: t('applications.groupBy.none') },
+                            { value: 'status', label: t('applications.groupBy.status') },
+                            { value: 'priority', label: t('applications.groupBy.priority') },
+                        ]}
+                        leftSection={<Text size="xs" fw={500}>{t('applications.groupBy.label')}:</Text>}
+                        leftSectionWidth={90}
                     />
-                )}
-                {viewMode === 'grid' && (
-                    <CardsView
-                        applications={filteredApplications}
-                        statusLabels={statusLabels}
-                        onView={handleViewDetail}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleDelete}
-                        onStatusChange={handleStatusChange}
-                    />
-                )}
-                {viewMode === 'list' && (
-                    <TableView
-                        applications={filteredApplications}
-                        statusLabels={statusLabels}
-                        onView={handleViewDetail}
-                        onEdit={handleOpenEdit}
-                        onDelete={handleDelete}
-                    />
-                )}
+                </Group>
+
+                {/* Table */}
+                <TableView
+                    applications={processedApplications}
+                    statusLabels={statusLabels}
+                    onView={handleViewDetail}
+                    onEdit={handleOpenEdit}
+                    onDelete={handleDelete}
+                    onStatusChange={handleStatusChange}
+                    sort={sort}
+                    onSortChange={setSort}
+                    groupBy={groupBy}
+                />
 
                 {/* Modals */}
                 <ApplicationFormModal
@@ -337,6 +319,7 @@ export default function ApplicationsPage() {
                     statusLabels={statusLabels}
                     onEdit={handleOpenEdit}
                     onDelete={handleDelete}
+                    onStatusChange={handleStatusChange}
                 />
             </Stack>
         </Container>
