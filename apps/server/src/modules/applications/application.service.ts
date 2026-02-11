@@ -117,7 +117,12 @@ export class ApplicationService {
         app.status = 'draft';
         app.statusHistory = [{ status: 'draft', date: new Date().toISOString() }];
         app.interviews = [];
-        if (dto.appliedAt) app.appliedAt = new Date(dto.appliedAt);
+        if (dto.appliedAt) {
+            const date = new Date(dto.appliedAt);
+            if (!isNaN(date.getTime())) {
+                app.appliedAt = date;
+            }
+        }
         app.createdAt = new Date();
         app.updatedAt = new Date();
 
@@ -144,7 +149,12 @@ export class ApplicationService {
         if (dto.source !== undefined) app.source = dto.source;
         if (dto.tags !== undefined) app.tags = dto.tags;
         if (dto.priority !== undefined) app.priority = dto.priority;
-        if (dto.appliedAt !== undefined) app.appliedAt = new Date(dto.appliedAt);
+        if (dto.appliedAt !== undefined) {
+            const date = new Date(dto.appliedAt);
+            if (!isNaN(date.getTime())) {
+                app.appliedAt = date;
+            }
+        }
         app.updatedAt = new Date();
 
         await this.database.persist(app);

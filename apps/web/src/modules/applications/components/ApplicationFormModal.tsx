@@ -178,8 +178,8 @@ export function ApplicationFormModal({
                         <DateInput
                             label={t('applications.appliedOn')}
                             placeholder={t('common.date')}
-                            value={form.appliedAt || null}
-                            onChange={(value) => onFormChange({ ...form, appliedAt: value || '' })}
+                            value={form.appliedAt ? new Date(form.appliedAt) : null}
+                            onChange={(value) => onFormChange({ ...form, appliedAt: value ? new Date(value).toISOString() : '' })}
                             clearable
                         />
                         <TagsInput
