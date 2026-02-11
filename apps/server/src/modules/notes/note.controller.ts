@@ -42,7 +42,7 @@ export class NoteController {
 
     @(http.POST('').group('auth-required'))
     async create(body: HttpBody<CreateNoteDto>, user: User) {
-        return this.noteService.create(user.id, body);
+        return await this.noteService.create(user.id, body);
     }
 
     @(http.PATCH('/:id').group('auth-required'))

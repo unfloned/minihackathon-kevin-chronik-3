@@ -37,7 +37,7 @@ export class DeadlineController {
 
     @(http.POST('').group('auth-required'))
     async create(body: HttpBody<CreateDeadlineDto>, user: User) {
-        return this.deadlineService.create(user.id, body);
+        return await this.deadlineService.create(user.id, body);
     }
 
     @(http.PATCH('/:id').group('auth-required'))

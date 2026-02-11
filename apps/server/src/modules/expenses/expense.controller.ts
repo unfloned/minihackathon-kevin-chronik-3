@@ -14,7 +14,7 @@ export class ExpenseController {
 
     @(http.POST('/categories').group('auth-required'))
     async createCategory(body: HttpBody<CreateCategoryDto>, user: User) {
-        return this.expenseService.createCategory(user.id, body);
+        return await this.expenseService.createCategory(user.id, body);
     }
 
     @(http.PATCH('/categories/:id').group('auth-required'))
@@ -61,7 +61,7 @@ export class ExpenseController {
 
     @(http.POST('').group('auth-required'))
     async createExpense(body: HttpBody<CreateExpenseDto>, user: User) {
-        return this.expenseService.create(user.id, body);
+        return await this.expenseService.create(user.id, body);
     }
 
     @(http.PATCH('/:id').group('auth-required'))

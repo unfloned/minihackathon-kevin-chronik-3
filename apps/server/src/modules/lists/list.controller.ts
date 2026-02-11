@@ -46,7 +46,7 @@ export class ListController {
 
     @(http.POST('').group('auth-required'))
     async create(body: HttpBody<CreateListDto>, user: User) {
-        return this.listService.create(user.id, body);
+        return await this.listService.create(user.id, body);
     }
 
     @(http.POST('/from-template/:templateId').group('auth-required'))

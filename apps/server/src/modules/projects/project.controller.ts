@@ -42,7 +42,7 @@ export class ProjectController {
 
     @(http.POST('').group('auth-required'))
     async create(body: HttpBody<CreateProjectDto>, user: User) {
-        return this.projectService.create(user.id, body);
+        return await this.projectService.create(user.id, body);
     }
 
     @(http.PATCH('/:id').group('auth-required'))

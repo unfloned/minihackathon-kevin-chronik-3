@@ -38,7 +38,7 @@ export class ApplicationController {
 
     @(http.POST('').group('auth-required'))
     async create(body: HttpBody<CreateApplicationDto>, user: User) {
-        return this.applicationService.create(user.id, body);
+        return await this.applicationService.create(user.id, body);
     }
 
     @(http.PATCH('/:id').group('auth-required'))

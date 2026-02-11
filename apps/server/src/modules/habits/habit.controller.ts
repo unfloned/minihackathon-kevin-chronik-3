@@ -42,7 +42,7 @@ export class HabitController {
 
     @(http.POST('').group('auth-required'))
     async createHabit(body: HttpBody<CreateHabitDto>, user: User) {
-        return this.habitService.create(user.id, body);
+        return await this.habitService.create(user.id, body);
     }
 
     @(http.POST('/:id/log').group('auth-required'))

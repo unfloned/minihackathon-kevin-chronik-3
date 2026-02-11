@@ -32,7 +32,7 @@ export class SubscriptionController {
 
     @(http.POST('').group('auth-required'))
     async create(body: HttpBody<CreateSubscriptionDto>, user: User) {
-        return this.subscriptionService.create(user.id, body);
+        return await this.subscriptionService.create(user.id, body);
     }
 
     @(http.PATCH('/:id').group('auth-required'))

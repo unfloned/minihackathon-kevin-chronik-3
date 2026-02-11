@@ -148,31 +148,39 @@ export default function ApplicationsPage() {
             } : undefined,
         };
 
-        try {
-            if (editingApp) {
-                await updateApp({ id: editingApp.id, data: payload });
+        if (editingApp) {
+            const result = await updateApp({ id: editingApp.id, data: payload });
+            if (!result) {
                 notifications.show({
-                    title: t('common.success'),
-                    message: t('applications.applicationUpdated'),
-                    color: 'green',
+                    title: t('common.error'),
+                    message: t('errors.generic'),
+                    color: 'red',
                 });
-            } else {
-                await createApp(payload);
-                notifications.show({
-                    title: t('common.success'),
-                    message: t('applications.applicationCreated'),
-                    color: 'green',
-                });
+                return;
             }
-            refetch();
-            close();
-        } catch {
             notifications.show({
-                title: t('common.error'),
-                message: t('errors.generic'),
-                color: 'red',
+                title: t('common.success'),
+                message: t('applications.applicationUpdated'),
+                color: 'green',
+            });
+        } else {
+            const result = await createApp(payload);
+            if (!result) {
+                notifications.show({
+                    title: t('common.error'),
+                    message: t('errors.generic'),
+                    color: 'red',
+                });
+                return;
+            }
+            notifications.show({
+                title: t('common.success'),
+                message: t('applications.applicationCreated'),
+                color: 'green',
             });
         }
+        refetch();
+        close();
     };
 
     const handleDelete = (id: string) => {
