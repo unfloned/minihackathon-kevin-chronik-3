@@ -1,12 +1,14 @@
 version: '3.8'
 
 services:
-  app:
+  api:
+    container_name: ycmm-api
     build:
       context: .
       dockerfile: Dockerfile
+      target: backend
     ports:
-      - "8080:80"
+      - "8080:8080"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=sqlite:///app/data/ycmm.db
@@ -15,9 +17,23 @@ services:
       - JWT_EXPIRES_IN=2h
       - JWT_REFRESH_EXPIRES_IN=7d
       - PASSWORD_SALT_ROUNDS=12
-      - WEB_URL=http://localhost:8080
+      - WEB_URL=http://localhost:5173
     volumes:
       - ycmm_data:/app/data
+    restart: unless-stopped
+
+  web:
+    container_name: ycmm-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    working_dir: /app/apps/web
+    command: sh -c "rm -f vite.config.js vite.config.d.ts && pnpm exec vite --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
     restart: unless-stopped
 
 volumes:
